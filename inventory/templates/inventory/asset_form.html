@@ -1,0 +1,14 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Asset Form | ITAM{% endblock %}
+
+{% block content %}
+<h2>{% if object %}Edit Asset{% else %}Add Asset{% endif %}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+    <a href="{% url 'asset_list' %}">Cancel</a>
+</form>
+{% endblock %}

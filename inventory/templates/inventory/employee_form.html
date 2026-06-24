@@ -1,0 +1,14 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Employee Form | ITAM{% endblock %}
+
+{% block content %}
+<h2>{% if object %}Edit Employee{% else %}Add Employee{% endif %}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+    <a href="{% url 'employee_list' %}">Cancel</a>
+</form>
+{% endblock %}

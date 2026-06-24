@@ -1,0 +1,15 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Delete Asset | ITAM{% endblock %}
+
+{% block content %}
+<h2>Delete Asset</h2>
+
+<p>Are you sure you want to delete {{ object.name }} ({{ object.serial_number }})?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirm Delete</button>
+    <a href="{% url 'asset_detail' object.pk %}">Cancel</a>
+</form>
+{% endblock %}

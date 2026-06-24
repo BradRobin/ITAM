@@ -1,0 +1,37 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Employees | ITAM{% endblock %}
+
+{% block content %}
+<h2>Employees</h2>
+
+<p><a href="{% url 'employee_add' %}">Add Employee</a></p>
+
+{% if employees %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.department }}</td>
+                    <td>{{ employee.email }}</td>
+                    <td>
+                        <a href="{% url 'employee_edit' employee.pk %}">Edit</a>
+                        <a href="{% url 'employee_delete' employee.pk %}">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No employees found.</p>
+{% endif %}
+{% endblock %}

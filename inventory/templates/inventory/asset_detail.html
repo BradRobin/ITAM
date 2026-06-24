@@ -1,0 +1,73 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}{{ asset.name }} | ITAM{% endblock %}
+
+{% block content %}
+<h2>{{ asset.name }}</h2>
+
+<dl>
+    <dt>Type</dt>
+    <dd>{{ asset.type }}</dd>
+    <dt>Serial Number</dt>
+    <dd>{{ asset.serial_number }}</dd>
+    <dt>Status</dt>
+    <dd>{{ asset.status }}</dd>
+    <dt>Last Maintenance Date</dt>
+    <dd>{{ asset.last_maintenance_date|default:"No maintenance recorded" }}</dd>
+</dl>
+
+<p>
+    <a href="{% url 'asset_edit' asset.pk %}">Edit</a>
+    <a href="{% url 'asset_delete' asset.pk %}">Delete</a>
+    <a href="{% url 'asset_list' %}">Back to Assets</a>
+</p>
+
+<section>
+    <h3>Active Assignment</h3>
+    {% if active_assignment %}
+        <p>
+            Assigned to {{ active_assignment.employee.name }}
+            on {{ active_assignment.date_assigned }}.
+        </p>
+        <form method="post" action="{% url 'return_asset' active_assignment.pk %}">
+            {% csrf_token %}
+            <button type="submit">Return Asset</button>
+        </form>
+    {% else %}
+        <p>This asset is not currently assigned.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h3>Assignment History</h3>
+    {% if assignment_history %}
+        <ul>
+            {% for assignment in assignment_history %}
+                <li>
+                    {{ assignment.employee.name }}:
+                    {{ assignment.date_assigned }} to
+                    {{ assignment.date_returned|default:"Present" }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No assignment history.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h3>Maintenance Logs</h3>
+    {% if maintenance_logs %}
+        <ul>
+            {% for log in maintenance_logs %}
+                <li>
+                    {{ log.date }} - {{ log.issue_description }}
+                    ({{ log.technician }}, {% if log.resolved %}Resolved{% else %}Open{% endif %})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No maintenance logs.</p>
+    {% endif %}
+</section>
+{% endblock %}

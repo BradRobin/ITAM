@@ -1,0 +1,50 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}{{ employee.name }} | ITAM{% endblock %}
+
+{% block content %}
+<h2>{{ employee.name }}</h2>
+
+<dl>
+    <dt>Department</dt>
+    <dd>{{ employee.department }}</dd>
+    <dt>Email</dt>
+    <dd>{{ employee.email }}</dd>
+</dl>
+
+<p>
+    <a href="{% url 'employee_edit' employee.pk %}">Edit</a>
+    <a href="{% url 'employee_delete' employee.pk %}">Delete</a>
+    <a href="{% url 'employee_list' %}">Back to Employees</a>
+</p>
+
+<section>
+    <h3>Active Assignments</h3>
+    {% if active_assignments %}
+        <ul>
+            {% for assignment in active_assignments %}
+                <li>{{ assignment.asset.name }} since {{ assignment.date_assigned }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No active assignments.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h3>Assignment History</h3>
+    {% if assignment_history %}
+        <ul>
+            {% for assignment in assignment_history %}
+                <li>
+                    {{ assignment.asset.name }}:
+                    {{ assignment.date_assigned }} to
+                    {{ assignment.date_returned|default:"Present" }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No assignment history.</p>
+    {% endif %}
+</section>
+{% endblock %}

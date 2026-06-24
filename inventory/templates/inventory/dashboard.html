@@ -1,0 +1,47 @@
+{% extends "inventory/base.html" %}
+
+{% block title %}Dashboard | ITAM{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<section>
+    <h3>Asset Summary</h3>
+    <ul>
+        <li>Total Assets: {{ asset_summary.total_assets|default:0 }}</li>
+        <li>Available: {{ asset_summary.available_assets|default:0 }}</li>
+        <li>Assigned: {{ asset_summary.assigned_assets|default:0 }}</li>
+        <li>Under Maintenance: {{ asset_summary.maintenance_assets|default:0 }}</li>
+    </ul>
+</section>
+
+<section>
+    <h3>Status Counts</h3>
+    {% if status_counts %}
+        <ul>
+            {% for row in status_counts %}
+                <li>{{ row.status }}: {{ row.total }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No assets have been registered yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h3>Maintenance Overdue Assets</h3>
+    <p>Assets with no maintenance since {{ overdue_cutoff }} are shown here.</p>
+    {% if overdue_assets %}
+        <ul>
+            {% for asset in overdue_assets %}
+                <li>
+                    <a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a>
+                    ({{ asset.serial_number }})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No overdue assets.</p>
+    {% endif %}
+</section>
+{% endblock %}
