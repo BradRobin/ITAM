@@ -24,6 +24,7 @@ class Asset(models.Model):
         choices=AssetStatus.choices,
         default=AssetStatus.AVAILABLE,
     )
+    date_created = models.DateField(default=timezone.now)
 
     class Meta:
         ordering = ["name", "serial_number"]

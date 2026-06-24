@@ -20,21 +20,19 @@
     </div>
 
     {% if request.user.is_staff or request.user.is_superuser %}
-        <form id="employee-form" class="card form-card">
+        <form id="employee-form" class="card form-card" hidden aria-hidden="true">
             {% csrf_token %}
-            <input id="employee-id" name="id" type="hidden">
-            <input id="employee-employee-id" name="employee_id" type="hidden">
 
             <label for="employee-name">Name</label>
             <input id="employee-name" name="name" type="text" required>
 
-            <label for="employee-email">Email</label>
-            <input id="employee-email" name="email" type="email" required>
-
             <label for="employee-department">Department</label>
             <input id="employee-department" name="department" type="text" required>
 
-            <button type="submit" class="btn btn-primary" data-create-label="Create Employee" data-update-label="Update Employee">Create Employee</button>
+            <label for="employee-email">Email</label>
+            <input id="employee-email" name="email" type="email" required>
+
+            <button type="submit" class="btn btn-primary">Create Employee</button>
             <button type="reset" class="btn btn-secondary">Cancel</button>
         </form>
     {% endif %}

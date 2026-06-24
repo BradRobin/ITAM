@@ -184,21 +184,39 @@ class DashboardContextTests(TestCase):
         self.assertEqual(response.context["assigned_assets"], 1)
         self.assertEqual(response.context["available_assets"], 1)
         self.assertEqual(response.context["maintenance_assets"], 1)
-        self.assertEqual(response.context["overdue_assets_count"], 3)
+        self.assertEqual(response.context["overdue_assets_count"], 0)
 
-    def test_dashboard_overdue_count_excludes_recent_maintenance(self):
+    def test_dashboard_overdue_count_uses_creation_or_recent_maintenance_date(self):
         recent_asset = Asset.objects.create(
             name="Recently Serviced Monitor",
             type=Asset.AssetType.MONITOR,
             serial_number="DASH-RECENT",
             status=Asset.AssetStatus.AVAILABLE,
+            date_created=timezone.now().date() - datetime.timedelta(days=300),
         )
         old_asset = Asset.objects.create(
             name="Oldly Serviced Router",
             type=Asset.AssetType.ROUTER,
             serial_number="DASH-OLD",
             status=Asset.AssetStatus.AVAILABLE,
+            date_created=timezone.now().date() - datetime.timedelta(days=300),
         )
+        old_unserviced_asset = Asset.objects.create(
+            name="Old Unserviced Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="DASH-OLD-UNSERVICED",
+            status=Asset.AssetStatus.AVAILABLE,
+            date_created=timezone.now().date() - datetime.timedelta(days=181),
+        )
+        new_unserviced_asset = Asset.objects.create(
+            name="New Unserviced Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="DASH-NEW-UNSERVICED",
+            status=Asset.AssetStatus.AVAILABLE,
+            date_created=timezone.now().date(),
+        )
+        self.assertIsNotNone(old_unserviced_asset.pk)
+        self.assertIsNotNone(new_unserviced_asset.pk)
         MaintenanceLog.objects.create(
             asset=recent_asset,
             issue_description="Preventive service",
@@ -217,8 +235,14 @@ class DashboardContextTests(TestCase):
         response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_assets"], 5)
-        self.assertEqual(response.context["overdue_assets_count"], 4)
+        self.assertEqual(response.context["total_assets"], 7)
+        self.assertEqual(response.context["overdue_assets_count"], 2)
+        self.assertQuerySetEqual(
+            response.context["overdue_assets"],
+            [old_asset, old_unserviced_asset],
+            transform=lambda asset: asset,
+            ordered=False,
+        )
 
 
 class InventoryAdminConfigurationTests(TestCase):
@@ -507,3 +531,22 @@ class FrontendAPIBridgeTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()[0]["assigned_assets_count"], 1)
+
+    def test_employee_api_create_adds_employee(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_employee_list"),
+            data={
+                "name": "Created Employee",
+                "department": "Support",
+                "email": "created.employee@example.com",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            Employee.objects.filter(email="created.employee@example.com").exists()
+        )
+        self.assertEqual(response.json()["name"], "Created Employee")

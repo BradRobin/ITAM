@@ -174,7 +174,7 @@ function attachTableEventListeners(container) {
                     break;
 
                 case 'action-edit':
-                    await loadEmployeeIntoForm(employeeId);
+                    window.location.href = `/employees/${employeeId}/edit/`;
                     break;
 
                 case 'action-delete':
@@ -277,53 +277,32 @@ async function showEmployeeDetails(employeeId) {
 // 7. FORM HANDLING
 // ============================================================
 
-async function loadEmployeeIntoForm(employeeId) {
-    const employee = await getEmployeeById(employeeId);
-    if (!employee) {
-        alert('Employee not found!');
-        return;
-    }
-
+function showEmployeeForm() {
     const form = document.getElementById('employee-form');
-    if (!form) {
-        console.warn('Form #employee-form not found.');
-        return;
-    }
-
-    document.getElementById('employee-id').value = employee.id || '';
-    document.getElementById('employee-name').value = employee.name || '';
-    document.getElementById('employee-email').value = employee.email || '';
-    document.getElementById('employee-department').value = employee.department || '';
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.textContent = 'Update Employee';
-        submitBtn.dataset.mode = 'edit';
-    }
-
-    form.scrollIntoView({ behavior: 'smooth' });
+    if (!form) return;
+    form.hidden = false;
+    form.setAttribute('aria-hidden', 'false');
+    document.getElementById('employee-name')?.focus();
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function resetEmployeeForm() {
+function hideEmployeeForm() {
+    const form = document.getElementById('employee-form');
+    if (!form) return;
+    form.hidden = true;
+    form.setAttribute('aria-hidden', 'true');
+}
+
+function resetEmployeeForm({ hide = false } = {}) {
     const form = document.getElementById('employee-form');
     if (!form) return;
 
     form.reset();
-    document.getElementById('employee-id').value = '';
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.textContent = 'Create Employee';
-        submitBtn.dataset.mode = 'create';
-    }
+    if (hide) hideEmployeeForm();
 }
 
 async function handleFormSubmit(e) {
     e.preventDefault();
-
-    const form = document.getElementById('employee-form');
-    const employeeId = document.getElementById('employee-id').value;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const mode = submitBtn?.dataset?.mode || 'create';
 
     const formData = {
         name: document.getElementById('employee-name').value.trim(),
@@ -337,16 +316,10 @@ async function handleFormSubmit(e) {
     }
 
     try {
-        let result;
-        if (mode === 'edit' && employeeId) {
-            result = await updateEmployee(employeeId, formData);
-            alert(`Employee "${result.name}" updated successfully!`);
-        } else {
-            result = await createEmployee(formData);
-            alert(`Employee "${result.name}" created successfully!`);
-        }
+        const result = await createEmployee(formData);
+        alert(`Employee "${result.name}" created successfully!`);
 
-        resetEmployeeForm();
+        resetEmployeeForm({ hide: true });
         refreshEmployeeList();
 
     } catch (error) {
@@ -408,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', handleFormSubmit);
         const resetBtn = form.querySelector('[type="reset"]');
         if (resetBtn) {
-            resetBtn.addEventListener('click', resetEmployeeForm);
+            resetBtn.addEventListener('click', () => resetEmployeeForm({ hide: true }));
         }
     }
 
@@ -416,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addBtn) {
         addBtn.addEventListener('click', () => {
             resetEmployeeForm();
-            document.getElementById('employee-form')?.scrollIntoView({ behavior: 'smooth' });
+            showEmployeeForm();
         });
     }
 
@@ -435,6 +408,8 @@ window.EmployeeManager = {
     deleteEmployee,
     refresh: refreshEmployeeList,
     resetForm: resetEmployeeForm,
+    showForm: showEmployeeForm,
+    hideForm: hideEmployeeForm,
 };
 
 window.fetchEmployees = getEmployees;

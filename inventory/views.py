@@ -9,7 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Exists, Max, OuterRef, Q
+from django.db.models import Count, Exists, F, Max, OuterRef, Q
+from django.db.models.functions import Coalesce
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -173,8 +174,12 @@ def get_overdue_assets_queryset():
         Asset.objects.annotate(
             has_recent_maintenance=Exists(recent_maintenance),
             last_maintenance_date=Max("maintenance_logs__date"),
+            service_reference_date=Coalesce(
+                Max("maintenance_logs__date"),
+                F("date_created"),
+            ),
         )
-        .filter(has_recent_maintenance=False)
+        .filter(has_recent_maintenance=False, service_reference_date__lt=overdue_cutoff)
         .order_by("name", "serial_number")
     )
 
