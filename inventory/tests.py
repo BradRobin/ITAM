@@ -1,9 +1,10 @@
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from .forms import AssetForm, AssignmentForm
-from .models import Asset, Assignment, Employee
+from .models import Asset, Assignment, Employee, MaintenanceLog
 
 
 class AssetFormSerialNumberValidationTests(TestCase):
@@ -143,3 +144,81 @@ class AssignmentStateMachineViewTests(TestCase):
         assignment = Assignment.objects.get(asset=self.asset)
         self.assertEqual(self.asset.status, Asset.AssetStatus.AVAILABLE)
         self.assertIsNotNone(assignment.date_returned)
+
+
+class DashboardContextTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="viewer",
+            email="viewer@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(self.user)
+        Asset.objects.create(
+            name="Available Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="DASH-AVAILABLE",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        Asset.objects.create(
+            name="Assigned Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="DASH-ASSIGNED",
+            status=Asset.AssetStatus.ASSIGNED,
+        )
+        Asset.objects.create(
+            name="Maintenance Printer",
+            type=Asset.AssetType.PRINTER,
+            serial_number="DASH-MAINTENANCE",
+            status=Asset.AssetStatus.UNDER_MAINTENANCE,
+        )
+
+    def test_dashboard_context_exposes_frontend_metric_keys(self):
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_assets"], 3)
+        self.assertEqual(response.context["assigned_assets"], 1)
+        self.assertEqual(response.context["available_assets"], 1)
+        self.assertEqual(response.context["maintenance_assets"], 1)
+
+
+class InventoryAdminConfigurationTests(TestCase):
+    def test_asset_admin_configuration(self):
+        model_admin = admin.site._registry[Asset]
+
+        self.assertEqual(
+            model_admin.list_display,
+            ("name", "type", "serial_number", "status"),
+        )
+        self.assertEqual(model_admin.list_filter, ("type", "status"))
+        self.assertEqual(model_admin.search_fields, ("name", "serial_number"))
+
+    def test_employee_admin_configuration(self):
+        model_admin = admin.site._registry[Employee]
+
+        self.assertEqual(model_admin.list_display, ("name", "department", "email"))
+        self.assertEqual(model_admin.search_fields, ("name", "department", "email"))
+
+    def test_assignment_admin_configuration(self):
+        model_admin = admin.site._registry[Assignment]
+
+        self.assertEqual(
+            model_admin.list_display,
+            ("asset", "employee", "date_assigned", "date_returned"),
+        )
+        self.assertEqual(model_admin.list_filter, ("date_assigned", "date_returned"))
+        self.assertIn("asset__name", model_admin.search_fields)
+        self.assertIn("asset__serial_number", model_admin.search_fields)
+        self.assertIn("employee__name", model_admin.search_fields)
+        self.assertIn("employee__email", model_admin.search_fields)
+
+    def test_maintenance_log_admin_configuration(self):
+        model_admin = admin.site._registry[MaintenanceLog]
+
+        self.assertEqual(
+            model_admin.list_display,
+            ("asset", "technician", "date", "resolved"),
+        )
+        self.assertEqual(model_admin.list_filter, ("resolved", "date"))
+        self.assertIn("issue_description", model_admin.search_fields)

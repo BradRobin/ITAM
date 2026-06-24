@@ -62,6 +62,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         context.update(
             {
+                "total_assets": aggregate_counts["total_assets"],
+                "assigned_assets": aggregate_counts["assigned_assets"],
+                "available_assets": aggregate_counts["available_assets"],
+                "maintenance_assets": aggregate_counts["maintenance_assets"],
                 "status_counts": status_counts,
                 "asset_summary": aggregate_counts,
                 "overdue_assets": overdue_assets,

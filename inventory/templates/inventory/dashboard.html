@@ -8,10 +8,10 @@
 <section>
     <h3>Asset Summary</h3>
     <ul>
-        <li>Total Assets: {{ asset_summary.total_assets|default:0 }}</li>
-        <li>Available: {{ asset_summary.available_assets|default:0 }}</li>
-        <li>Assigned: {{ asset_summary.assigned_assets|default:0 }}</li>
-        <li>Under Maintenance: {{ asset_summary.maintenance_assets|default:0 }}</li>
+        <li>Total Assets: {{ total_assets|default:0 }}</li>
+        <li>Available: {{ available_assets|default:0 }}</li>
+        <li>Assigned: {{ assigned_assets|default:0 }}</li>
+        <li>Under Maintenance: {{ maintenance_assets|default:0 }}</li>
     </ul>
 </section>
 
