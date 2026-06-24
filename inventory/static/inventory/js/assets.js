@@ -68,8 +68,8 @@ async function request(url, method = 'GET', data = null) {
         const responseData = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            const errorMsg = responseData.message || responseData.detail || JSON.stringify(responseData);
-            throw new Error(`Request failed (${response.status}): ${errorMsg}`);
+            const errorMsg = getFormErrorMessage(responseData);
+            throw new Error(errorMsg);
         }
 
         return responseData;
@@ -77,6 +77,26 @@ async function request(url, method = 'GET', data = null) {
         console.error(`API Error [${method} ${url}]:`, error);
         throw error;
     }
+}
+
+function getFormErrorMessage(responseData) {
+    const errors = responseData?.errors;
+    if (!errors) {
+        return responseData?.message || responseData?.detail || JSON.stringify(responseData);
+    }
+
+    if (errors.serial_number?.length) {
+        return 'Serial number must be unique. An asset with this serial number already exists.';
+    }
+
+    const messages = [];
+    Object.entries(errors).forEach(([field, fieldErrors]) => {
+        fieldErrors.forEach((error) => {
+            messages.push(`${field}: ${error.message || error}`);
+        });
+    });
+
+    return messages.join(' ') || 'Please correct the highlighted form errors.';
 }
 
 async function getAssets(filters = {}) {
