@@ -5,6 +5,38 @@ from . import views
 
 urlpatterns = [
     path("", views.DashboardView.as_view(), name="dashboard"),
+    path("api/assets", views.AssetAPIListView.as_view(), name="api_asset_list"),
+    path("api/assets/", views.AssetAPIListView.as_view(), name="api_asset_list_slash"),
+    path(
+        "api/assets/<int:pk>/",
+        views.AssetAPIDetailView.as_view(),
+        name="api_asset_detail",
+    ),
+    path(
+        "api/assets/<int:pk>/assign/",
+        views.AssetAssignAPIView.as_view(),
+        name="api_asset_assign",
+    ),
+    path(
+        "api/assets/<int:pk>/return/",
+        views.AssetReturnAPIView.as_view(),
+        name="api_asset_return",
+    ),
+    path(
+        "api/employees",
+        views.EmployeeAPIListView.as_view(),
+        name="api_employee_list",
+    ),
+    path(
+        "api/employees/",
+        views.EmployeeAPIListView.as_view(),
+        name="api_employee_list_slash",
+    ),
+    path(
+        "api/employees/<int:pk>/",
+        views.EmployeeAPIDetailView.as_view(),
+        name="api_employee_detail",
+    ),
     path("assets/", views.AssetListView.as_view(), name="asset_list"),
     path("assets/export.csv", views.AssetCSVExportView.as_view(), name="asset_export"),
     path("assets/add/", views.AssetCreateView.as_view(), name="asset_add"),

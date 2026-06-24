@@ -2,41 +2,77 @@
 {% load static %}
 
 {% block title %}Assets - ITAM System{% endblock %}
+{% block page_name %}assets{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="page-header">
         <h1>Assets</h1>
         <div class="actions">
-            <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+            {% if request.user.is_staff or request.user.is_superuser %}
+                <button id="add-asset-btn" type="button" class="btn btn-primary">Add Asset</button>
+            {% endif %}
             <a href="{% url 'asset_export' %}" class="btn btn-success">Export CSV</a>
         </div>
     </div>
 
-    <div class="filters">
-        <form method="get" class="filter-form">
-            <select name="type" class="filter-select">
-                <option value="">All Types</option>
-                <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
-                <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
-                <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
-                <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
+    {% if request.user.is_staff or request.user.is_superuser %}
+        <form id="asset-form" class="card form-card">
+            {% csrf_token %}
+            <input id="asset-id" name="id" type="hidden">
+
+            <label for="asset-name">Name</label>
+            <input id="asset-name" name="name" type="text" required>
+
+            <label for="asset-serial">Serial Number</label>
+            <input id="asset-serial" name="serial_number" type="text" required>
+
+            <label for="asset-type">Type</label>
+            <select id="asset-type" name="type" required>
+                <option value="laptop">Laptop</option>
+                <option value="printer">Printer</option>
+                <option value="router">Router</option>
+                <option value="monitor">Monitor</option>
             </select>
-            <select name="status" class="filter-select">
+
+            <label for="asset-status">Status</label>
+            <select id="asset-status" name="status" required>
+                <option value="available">Available</option>
+                <option value="assigned">Assigned</option>
+                <option value="maintenance">Under Maintenance</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary" data-create-label="Create Asset" data-update-label="Update Asset">Create Asset</button>
+            <button type="reset" class="btn btn-secondary">Cancel</button>
+        </form>
+    {% endif %}
+
+    <div class="filters">
+        <form id="filter-form" method="get" class="filter-form">
+            <select id="type" name="type" class="filter-select">
+                <option value="">All Types</option>
+                <option value="laptop" {% if selected_type == "laptop" %}selected{% endif %}>Laptop</option>
+                <option value="printer" {% if selected_type == "printer" %}selected{% endif %}>Printer</option>
+                <option value="router" {% if selected_type == "router" %}selected{% endif %}>Router</option>
+                <option value="monitor" {% if selected_type == "monitor" %}selected{% endif %}>Monitor</option>
+            </select>
+            <select id="status" name="status" class="filter-select">
                 <option value="">All Statuses</option>
-                <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
-                <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
-                <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
+                <option value="available" {% if selected_status == "available" %}selected{% endif %}>Available</option>
+                <option value="assigned" {% if selected_status == "assigned" %}selected{% endif %}>Assigned</option>
+                <option value="maintenance" {% if selected_status == "maintenance" %}selected{% endif %}>Under Maintenance</option>
             </select>
             <button type="submit" class="btn btn-filter">Filter</button>
+            <button type="reset" class="btn btn-secondary btn-sm">Reset</button>
             <a href="{% url 'asset_list' %}" class="btn btn-secondary btn-sm">Clear</a>
         </form>
     </div>
 
-    <div class="table-wrapper">
+    <section id="asset-list-container" class="table-wrapper">
         <table>
             <thead>
                 <tr>
@@ -68,7 +104,7 @@
                     <tr>
                         <td colspan="5" class="empty-state">
                             <div class="empty-state-content">
-                                <span class="empty-icon">📭</span>
+                                <span class="empty-icon">No assets</span>
                                 <h3>No assets found</h3>
                                 <p>Start by adding your first asset.</p>
                                 <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
@@ -78,7 +114,7 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+    </section>
 
     {% if is_paginated %}
         <div class="pagination">
@@ -101,6 +137,6 @@
     {% endif %}
 {% endblock %}
 
-{% block extra_js %}
+{% block page_js %}
     <script src="{% static 'inventory/js/assets.js' %}"></script>
 {% endblock %}

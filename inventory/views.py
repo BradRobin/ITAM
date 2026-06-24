@@ -1,4 +1,5 @@
 import csv
+import json
 from datetime import timedelta
 
 from django.contrib import messages
@@ -6,7 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Max, Q
-from django.http import HttpResponse
+from django.db.models.deletion import ProtectedError
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -27,6 +29,103 @@ from .models import Asset, Assignment, Employee
 
 def user_has_admin_access(user) -> bool:
     return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
+STATUS_TO_API = {
+    Asset.AssetStatus.AVAILABLE: "available",
+    Asset.AssetStatus.ASSIGNED: "assigned",
+    Asset.AssetStatus.UNDER_MAINTENANCE: "maintenance",
+}
+
+STATUS_TO_MODEL = {
+    "available": Asset.AssetStatus.AVAILABLE,
+    "assigned": Asset.AssetStatus.ASSIGNED,
+    "maintenance": Asset.AssetStatus.UNDER_MAINTENANCE,
+    "under maintenance": Asset.AssetStatus.UNDER_MAINTENANCE,
+    Asset.AssetStatus.AVAILABLE.lower(): Asset.AssetStatus.AVAILABLE,
+    Asset.AssetStatus.ASSIGNED.lower(): Asset.AssetStatus.ASSIGNED,
+    Asset.AssetStatus.UNDER_MAINTENANCE.lower(): Asset.AssetStatus.UNDER_MAINTENANCE,
+}
+
+TYPE_TO_MODEL = {
+    "laptop": Asset.AssetType.LAPTOP,
+    "printer": Asset.AssetType.PRINTER,
+    "router": Asset.AssetType.ROUTER,
+    "monitor": Asset.AssetType.MONITOR,
+}
+
+
+def parse_request_data(request) -> dict:
+    if request.content_type.startswith("application/json") and request.body:
+        return json.loads(request.body.decode("utf-8"))
+    return request.POST.dict()
+
+
+def normalize_asset_payload(payload: dict) -> dict:
+    normalized = payload.copy()
+    status = normalized.get("status")
+    asset_type = normalized.get("type")
+
+    if status:
+        normalized["status"] = STATUS_TO_MODEL.get(str(status).lower(), status)
+    else:
+        normalized["status"] = Asset.AssetStatus.AVAILABLE
+
+    if asset_type:
+        normalized["type"] = TYPE_TO_MODEL.get(str(asset_type).lower(), asset_type)
+
+    return normalized
+
+
+def serialize_employee(employee: Employee) -> dict:
+    active_assets = Asset.objects.filter(
+        assignments__employee=employee,
+        assignments__date_returned__isnull=True,
+    ).distinct()
+    return {
+        "id": employee.id,
+        "name": employee.name,
+        "department": employee.department,
+        "email": employee.email,
+        "assigned_assets_count": active_assets.count(),
+        "assigned_assets": [
+            {
+                "id": asset.id,
+                "name": asset.name,
+                "type": asset.type,
+                "serial_number": asset.serial_number,
+                "status": STATUS_TO_API.get(asset.status, asset.status),
+                "status_label": asset.status,
+            }
+            for asset in active_assets
+        ],
+    }
+
+
+def serialize_asset(asset: Asset) -> dict:
+    active_assignment = (
+        asset.assignments.select_related("employee")
+        .filter(date_returned__isnull=True)
+        .first()
+    )
+    return {
+        "id": asset.id,
+        "name": asset.name,
+        "type": asset.type,
+        "serial_number": asset.serial_number,
+        "status": STATUS_TO_API.get(asset.status, asset.status),
+        "status_label": asset.status,
+        "assigned_employee": (
+            serialize_employee(active_assignment.employee) if active_assignment else None
+        ),
+    }
+
+
+def json_permission_denied() -> JsonResponse:
+    return JsonResponse(
+        {"detail": "You do not have permission to perform this action."},
+        status=403,
+    )
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -91,9 +190,13 @@ class AssetListView(LoginRequiredMixin, ListView):
         status = self.request.GET.get("status")
 
         if asset_type:
-            queryset = queryset.filter(type=asset_type)
+            queryset = queryset.filter(
+                type=TYPE_TO_MODEL.get(asset_type.lower(), asset_type)
+            )
         if status:
-            queryset = queryset.filter(status=status)
+            queryset = queryset.filter(
+                status=STATUS_TO_MODEL.get(status.lower(), status)
+            )
 
         return queryset
 
@@ -372,3 +475,189 @@ class AssetCSVExportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return response
     # can we use constant instead repeated maintance interval logic so that If management changes maintenance schedules to 90 or 365 days, you only update one place.
     #add audit logging
+
+
+class AssetAPIListView(LoginRequiredMixin, View):
+    def get(self, request):
+        queryset = Asset.objects.all().order_by("name", "serial_number")
+        asset_type = request.GET.get("type")
+        status = request.GET.get("status")
+
+        if asset_type:
+            queryset = queryset.filter(
+                type=TYPE_TO_MODEL.get(asset_type.lower(), asset_type)
+            )
+        if status:
+            queryset = queryset.filter(
+                status=STATUS_TO_MODEL.get(status.lower(), status)
+            )
+
+        return JsonResponse([serialize_asset(asset) for asset in queryset], safe=False)
+
+    def post(self, request):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        form = AssetForm(data=normalize_asset_payload(parse_request_data(request)))
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+        asset = form.save()
+        return JsonResponse(serialize_asset(asset), status=201)
+
+
+class AssetAPIDetailView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        asset = get_object_or_404(Asset, pk=pk)
+        return JsonResponse(serialize_asset(asset))
+
+    def put(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        asset = get_object_or_404(Asset, pk=pk)
+        form = AssetForm(
+            data=normalize_asset_payload(parse_request_data(request)),
+            instance=asset,
+        )
+        if not form.is_valid():
+            return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+        asset = form.save()
+        return JsonResponse(serialize_asset(asset))
+
+    def delete(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        asset = get_object_or_404(Asset, pk=pk)
+        try:
+            asset.delete()
+        except ProtectedError:
+            return JsonResponse(
+                {
+                    "detail": (
+                        "This asset cannot be deleted because it has assignment "
+                        "history."
+                    )
+                },
+                status=400,
+            )
+        return JsonResponse({"deleted": True})
+
+
+class AssetAssignAPIView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        payload = parse_request_data(request)
+        employee_id = payload.get("employee_id") or payload.get("employee")
+        if not employee_id:
+            return JsonResponse({"employee_id": ["This field is required."]}, status=400)
+
+        with transaction.atomic():
+            asset = get_object_or_404(Asset.objects.select_for_update(), pk=pk)
+            employee = get_object_or_404(Employee, pk=employee_id)
+            has_active_assignment = Assignment.objects.select_for_update().filter(
+                asset=asset,
+                date_returned__isnull=True,
+            ).exists()
+
+            if asset.status != Asset.AssetStatus.AVAILABLE or has_active_assignment:
+                return JsonResponse(
+                    {"detail": "This asset is not available for assignment."},
+                    status=400,
+                )
+
+            Assignment.objects.create(asset=asset, employee=employee)
+            asset.status = Asset.AssetStatus.ASSIGNED
+            asset.save(update_fields=["status"])
+
+        return JsonResponse(serialize_asset(asset))
+
+
+class AssetReturnAPIView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        with transaction.atomic():
+            asset = get_object_or_404(Asset.objects.select_for_update(), pk=pk)
+            assignment = (
+                Assignment.objects.select_for_update()
+                .filter(asset=asset, date_returned__isnull=True)
+                .first()
+            )
+            if assignment is None:
+                return JsonResponse(
+                    {"detail": "This asset does not have an active assignment."},
+                    status=400,
+                )
+
+            assignment.date_returned = timezone.now().date()
+            assignment.save(update_fields=["date_returned"])
+            asset.status = Asset.AssetStatus.AVAILABLE
+            asset.save(update_fields=["status"])
+
+        return JsonResponse(serialize_asset(asset))
+
+
+class EmployeeAPIListView(LoginRequiredMixin, View):
+    def get(self, request):
+        queryset = Employee.objects.all().order_by("name")
+        search = request.GET.get("search")
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search)
+                | Q(department__icontains=search)
+                | Q(email__icontains=search)
+            )
+        return JsonResponse(
+            [serialize_employee(employee) for employee in queryset],
+            safe=False,
+        )
+
+    def post(self, request):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        employee = Employee.objects.create(**parse_request_data(request))
+        return JsonResponse(serialize_employee(employee), status=201)
+
+
+class EmployeeAPIDetailView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        employee = get_object_or_404(Employee, pk=pk)
+        return JsonResponse(serialize_employee(employee))
+
+    def put(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        employee = get_object_or_404(Employee, pk=pk)
+        payload = parse_request_data(request)
+        employee.name = payload.get("name", employee.name)
+        employee.department = payload.get("department", employee.department)
+        employee.email = payload.get("email", employee.email)
+        employee.save(update_fields=["name", "department", "email"])
+        return JsonResponse(serialize_employee(employee))
+
+    def delete(self, request, pk):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        employee = get_object_or_404(Employee, pk=pk)
+        try:
+            employee.delete()
+        except ProtectedError:
+            return JsonResponse(
+                {
+                    "detail": (
+                        "This employee cannot be deleted because they have "
+                        "assignment history."
+                    )
+                },
+                status=400,
+            )
+        return JsonResponse({"deleted": True})

@@ -5,58 +5,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ITAM System{% endblock %}</title>
-    
+
     <link rel="icon" type="image/x-icon" href="{% static 'inventory/images/favicon.ico' %}">
-    
-    <!-- ===== CORE CSS (Loaded on ALL pages) ===== -->
     <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
     <link rel="stylesheet" href="{% static 'inventory/css/navbar.css' %}">
     <link rel="stylesheet" href="{% static 'inventory/css/footer.css' %}">
-    
-    <!-- ===== PAGE-SPECIFIC CSS (Defined in child templates) ===== -->
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    
-    <!-- ============================================ -->
-    <!-- NAVIGATION                                   -->
-    <!-- ============================================ -->
+<body data-page="{% block page_name %}dashboard{% endblock %}">
+    <div id="page-loader">Loading...</div>
+
     {% include 'inventory/includes/navbar.html' %}
-    
-    <!-- ============================================ -->
-    <!-- MESSAGES / ALERTS                           -->
-    <!-- ============================================ -->
+
     {% if messages %}
         <div class="messages-container">
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }}">
+                    <span class="alert-icon">
+                        {% if message.tags == 'success' %}OK
+                        {% elif message.tags == 'error' %}Error
+                        {% elif message.tags == 'warning' %}Warning
+                        {% else %}Info
+                        {% endif %}
+                    </span>
                     {{ message }}
                     <button class="alert-close" onclick="this.parentElement.remove();">&times;</button>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
-    
-    <!-- ============================================ -->
-    <!-- MAIN CONTENT                                 -->
-    <!-- ============================================ -->
-    <main>
+
+    <main id="main-content" class="container">
         {% block content %}{% endblock %}
     </main>
-    
-    <!-- ============================================ -->
-    <!-- FOOTER                                       -->
-    <!-- ============================================ -->
+
+    <div id="toast-container"></div>
+
     {% include 'inventory/includes/footer.html' %}
-    
-    <!-- ============================================ -->
-    <!-- CORE JAVASCRIPT                             -->
-    <!-- ============================================ -->
-    <script src="{% static 'inventory/js/main.js' %}"></script>
-    
-    <!-- ============================================ -->
-    <!-- PAGE-SPECIFIC JAVASCRIPT                    -->
-    <!-- ============================================ -->
+
+    {% block page_js %}{% endblock %}
     {% block extra_js %}{% endblock %}
+    <script src="{% static 'inventory/js/main.js' %}"></script>
 </body>
 </html>

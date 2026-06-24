@@ -38,6 +38,13 @@ const STATUS_BADGE_CLASSES = {
     [STATUS.DISPOSED]: 'badge-overdue',
 };
 
+function getCSRFToken() {
+    const token = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('csrftoken='));
+    return token ? decodeURIComponent(token.split('=')[1]) : '';
+}
+
 // ============================================================
 // 2. API HELPER FUNCTIONS
 // ============================================================
@@ -45,8 +52,11 @@ const STATUS_BADGE_CLASSES = {
 async function request(url, method = 'GET', data = null) {
     const options = {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        credentials: 'same-origin', // Includes cookies for session auth
     };
 
     if (data) {

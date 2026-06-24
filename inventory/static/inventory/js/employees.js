@@ -18,6 +18,13 @@
 const API_BASE = '/api';
 const EMPLOYEES_API_URL = `${API_BASE}/employees`;
 
+function getCSRFToken() {
+    const token = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('csrftoken='));
+    return token ? decodeURIComponent(token.split('=')[1]) : '';
+}
+
 // ============================================================
 // 2. API HELPER FUNCTIONS
 // ============================================================
@@ -25,7 +32,10 @@ const EMPLOYEES_API_URL = `${API_BASE}/employees`;
 async function apiRequest(url, method = 'GET', data = null) {
     const options = {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
         credentials: 'same-origin',
     };
     if (data) {

@@ -287,3 +287,61 @@ class ManagementViewSecurityTests(TestCase):
         self.assertTrue(
             Asset.objects.filter(serial_number="STAFF-ROUTER-001").exists()
         )
+
+
+class FrontendAPIBridgeTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="api-viewer",
+            email="api-viewer@example.com",
+            password="test-pass-12345",
+        )
+        self.admin = get_user_model().objects.create_user(
+            username="api-admin",
+            email="api-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.employee = Employee.objects.create(
+            name="API Employee",
+            department="IT Operations",
+            email="api.employee@example.com",
+        )
+        self.asset = Asset.objects.create(
+            name="API Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="API-12345",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+    def test_asset_api_list_returns_frontend_status_values(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("api_asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()[0]["status"], "available")
+        self.assertEqual(response.json()[0]["status_label"], "Available")
+
+    def test_asset_api_assignment_updates_state(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_assign", kwargs={"pk": self.asset.pk}),
+            data={"employee_id": self.employee.pk},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.status, Asset.AssetStatus.ASSIGNED)
+        self.assertEqual(response.json()["status"], "assigned")
+
+    def test_employee_api_list_returns_assigned_asset_counts(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("api_employee_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()[0]["assigned_assets_count"], 1)

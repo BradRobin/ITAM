@@ -1,21 +1,50 @@
 {% extends 'inventory/base.html' %}
 {% load static %}
 
-{% block title %}Employees{% endblock %}
+{% block title %}Employees - ITAM System{% endblock %}
+{% block page_name %}employees{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="page-header">
         <h1>Employees</h1>
         <div class="actions">
-            <a href="{% url 'employee_add' %}" class="btn btn-primary">Add Employee</a>
+            {% if request.user.is_staff or request.user.is_superuser %}
+                <button id="add-employee-btn" type="button" class="btn btn-primary">Add Employee</button>
+            {% endif %}
         </div>
     </div>
 
-    <div class="table-wrapper">
+    {% if request.user.is_staff or request.user.is_superuser %}
+        <form id="employee-form" class="card form-card">
+            {% csrf_token %}
+            <input id="employee-id" name="id" type="hidden">
+            <input id="employee-employee-id" name="employee_id" type="hidden">
+
+            <label for="employee-name">Name</label>
+            <input id="employee-name" name="name" type="text" required>
+
+            <label for="employee-email">Email</label>
+            <input id="employee-email" name="email" type="email" required>
+
+            <label for="employee-department">Department</label>
+            <input id="employee-department" name="department" type="text" required>
+
+            <button type="submit" class="btn btn-primary" data-create-label="Create Employee" data-update-label="Update Employee">Create Employee</button>
+            <button type="reset" class="btn btn-secondary">Cancel</button>
+        </form>
+    {% endif %}
+
+    <div class="filters">
+        <label for="employee-search">Search Employees</label>
+        <input id="employee-search" type="search" placeholder="Search by name, department, or email" class="filter-select">
+    </div>
+
+    <section id="employee-list-container" class="table-wrapper">
         <table>
             <thead>
                 <tr>
@@ -40,7 +69,7 @@
                     <tr>
                         <td colspan="4" class="empty-state">
                             <div class="empty-state-content">
-                                <span class="empty-icon">👤</span>
+                                <span class="empty-icon">No employees</span>
                                 <h3>No employees found</h3>
                                 <p>Start by adding your first employee.</p>
                                 <a href="{% url 'employee_add' %}" class="btn btn-primary">Add Employee</a>
@@ -50,7 +79,7 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+    </section>
 
     {% if is_paginated %}
         <div class="pagination">
@@ -73,6 +102,6 @@
     {% endif %}
 {% endblock %}
 
-{% block extra_js %}
+{% block page_js %}
     <script src="{% static 'inventory/js/employees.js' %}"></script>
 {% endblock %}
