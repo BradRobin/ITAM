@@ -1,76 +1,135 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}{{ asset.name }} | ITAM{% endblock %}
+{% block title %}{{ asset.name }} - Asset Details{% endblock %}
+
+{% block extra_css %}
+    <!-- Table CSS for history tables -->
+    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>{{ asset.name }}</h2>
+    <div class="detail-header">
+        <div class="detail-header-left">
+            <h1>{{ asset.name }}</h1>
+            <p class="detail-subtitle">
+                <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                    {{ asset.status }}
+                </span>
+                {% if asset.last_maintenance_date and asset.last_maintenance_date < overdue_cutoff %}
+                    <span class="badge badge-overdue">⚠️ Overdue for Service</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="detail-header-actions">
+            <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-secondary">✏️ Edit</a>
+            <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-danger">🗑️ Delete</a>
+            <a href="{% url 'asset_list' %}" class="btn btn-secondary">← Back</a>
+        </div>
+    </div>
 
-<dl>
-    <dt>Type</dt>
-    <dd>{{ asset.type }}</dd>
-    <dt>Serial Number</dt>
-    <dd>{{ asset.serial_number }}</dd>
-    <dt>Status</dt>
-    <dd>{{ asset.status }}</dd>
-    <dt>Last Maintenance Date</dt>
-    <dd>{{ asset.last_maintenance_date|default:"No maintenance recorded" }}</dd>
-</dl>
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h3>📋 Asset Information</h3>
+            <div class="detail-field">
+                <span class="field-label">Type</span>
+                <span class="field-value">{{ asset.type }}</span>
+            </div>
+            <div class="detail-field">
+                <span class="field-label">Serial Number</span>
+                <span class="field-value"><strong>{{ asset.serial_number }}</strong></span>
+            </div>
+            <div class="detail-field">
+                <span class="field-label">Status</span>
+                <span class="field-value">
+                    <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                        {{ asset.status }}
+                    </span>
+                </span>
+            </div>
+        </div>
 
-<p>
-    <a href="{% url 'asset_edit' asset.pk %}">Edit</a>
-    <a href="{% url 'asset_delete' asset.pk %}">Delete</a>
-    <a href="{% url 'asset_list' %}">Back to Assets</a>
-</p>
+        <div class="detail-card">
+            <h3>👤 Current Assignment</h3>
+            {% if active_assignment %}
+                <div class="assignment-active">
+                    <p><strong>Assigned to:</strong> {{ active_assignment.employee.name }}</p>
+                    <p><strong>Department:</strong> {{ active_assignment.employee.department }}</p>
+                    <p><strong>Email:</strong> {{ active_assignment.employee.email }}</p>
+                    <p><strong>Assigned on:</strong> {{ active_assignment.date_assigned }}</p>
+                    <form method="post" action="{% url 'return_asset' asset.pk %}" style="margin-top: 1rem;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">↩️ Return Asset</button>
+                    </form>
+                </div>
+            {% elif asset.status == "Available" %}
+                <div class="assignment-available">
+                    <p>✅ This asset is <strong>available</strong> for assignment.</p>
+                    <a href="{% url 'assign_asset' asset.pk %}" class="btn btn-primary" style="margin-top: 0.5rem;">📤 Assign Asset</a>
+                </div>
+            {% else %}
+                <div class="assignment-unavailable">
+                    <p>🔧 This asset is currently <strong>{{ asset.status }}</strong>.</p>
+                    <p>It cannot be assigned until it is available.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-<section>
-    <h3>Active Assignment</h3>
-    {% if active_assignment %}
-        <p>
-            Assigned to {{ active_assignment.employee.name }}
-            on {{ active_assignment.date_assigned }}.
-        </p>
-        <form method="post" action="{% url 'return_asset' asset.pk %}">
-            {% csrf_token %}
-            <button type="submit">Return Asset</button>
-        </form>
-    {% else %}
-        <p>This asset is not currently assigned.</p>
-        {% if asset.status == "Available" %}
-            <p><a href="{% url 'assign_asset' asset.pk %}">Assign Asset</a></p>
+    <section>
+        <h3>📜 Assignment History</h3>
+        {% if assignment_history %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Assigned</th>
+                            <th>Returned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in assignment_history %}
+                            <tr>
+                                <td>{{ assignment.employee.name }}</td>
+                                <td>{{ assignment.employee.department }}</td>
+                                <td>{{ assignment.date_assigned }}</td>
+                                <td>{{ assignment.date_returned|default:"<em>Currently assigned</em>" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No assignment history.</p>
         {% endif %}
-    {% endif %}
-</section>
+    </section>
 
-<section>
-    <h3>Assignment History</h3>
-    {% if assignment_history %}
-        <ul>
-            {% for assignment in assignment_history %}
-                <li>
-                    {{ assignment.employee.name }}:
-                    {{ assignment.date_assigned }} to
-                    {{ assignment.date_returned|default:"Present" }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No assignment history.</p>
-    {% endif %}
-</section>
+    <section>
+        <h3>🔧 Maintenance Logs</h3>
+        {% if maintenance_logs %}
+            <div class="maintenance-timeline">
+                {% for log in maintenance_logs %}
+                    <div class="maintenance-item {% if log.resolved %}resolved{% else %}pending{% endif %}">
+                        <div class="meta">
+                            <span class="date">{{ log.date }}</span>
+                            <span class="status-badge">
+                                {% if log.resolved %}✅ Resolved{% else %}🔄 Pending{% endif %}
+                            </span>
+                        </div>
+                        <div class="issue">{{ log.issue_description }}</div>
+                        <div class="technician">👨‍🔧 Technician: {{ log.technician }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No maintenance logs.</p>
+        {% endif %}
+    </section>
+{% endblock %}
 
-<section>
-    <h3>Maintenance Logs</h3>
-    {% if maintenance_logs %}
-        <ul>
-            {% for log in maintenance_logs %}
-                <li>
-                    {{ log.date }} - {{ log.issue_description }}
-                    ({{ log.technician }}, {% if log.resolved %}Resolved{% else %}Open{% endif %})
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No maintenance logs.</p>
-    {% endif %}
-</section>
+{% block extra_js %}
+    <!-- Asset management JavaScript -->
+    <script src="{% static 'inventory/js/assets.js' %}"></script>
 {% endblock %}

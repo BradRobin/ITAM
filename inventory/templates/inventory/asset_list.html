@@ -1,61 +1,108 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}Assets | ITAM{% endblock %}
+{% block title %}Assets - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <!-- Table specific CSS -->
+    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Assets</h2>
+    <div class="page-header">
+        <h1>💻 Assets</h1>
+        <div class="actions">
+            <a href="{% url 'asset_add' %}" class="btn btn-primary">➕ Add Asset</a>
+            <a href="{% url 'asset_export' %}" class="btn btn-success">📥 Export CSV</a>
+        </div>
+    </div>
 
-<p><a href="{% url 'asset_add' %}">Add Asset</a></p>
+    <div class="filters">
+        <form method="get" class="filter-form">
+            <select name="type" class="filter-select">
+                <option value="">All Types</option>
+                <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
+                <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
+                <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
+                <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
+            </select>
+            <select name="status" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
+                <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
+                <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
+            </select>
+            <button type="submit" class="btn btn-filter">🔍 Filter</button>
+            <a href="{% url 'asset_list' %}" class="btn btn-secondary btn-sm">Clear</a>
+        </form>
+    </div>
 
-<form method="get">
-    <label for="type">Type</label>
-    <select id="type" name="type">
-        <option value="">All Types</option>
-        <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
-        <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
-        <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
-        <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
-    </select>
-
-    <label for="status">Status</label>
-    <select id="status" name="status">
-        <option value="">All Statuses</option>
-        <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
-        <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
-        <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
-    </select>
-
-    <button type="submit">Filter</button>
-    <a href="{% url 'asset_list' %}">Clear</a>
-</form>
-
-{% if assets %}
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Serial Number</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for asset in assets %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
                 <tr>
-                    <td><a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a></td>
-                    <td>{{ asset.type }}</td>
-                    <td>{{ asset.serial_number }}</td>
-                    <td>{{ asset.status }}</td>
-                    <td>
-                        <a href="{% url 'asset_edit' asset.pk %}">Edit</a>
-                        <a href="{% url 'asset_delete' asset.pk %}">Delete</a>
-                    </td>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Serial Number</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>No assets found.</p>
-{% endif %}
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                    <tr>
+                        <td><a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a></td>
+                        <td>{{ asset.type }}</td>
+                        <td>{{ asset.serial_number }}</td>
+                        <td>
+                            <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                {{ asset.status }}
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View</a>
+                            <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                            <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-content">
+                                <span class="empty-icon">📭</span>
+                                <h3>No assets found</h3>
+                                <p>Start by adding your first asset.</p>
+                                <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-sm btn-secondary">&laquo; First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-sm btn-secondary">Previous</a>
+                {% endif %}
+
+                <span class="current-page">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-sm btn-secondary">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn-sm btn-secondary">Last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Asset management JavaScript -->
+    <script src="{% static 'inventory/js/assets.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,50 @@
+{% load static %}
+<nav class="navbar">
+    <div class="navbar-brand">
+        <a href="{% url 'dashboard' %}">
+            <span class="brand-icon">📊</span>
+            ITAM System
+        </a>
+    </div>
+    
+    <button class="navbar-toggler" id="navbarToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <ul class="navbar-nav" id="navbarNav">
+        <li class="nav-item">
+            <a class="nav-link {% if request.path == '/' %}active{% endif %}" 
+               href="{% url 'dashboard' %}">
+                📈 Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if 'assets' in request.path %}active{% endif %}" 
+               href="{% url 'asset_list' %}">
+                💻 Assets
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" 
+               href="{% url 'employee_list' %}">
+                👥 Employees
+            </a>
+        </li>
+        {% if user.is_authenticated %}
+            <li class="nav-item nav-item-right">
+                <span class="nav-user">👤 {{ user.username }}</span>
+                <a class="nav-link nav-logout" href="{% url 'admin:logout' %}">
+                    🚪 Logout
+                </a>
+            </li>
+        {% else %}
+            <li class="nav-item nav-item-right">
+                <a class="nav-link nav-login" href="{% url 'admin:login' %}">
+                    🔐 Admin Login
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>v

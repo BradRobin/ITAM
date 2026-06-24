@@ -1,47 +1,149 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}Dashboard | ITAM{% endblock %}
+{% block title %}Dashboard - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <!-- Dashboard specific CSS -->
+    <link rel="stylesheet" href="{% static 'inventory/css/dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Dashboard</h2>
+    <!-- Dashboard content -->
+    <div class="dashboard-header">
+        <h1>📈 Dashboard</h1>
+        <p class="dashboard-subtitle">Real-time overview of your IT asset inventory</p>
+    </div>
 
-<section>
-    <h3>Asset Summary</h3>
-    <ul>
-        <li>Total Assets: {{ total_assets|default:0 }}</li>
-        <li>Available: {{ available_assets|default:0 }}</li>
-        <li>Assigned: {{ assigned_assets|default:0 }}</li>
-        <li>Under Maintenance: {{ maintenance_assets|default:0 }}</li>
-    </ul>
-</section>
+    <div class="dashboard-stats">
+        <div class="stat-card stat-total">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+                <h3>Total Assets</h3>
+                <p class="stat-number">{{ total_assets|default:"0" }}</p>
+            </div>
+            <div class="stat-trend">
+                <span class="trend-label">All equipment</span>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-available">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>Available</h3>
+                <p class="stat-number">{{ available_assets|default:"0" }}</p>
+            </div>
+            <div class="stat-trend">
+                <span class="trend-label">Ready for assignment</span>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-assigned">
+            <div class="stat-icon">👤</div>
+            <div class="stat-content">
+                <h3>Assigned</h3>
+                <p class="stat-number">{{ assigned_assets|default:"0" }}</p>
+            </div>
+            <div class="stat-trend">
+                <span class="trend-label">Currently with employees</span>
+            </div>
+        </div>
+        
+        <div class="stat-card stat-maintenance">
+            <div class="stat-icon">🔧</div>
+            <div class="stat-content">
+                <h3>Under Maintenance</h3>
+                <p class="stat-number">{{ maintenance_assets|default:"0" }}</p>
+            </div>
+            <div class="stat-trend">
+                <span class="trend-label">In repair shop</span>
+            </div>
+        </div>
+    </div>
 
-<section>
-    <h3>Status Counts</h3>
-    {% if status_counts %}
-        <ul>
-            {% for row in status_counts %}
-                <li>{{ row.status }}: {{ row.total }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No assets have been registered yet.</p>
-    {% endif %}
-</section>
+    <div class="dashboard-actions">
+        <a href="{% url 'asset_add' %}" class="btn btn-primary">➕ Add New Asset</a>
+        <a href="{% url 'employee_add' %}" class="btn btn-secondary">👤 Add New Employee</a>
+        <a href="{% url 'asset_export' %}" class="btn btn-success">📥 Export CSV</a>
+    </div>
 
-<section>
-    <h3>Maintenance Overdue Assets</h3>
-    <p>Assets with no maintenance since {{ overdue_cutoff }} are shown here.</p>
     {% if overdue_assets %}
-        <ul>
-            {% for asset in overdue_assets %}
-                <li>
-                    <a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a>
-                    ({{ asset.serial_number }})
-                </li>
-            {% endfor %}
-        </ul>
+        <div class="overdue-section">
+            <div class="overdue-header">
+                <h2>⚠️ Assets Overdue for Service</h2>
+                <span class="overdue-badge">{{ overdue_assets|length }}</span>
+            </div>
+            <p class="overdue-subtitle">
+                These assets haven't been serviced in over 6 months (since {{ overdue_cutoff }}).
+                <strong>Service is overdue!</strong>
+            </p>
+            <div class="overdue-grid">
+                {% for asset in overdue_assets|slice:":6" %}
+                    <div class="overdue-card">
+                        <div class="overdue-card-header">
+                            <span class="overdue-icon">🔴</span>
+                            <strong>{{ asset.name }}</strong>
+                        </div>
+                        <div class="overdue-card-body">
+                            <p><strong>Type:</strong> {{ asset.type }}</p>
+                            <p><strong>Serial:</strong> {{ asset.serial_number }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                    {{ asset.status }}
+                                </span>
+                            </p>
+                            {% if asset.last_maintenance_date %}
+                                <p><strong>Last Service:</strong> {{ asset.last_maintenance_date }}</p>
+                            {% else %}
+                                <p><strong>Last Service:</strong> <em>Never serviced</em></p>
+                            {% endif %}
+                        </div>
+                        <div class="overdue-card-footer">
+                            <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View Details</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if overdue_assets|length > 6 %}
+                <div class="overdue-more">
+                    <a href="{% url 'asset_list' %}?status=overdue" class="btn btn-secondary">
+                        View All {{ overdue_assets|length }} Overdue Assets
+                    </a>
+                </div>
+            {% endif %}
+        </div>
     {% else %}
-        <p>No overdue assets.</p>
+        <div class="overdue-section overdue-clear">
+            <div class="overdue-header">
+                <h2>✅ All Assets Up to Date</h2>
+            </div>
+            <p class="overdue-clear-message">All assets have been serviced within the last 6 months.</p>
+        </div>
     {% endif %}
-</section>
+
+    <div class="dashboard-footer">
+        <div class="footer-stat">
+            <span class="footer-stat-label">📊 Last Updated</span>
+            <span class="footer-stat-value">{% now "Y-m-d H:i:s" %}</span>
+        </div>
+        <div class="footer-stat">
+            <span class="footer-stat-label">📈 Total Assets</span>
+            <span class="footer-stat-value">{{ total_assets|default:"0" }}</span>
+        </div>
+        <div class="footer-stat">
+            <span class="footer-stat-label">🔄 Utilization Rate</span>
+            <span class="footer-stat-value">
+                {% if total_assets > 0 %}
+                    {% widthratio assigned_assets total_assets 100 %}%
+                {% else %}
+                    0%
+                {% endif %}
+            </span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Dashboard specific JavaScript -->
+    <script src="{% static 'inventory/js/dashboard.js' %}"></script>
 {% endblock %}

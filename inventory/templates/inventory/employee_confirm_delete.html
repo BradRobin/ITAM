@@ -1,15 +1,45 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}Delete Employee | ITAM{% endblock %}
+{% block title %}Delete Employee{% endblock %}
+
+{% block extra_css %}
+    <!-- Form CSS for delete confirmation -->
+    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Delete Employee</h2>
+    <div class="delete-confirmation-container">
+        <div class="delete-confirmation-card">
+            <div class="delete-icon">🗑️</div>
+            <h1>Delete Employee</h1>
+            <p class="delete-warning">
+                Are you sure you want to delete <strong>"{{ object.name }}"</strong>?
+            </p>
+            <p class="delete-detail">
+                <strong>Department:</strong> {{ object.department }}<br>
+                <strong>Email:</strong> {{ object.email }}
+            </p>
+            
+            {% if object.assignments.exists %}
+                <div class="delete-warning-box">
+                    ⚠️ This employee has <strong>{{ object.assignments.count }}</strong> assignment record(s).
+                    Deleting them will also remove all assignment history.
+                </div>
+            {% endif %}
+            
+            <form method="post" class="delete-form">
+                {% csrf_token %}
+                <div class="delete-actions">
+                    <button type="submit" class="btn btn-danger">🗑️ Confirm Delete</button>
+                    <a href="{% url 'employee_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
 
-<p>Are you sure you want to delete {{ object.name }}?</p>
-
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Confirm Delete</button>
-    <a href="{% url 'employee_list' %}">Cancel</a>
-</form>
+{% block extra_js %}
+    <!-- Form validation JavaScript -->
+    <script src="{% static 'inventory/js/forms.js' %}"></script>
 {% endblock %}

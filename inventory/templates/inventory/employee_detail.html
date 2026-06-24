@@ -1,50 +1,102 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}{{ employee.name }} | ITAM{% endblock %}
+{% block title %}{{ employee.name }} - Employee Details{% endblock %}
+
+{% block extra_css %}
+    <!-- Table CSS for history -->
+    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>{{ employee.name }}</h2>
+    <div class="detail-header">
+        <div class="detail-header-left">
+            <h1>{{ employee.name }}</h1>
+        </div>
+        <div class="detail-header-actions">
+            <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-secondary">✏️ Edit</a>
+            <a href="{% url 'employee_delete' employee.pk %}" class="btn btn-danger">🗑️ Delete</a>
+            <a href="{% url 'employee_list' %}" class="btn btn-secondary">← Back</a>
+        </div>
+    </div>
 
-<dl>
-    <dt>Department</dt>
-    <dd>{{ employee.department }}</dd>
-    <dt>Email</dt>
-    <dd>{{ employee.email }}</dd>
-</dl>
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h3>📋 Employee Information</h3>
+            <div class="detail-field">
+                <span class="field-label">Department</span>
+                <span class="field-value">{{ employee.department }}</span>
+            </div>
+            <div class="detail-field">
+                <span class="field-label">Email</span>
+                <span class="field-value"><a href="mailto:{{ employee.email }}">{{ employee.email }}</a></span>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a href="{% url 'employee_edit' employee.pk %}">Edit</a>
-    <a href="{% url 'employee_delete' employee.pk %}">Delete</a>
-    <a href="{% url 'employee_list' %}">Back to Employees</a>
-</p>
+    <section>
+        <h3>📦 Active Assignments</h3>
+        {% if active_assignments %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Assigned</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in active_assignments %}
+                            <tr>
+                                <td><a href="{% url 'asset_detail' assignment.asset.pk %}">{{ assignment.asset.name }}</a></td>
+                                <td>{{ assignment.date_assigned }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'return_asset' assignment.asset.pk %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success">↩️ Return</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No active assignments.</p>
+        {% endif %}
+    </section>
 
-<section>
-    <h3>Active Assignments</h3>
-    {% if active_assignments %}
-        <ul>
-            {% for assignment in active_assignments %}
-                <li>{{ assignment.asset.name }} since {{ assignment.date_assigned }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No active assignments.</p>
-    {% endif %}
-</section>
+    <section>
+        <h3>📜 Assignment History</h3>
+        {% if assignment_history %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Assigned</th>
+                            <th>Returned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in assignment_history %}
+                            <tr>
+                                <td><a href="{% url 'asset_detail' assignment.asset.pk %}">{{ assignment.asset.name }}</a></td>
+                                <td>{{ assignment.date_assigned }}</td>
+                                <td>{{ assignment.date_returned|default:"<em>Currently assigned</em>" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No assignment history.</p>
+        {% endif %}
+    </section>
+{% endblock %}
 
-<section>
-    <h3>Assignment History</h3>
-    {% if assignment_history %}
-        <ul>
-            {% for assignment in assignment_history %}
-                <li>
-                    {{ assignment.asset.name }}:
-                    {{ assignment.date_assigned }} to
-                    {{ assignment.date_returned|default:"Present" }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No assignment history.</p>
-    {% endif %}
-</section>
+{% block extra_js %}
+    <!-- Employee management JavaScript -->
+    <script src="{% static 'inventory/js/employees.js' %}"></script>
 {% endblock %}

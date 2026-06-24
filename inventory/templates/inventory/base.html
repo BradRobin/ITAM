@@ -1,32 +1,55 @@
-<!doctype html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}ITAM{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ITAM System{% endblock %}</title>
+    
+    <link rel="icon" type="image/x-icon" href="{% static 'inventory/images/favicon.ico' %}">
+    
+    <!-- ===== CORE CSS (Loaded on ALL pages) ===== -->
+    <link rel="stylesheet" href="{% static 'inventory/css/style.css' %}">
+    
+    <!-- ===== PAGE-SPECIFIC CSS (Defined in child templates) ===== -->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header>
-        <h1>IT Asset Management</h1>
-        <nav>
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-            <a href="{% url 'asset_list' %}">Assets</a>
-            <a href="{% url 'employee_list' %}">Employees</a>
-            <a href="{% url 'asset_export' %}">Export CSV</a>
-            <a href="{% url 'admin:index' %}">Admin</a>
-        </nav>
-    </header>
-
+    
+    <!-- NAVIGATION -->
+    {% include 'inventory/includes/navbar.html' %}
+    
+    <!-- MESSAGES -->
     {% if messages %}
-        <section>
+        <div class="messages-container">
             {% for message in messages %}
-                <p>{{ message }}</p>
+                <div class="alert alert-{{ message.tags }}">
+                    <span class="alert-icon">
+                        {% if message.tags == 'success' %}✅
+                        {% elif message.tags == 'error' %}❌
+                        {% elif message.tags == 'warning' %}⚠️
+                        {% else %}ℹ️
+                        {% endif %}
+                    </span>
+                    {{ message }}
+                    <button class="alert-close" onclick="this.parentElement.remove();">&times;</button>
+                </div>
             {% endfor %}
-        </section>
+        </div>
     {% endif %}
-
+    
+    <!-- MAIN CONTENT -->
     <main>
         {% block content %}{% endblock %}
     </main>
+    
+    <!-- FOOTER -->
+    {% include 'inventory/includes/footer.html' %}
+    
+    <!-- ===== CORE JAVASCRIPT (Loaded on ALL pages) ===== -->
+    <script src="{% static 'inventory/js/main.js' %}"></script>
+    
+    <!-- ===== PAGE-SPECIFIC JAVASCRIPT (Defined in child templates) ===== -->
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,14 +1,70 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}Asset Form | ITAM{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Asset{% endblock %}
+
+{% block extra_css %}
+    <!-- Form specific CSS -->
+    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>{% if object %}Edit Asset{% else %}Add Asset{% endif %}</h2>
+    <div class="form-header">
+        <h1>{% if form.instance.pk %}✏️ Edit{% else %}➕ Add{% endif %} Asset</h1>
+        <p class="form-subtitle">
+            {% if form.instance.pk %}
+                Update the asset details below.
+            {% else %}
+                Enter the asset details to add it to inventory.
+            {% endif %}
+        </p>
+    </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-    <a href="{% url 'asset_list' %}">Cancel</a>
-</form>
+    <div class="form-container">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                        <div class="alert alert-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="form-grid">
+                {% for field in form %}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                            {% if field.field.required %}
+                                <span class="required-asterisk">*</span>
+                            {% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="help-text">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="field-errors">
+                                {% for error in field.errors %}
+                                    <span class="error-message">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">💾 Save Asset</button>
+                <a href="{% url 'asset_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Form validation JavaScript -->
+    <script src="{% static 'inventory/js/forms.js' %}"></script>
 {% endblock %}

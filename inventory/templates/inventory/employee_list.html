@@ -1,37 +1,80 @@
-{% extends "inventory/base.html" %}
+{% extends 'inventory/base.html' %}
+{% load static %}
 
-{% block title %}Employees | ITAM{% endblock %}
+{% block title %}Employees - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <!-- Table specific CSS -->
+    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Employees</h2>
+    <div class="page-header">
+        <h1>👥 Employees</h1>
+        <div class="actions">
+            <a href="{% url 'employee_add' %}" class="btn btn-primary">➕ Add Employee</a>
+        </div>
+    </div>
 
-<p><a href="{% url 'employee_add' %}">Add Employee</a></p>
-
-{% if employees %}
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Email</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for employee in employees %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ employee.name }}</td>
-                    <td>{{ employee.department }}</td>
-                    <td>{{ employee.email }}</td>
-                    <td>
-                        <a href="{% url 'employee_edit' employee.pk %}">Edit</a>
-                        <a href="{% url 'employee_delete' employee.pk %}">Delete</a>
-                    </td>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Actions</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>No employees found.</p>
-{% endif %}
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td><strong>{{ employee.name }}</strong></td>
+                        <td>{{ employee.department }}</td>
+                        <td><a href="mailto:{{ employee.email }}">{{ employee.email }}</a></td>
+                        <td class="actions-cell">
+                            <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                            <a href="{% url 'employee_delete' employee.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <div class="empty-state-content">
+                                <span class="empty-icon">👤</span>
+                                <h3>No employees found</h3>
+                                <p>Start by adding your first employee.</p>
+                                <a href="{% url 'employee_add' %}" class="btn btn-primary">Add Employee</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="btn btn-sm btn-secondary">&laquo; First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-secondary">Previous</a>
+                {% endif %}
+
+                <span class="current-page">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-secondary">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm btn-secondary">Last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Employee management JavaScript -->
+    <script src="{% static 'inventory/js/employees.js' %}"></script>
 {% endblock %}
