@@ -10,14 +10,14 @@ class AssetForm(forms.ModelForm):
 
     def clean_serial_number(self) -> str:
         serial_number = self.cleaned_data["serial_number"]
-        duplicate_assets = Asset.objects.filter(serial_number=serial_number)
+        duplicate_assets = Asset.objects.filter(serial_number__iexact=serial_number)
 
         if self.instance.pk:
             duplicate_assets = duplicate_assets.exclude(pk=self.instance.pk)
 
         if duplicate_assets.exists():
             raise forms.ValidationError(
-                "An asset with this serial number already exists."
+                "An asset with this serial number already exists in the system."
             )
 
         return serial_number
