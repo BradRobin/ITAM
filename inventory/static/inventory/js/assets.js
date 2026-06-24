@@ -129,6 +129,13 @@ function canDelete(status) {
     return status === STATUS.AVAILABLE || status === STATUS.DISPOSED;
 }
 
+function formatCalendarDate(value) {
+    if (!value) return '—';
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString();
+}
+
 // ============================================================
 // 4. UI RENDERER
 // ============================================================
@@ -159,6 +166,8 @@ function renderAssetList(assets, containerId = 'asset-list-container') {
                         <th>Type</th>
                         <th>Status</th>
                         <th>Assigned To</th>
+                        <th>Assigned Date</th>
+                        <th>Returned Date</th>
                         <th style="min-width: 200px;">Actions</th>
                     </tr>
                 </thead>
@@ -169,6 +178,8 @@ function renderAssetList(assets, containerId = 'asset-list-container') {
         const statusLabel = STATUS_LABELS[asset.status] || asset.status;
         const badgeClass = STATUS_BADGE_CLASSES[asset.status] || 'badge-secondary';
         const assignedTo = asset.assigned_employee?.name || asset.assigned_employee?.username || '—';
+        const assignedDate = formatCalendarDate(asset.assignment_calendar?.date_assigned || asset.date_assigned);
+        const returnedDate = formatCalendarDate(asset.assignment_calendar?.date_returned || asset.date_returned);
 
         let actionsHtml = `
             <button class="btn btn-sm btn-outline-primary action-edit" data-id="${asset.id}">Edit</button>
@@ -200,6 +211,8 @@ function renderAssetList(assets, containerId = 'asset-list-container') {
                 <td>${asset.type || '—'}</td>
                 <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
                 <td>${assignedTo}</td>
+                <td>${assignedDate}</td>
+                <td>${returnedDate}</td>
                 <td>
                     <div class="btn-group btn-group-sm flex-wrap" role="group">
                         ${actionsHtml}

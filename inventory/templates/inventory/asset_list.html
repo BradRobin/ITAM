@@ -80,6 +80,8 @@
                     <th>Type</th>
                     <th>Serial Number</th>
                     <th>Status</th>
+                    <th>Assigned Date</th>
+                    <th>Returned Date</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -94,6 +96,8 @@
                                 {{ asset.status }}
                             </span>
                         </td>
+                        <td>{{ asset.last_assigned_date|default:"-" }}</td>
+                        <td>{{ asset.last_returned_date|default:"-" }}</td>
                         <td class="actions-cell">
                             <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View</a>
                             <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary">Edit</a>
@@ -102,7 +106,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="empty-state">
+                        <td colspan="7" class="empty-state">
                             <div class="empty-state-content">
                                 <span class="empty-icon">No assets</span>
                                 <h3>No assets found</h3>

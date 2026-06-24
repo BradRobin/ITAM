@@ -105,12 +105,28 @@ def serialize_employee(employee: Employee) -> dict:
     }
 
 
+def serialize_date(value):
+    return value.isoformat() if value else None
+
+
 def serialize_asset(asset: Asset) -> dict:
     active_assignment = (
         asset.assignments.select_related("employee")
         .filter(date_returned__isnull=True)
         .first()
     )
+    latest_assignment = asset.assignments.select_related("employee").first()
+    date_assigned = (
+        active_assignment.date_assigned
+        if active_assignment
+        else getattr(asset, "last_assigned_date", None)
+    )
+    date_returned = getattr(asset, "last_returned_date", None)
+
+    if latest_assignment:
+        date_assigned = latest_assignment.date_assigned
+        date_returned = latest_assignment.date_returned
+
     return {
         "id": asset.id,
         "name": asset.name,
@@ -121,6 +137,13 @@ def serialize_asset(asset: Asset) -> dict:
         "assigned_employee": (
             serialize_employee(active_assignment.employee) if active_assignment else None
         ),
+        "assignment_calendar": {
+            "date_assigned": serialize_date(date_assigned),
+            "date_returned": serialize_date(date_returned),
+            "currently_assigned": active_assignment is not None,
+        },
+        "date_assigned": serialize_date(date_assigned),
+        "date_returned": serialize_date(date_returned),
     }
 
 
@@ -248,7 +271,11 @@ class AssetListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = (
-            Asset.objects.annotate(last_maintenance_date=Max("maintenance_logs__date"))
+            Asset.objects.annotate(
+                last_maintenance_date=Max("maintenance_logs__date"),
+                last_assigned_date=Max("assignments__date_assigned"),
+                last_returned_date=Max("assignments__date_returned"),
+            )
             .all()
             .order_by("name", "serial_number")
         )
@@ -556,7 +583,10 @@ AssetCSVExportView = ExportAssetCSVView
 
 class AssetAPIListView(LoginRequiredMixin, View):
     def get(self, request):
-        queryset = Asset.objects.all().order_by("name", "serial_number")
+        queryset = Asset.objects.annotate(
+            last_assigned_date=Max("assignments__date_assigned"),
+            last_returned_date=Max("assignments__date_returned"),
+        ).order_by("name", "serial_number")
         asset_type = request.GET.get("type")
         status = request.GET.get("status")
 

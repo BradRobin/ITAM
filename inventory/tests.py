@@ -445,6 +445,7 @@ class FrontendAPIBridgeTests(TestCase):
 
     def test_asset_api_assignment_updates_state(self):
         self.client.force_login(self.admin)
+        today = timezone.now().date().isoformat()
 
         response = self.client.post(
             reverse("api_asset_assign", kwargs={"pk": self.asset.pk}),
@@ -456,6 +457,28 @@ class FrontendAPIBridgeTests(TestCase):
         self.asset.refresh_from_db()
         self.assertEqual(self.asset.status, Asset.AssetStatus.ASSIGNED)
         self.assertEqual(response.json()["status"], "assigned")
+        self.assertEqual(response.json()["date_assigned"], today)
+        self.assertIsNone(response.json()["date_returned"])
+        self.assertEqual(response.json()["assignment_calendar"]["date_assigned"], today)
+        self.assertTrue(response.json()["assignment_calendar"]["currently_assigned"])
+
+    def test_asset_api_return_updates_calendar_dates(self):
+        self.client.force_login(self.admin)
+        assignment = Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.asset.status = Asset.AssetStatus.ASSIGNED
+        self.asset.save(update_fields=["status"])
+        today = timezone.now().date().isoformat()
+
+        response = self.client.post(reverse("api_asset_return", kwargs={"pk": self.asset.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.asset.refresh_from_db()
+        assignment.refresh_from_db()
+        self.assertEqual(self.asset.status, Asset.AssetStatus.AVAILABLE)
+        self.assertEqual(assignment.date_returned.isoformat(), today)
+        self.assertEqual(response.json()["date_assigned"], assignment.date_assigned.isoformat())
+        self.assertEqual(response.json()["date_returned"], today)
+        self.assertFalse(response.json()["assignment_calendar"]["currently_assigned"])
 
     def test_employee_api_list_returns_assigned_asset_counts(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
