@@ -1,0 +1,398 @@
+/* ============================================
+   ITAM - Form Styles
+   ============================================ */
+
+/* ============ FORM CONTAINERS ============ */
+
+.form-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+}
+
+.form-container-large {
+    max-width: 900px;
+}
+
+.form-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.form-header h2 {
+    font-size: 24px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.form-header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* ============ FORM GROUPS ============ */
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.form-group-half {
+    grid-column: span 1;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+/* ============ LABELS & HELP TEXT ============ */
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+label.required::after {
+    content: ' *';
+    color: var(--danger-color);
+}
+
+.help-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.error-message {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--danger-color);
+    font-weight: 500;
+}
+
+/* ============ INPUT FIELDS ============ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background-color: white;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background-color: white;
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+input[type="password"]:disabled,
+input[type="date"]:disabled,
+input[type="number"]:disabled,
+select:disabled,
+textarea:disabled {
+    background-color: var(--light-color);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+input[type="text"].error,
+input[type="email"].error,
+input[type="password"].error,
+input[type="date"].error,
+input[type="number"].error,
+select.error,
+textarea.error {
+    border-color: var(--danger-color);
+    background-color: #fef2f2;
+}
+
+input[type="text"].error:focus,
+input[type="email"].error:focus,
+input[type="password"].error:focus,
+input[type="date"].error:focus,
+input[type="number"].error:focus,
+select.error:focus,
+textarea.error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+    padding: 12px;
+}
+
+/* ============ SELECT DROPDOWNS ============ */
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M1 4l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+select:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111827' d='M1 4l5 5 5-5'/%3E%3C/svg%3E");
+}
+
+/* ============ CHECKBOXES & RADIO BUTTONS ============ */
+
+.checkbox-group,
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.checkbox-item,
+.radio-item {
+    display: flex;
+    align-items: center;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    margin-top: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checkbox-label,
+.radio-label {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 400;
+}
+
+.checkbox-label:hover,
+.radio-label:hover {
+    color: var(--primary-color);
+}
+
+/* ============ TOGGLE SWITCH ============ */
+
+.toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background-color: var(--border-color);
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-switch input {
+    display: none;
+}
+
+.toggle-switch span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: left 0.3s ease;
+}
+
+.toggle-switch input:checked + span {
+    left: 27px;
+}
+
+.toggle-switch input:checked {
+    background-color: var(--success-color);
+}
+
+/* ============ FORM ACTIONS ============ */
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+}
+
+.form-actions .btn {
+    min-width: 120px;
+}
+
+.form-actions .btn-cancel {
+    background-color: var(--light-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.form-actions .btn-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.form-actions .btn-submit {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.form-actions .btn-submit:hover {
+    background-color: var(--secondary-color);
+}
+
+/* ============ FORM VALIDATION ============ */
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: var(--danger-color);
+    background-color: #fef2f2;
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error select:focus,
+.form-group.has-error textarea:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-group.has-success input,
+.form-group.has-success select,
+.form-group.has-success textarea {
+    border-color: var(--success-color);
+}
+
+.form-group.has-success input:focus,
+.form-group.has-success select:focus,
+.form-group.has-success textarea:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* ============ INLINE FORMS ============ */
+
+.form-inline {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.form-inline .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-inline .btn {
+    margin-bottom: 0;
+}
+
+/* ============ FORM LOADER ============ */
+
+.form-loading {
+    position: relative;
+}
+
+.form-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* ============ RESPONSIVE ============ */
+
+@media (max-width: 768px) {
+    .form-container {
+        padding: 20px;
+    }
+
+    .form-header h2 {
+        font-size: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    .form-inline {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .form-inline .form-group {
+        width: 100%;
+    }
+
+    .form-inline .btn {
+        width: 100%;
+    }
+}
