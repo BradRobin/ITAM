@@ -38,7 +38,12 @@ urlpatterns = [
         name="api_employee_detail",
     ),
     path("assets/", views.AssetListView.as_view(), name="asset_list"),
-    path("assets/export.csv", views.AssetCSVExportView.as_view(), name="asset_export"),
+    path(
+        "assets/export/csv/",
+        views.ExportAssetCSVView.as_view(),
+        name="export_asset_csv",
+    ),
+    path("assets/export.csv", views.ExportAssetCSVView.as_view(), name="asset_export"),
     path("assets/add/", views.AssetCreateView.as_view(), name="asset_add"),
     path("assets/<int:pk>/", views.AssetDetailView.as_view(), name="asset_detail"),
     path("assets/<int:pk>/edit/", views.AssetUpdateView.as_view(), name="asset_edit"),

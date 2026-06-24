@@ -1,7 +1,10 @@
+import datetime
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .forms import AssetForm, AssignmentForm
 from .models import Asset, Assignment, Employee, MaintenanceLog
@@ -181,6 +184,41 @@ class DashboardContextTests(TestCase):
         self.assertEqual(response.context["assigned_assets"], 1)
         self.assertEqual(response.context["available_assets"], 1)
         self.assertEqual(response.context["maintenance_assets"], 1)
+        self.assertEqual(response.context["overdue_assets_count"], 3)
+
+    def test_dashboard_overdue_count_excludes_recent_maintenance(self):
+        recent_asset = Asset.objects.create(
+            name="Recently Serviced Monitor",
+            type=Asset.AssetType.MONITOR,
+            serial_number="DASH-RECENT",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        old_asset = Asset.objects.create(
+            name="Oldly Serviced Router",
+            type=Asset.AssetType.ROUTER,
+            serial_number="DASH-OLD",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        MaintenanceLog.objects.create(
+            asset=recent_asset,
+            issue_description="Preventive service",
+            technician="Nelson",
+            date=timezone.now().date() - datetime.timedelta(days=30),
+            resolved=True,
+        )
+        MaintenanceLog.objects.create(
+            asset=old_asset,
+            issue_description="Old service",
+            technician="Nelson",
+            date=timezone.now().date() - datetime.timedelta(days=181),
+            resolved=True,
+        )
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_assets"], 5)
+        self.assertEqual(response.context["overdue_assets_count"], 4)
 
 
 class InventoryAdminConfigurationTests(TestCase):
@@ -287,6 +325,58 @@ class ManagementViewSecurityTests(TestCase):
         self.assertTrue(
             Asset.objects.filter(serial_number="STAFF-ROUTER-001").exists()
         )
+
+
+class AssetCSVExportTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="export-admin",
+            email="export-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.user = get_user_model().objects.create_user(
+            username="export-user",
+            email="export-user@example.com",
+            password="test-pass-12345",
+        )
+        self.asset = Asset.objects.create(
+            name="Export Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="EXPORT-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        self.maintenance_date = timezone.now().date() - datetime.timedelta(days=10)
+        MaintenanceLog.objects.create(
+            asset=self.asset,
+            issue_description="Routine check",
+            technician="Yvonne",
+            date=self.maintenance_date,
+            resolved=True,
+        )
+
+    def test_export_asset_csv_streams_expected_columns(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("export_asset_csv"))
+        content = b"".join(response.streaming_content).decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="itam_asset_report.csv"',
+        )
+        self.assertIn("Name,Type,Serial Number,Status,Last Maintenance Date", content)
+        self.assertIn("Export Laptop,Laptop,EXPORT-001,Available", content)
+        self.assertIn(str(self.maintenance_date), content)
+
+    def test_export_asset_csv_rejects_non_admin_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("export_asset_csv"))
+
+        self.assertEqual(response.status_code, 403)
 
 
 class FrontendAPIBridgeTests(TestCase):

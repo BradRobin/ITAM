@@ -1,14 +1,14 @@
 import csv
+import datetime
 import json
-from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.models.deletion import ProtectedError
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -24,7 +24,7 @@ from django.views.generic import (
 )
 
 from .forms import AssetForm, AssignmentForm
-from .models import Asset, Assignment, Employee
+from .models import Asset, Assignment, Employee, MaintenanceLog
 
 
 def user_has_admin_access(user) -> bool:
@@ -128,6 +128,31 @@ def json_permission_denied() -> JsonResponse:
     )
 
 
+class CSVBuffer:
+    def write(self, value):
+        return value
+
+
+def get_service_overdue_cutoff():
+    return timezone.now() - datetime.timedelta(days=Asset.SERVICE_INTERVAL_DAYS)
+
+
+def get_overdue_assets_queryset():
+    overdue_cutoff = get_service_overdue_cutoff().date()
+    recent_maintenance = MaintenanceLog.objects.filter(
+        asset=OuterRef("pk"),
+        date__gte=overdue_cutoff,
+    )
+    return (
+        Asset.objects.annotate(
+            has_recent_maintenance=Exists(recent_maintenance),
+            last_maintenance_date=Max("maintenance_logs__date"),
+        )
+        .filter(has_recent_maintenance=False)
+        .order_by("name", "serial_number")
+    )
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "inventory/dashboard.html"
 
@@ -149,15 +174,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 filter=Q(status=Asset.AssetStatus.UNDER_MAINTENANCE),
             ),
         )
-        overdue_cutoff = timezone.localdate() - timedelta(days=183)
-        overdue_assets = (
-            Asset.objects.annotate(last_maintenance_date=Max("maintenance_logs__date"))
-            .filter(
-                Q(last_maintenance_date__lt=overdue_cutoff)
-                | Q(last_maintenance_date__isnull=True)
-            )
-            .order_by("name")
-        )
+        overdue_cutoff = get_service_overdue_cutoff().date()
+        overdue_assets = get_overdue_assets_queryset()
 
         context.update(
             {
@@ -168,6 +186,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 "status_counts": status_counts,
                 "asset_summary": aggregate_counts,
                 "overdue_assets": overdue_assets,
+                "overdue_assets_count": overdue_assets.count(),
                 "overdue_cutoff": overdue_cutoff,
             }
         )
@@ -202,12 +221,11 @@ class AssetListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        overdue_cutoff = timezone.localdate() - timedelta(days=183)
         context.update(
             {
                 "selected_type": self.request.GET.get("type", ""),
                 "selected_status": self.request.GET.get("status", ""),
-                "overdue_cutoff": overdue_cutoff,
+                "overdue_cutoff": get_service_overdue_cutoff().date(),
             }
         )
         return context
@@ -237,7 +255,7 @@ class AssetDetailView(LoginRequiredMixin, DetailView):
                     "employee"
                 ),
                 "maintenance_logs": self.object.maintenance_logs.all(),
-                "overdue_cutoff": timezone.localdate() - timedelta(days=183),
+                "overdue_cutoff": get_service_overdue_cutoff().date(),
             }
         )
         return context
@@ -446,7 +464,7 @@ class ReturnAssetView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect("asset_detail", pk=asset.pk)
 
 
-class AssetCSVExportView(LoginRequiredMixin, UserPassesTestMixin, View):
+class ExportAssetCSVView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self) -> bool:
         return user_has_admin_access(self.request.user)
 
@@ -456,25 +474,37 @@ class AssetCSVExportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return super().handle_no_permission()
 
     def get(self, request):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="assets.csv"'
+        response = StreamingHttpResponse(
+            self.stream_asset_rows(),
+            content_type="text/csv",
+        )
+        response["Content-Disposition"] = (
+            'attachment; filename="itam_asset_report.csv"'
+        )
+        return response
 
-        writer = csv.writer(response)
-        writer.writerow(["Name", "Type", "Serial Number", "Status"])
+    def stream_asset_rows(self):
+        writer = csv.writer(CSVBuffer())
+        yield writer.writerow(
+            ["Name", "Type", "Serial Number", "Status", "Last Maintenance Date"]
+        )
 
-        for asset in Asset.objects.order_by("name", "serial_number").iterator():
-            writer.writerow(
+        queryset = Asset.objects.annotate(
+            last_maintenance_date=Max("maintenance_logs__date")
+        ).order_by("name", "serial_number")
+        for asset in queryset.iterator(chunk_size=2000):
+            yield writer.writerow(
                 [
                     asset.name,
                     asset.type,
                     asset.serial_number,
                     asset.status,
+                    asset.last_maintenance_date or "",
                 ]
             )
 
-        return response
-    # can we use constant instead repeated maintance interval logic so that If management changes maintenance schedules to 90 or 365 days, you only update one place.
-    #add audit logging
+
+AssetCSVExportView = ExportAssetCSVView
 
 
 class AssetAPIListView(LoginRequiredMixin, View):

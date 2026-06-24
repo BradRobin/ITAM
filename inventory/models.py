@@ -3,6 +3,8 @@ from django.utils import timezone
 
 
 class Asset(models.Model):
+    SERVICE_INTERVAL_DAYS = 180
+
     class AssetType(models.TextChoices):
         LAPTOP = "Laptop", "Laptop"
         PRINTER = "Printer", "Printer"
@@ -79,10 +81,3 @@ class MaintenanceLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.asset} maintenance on {self.date}"
-    
-    #add validation to prevent multiple active assignment
-    #employee email should be unique
-    #add a purchase date
-    #add asset value if possible
-    #do database indexing to improve performance
-
