@@ -17,12 +17,12 @@ env_file = BASE_DIR / ".env"
 if env_file.exists():
     try:
         environ.Env.read_env(env_file)
-        print("✅ .env file loaded successfully")
+        print(".env file loaded successfully")
     except Exception as e:
-        print(f"⚠️ Warning: Could not read .env file: {e}")
+        print(f"Warning: Could not read .env file: {e}")
         print("Using environment variables or defaults instead.")
 else:
-    print("ℹ️ No .env file found. Using environment variables or defaults.")
+    print("No .env file found. Using environment variables or defaults.")
 
 # Get settings from environment or use defaults
 SECRET_KEY = os.environ.get("SECRET_KEY") or env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
@@ -136,15 +136,15 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Login/Logout URLs
-LOGIN_URL = "admin:login"
+LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "dashboard"
 
 # Print configuration status
-print("\n📋 Configuration Summary:")
+print("\nConfiguration Summary:")
 print(f"   DEBUG: {DEBUG}")
 print(f"   ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 print(f"   Database: {DATABASES['default']['ENGINE']}")
-print(f"   Database Host: {DATABASES['default']['HOST']}")
-print(f"   Database Port: {DATABASES['default']['PORT']}")
-print("✅ Configuration loaded successfully!\n")
+print(f"   Database Host: {DATABASES['default'].get('HOST', 'local')}")
+print(f"   Database Port: {DATABASES['default'].get('PORT', 'default')}")
+print("Configuration loaded successfully.\n")

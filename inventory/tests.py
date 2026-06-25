@@ -175,6 +175,16 @@ class DashboardContextTests(TestCase):
             serial_number="DASH-MAINTENANCE",
             status=Asset.AssetStatus.UNDER_MAINTENANCE,
         )
+        Employee.objects.create(
+            name="Dashboard Employee One",
+            department="IT Operations",
+            email="dashboard.one@example.com",
+        )
+        Employee.objects.create(
+            name="Dashboard Employee Two",
+            department="Procurement",
+            email="dashboard.two@example.com",
+        )
 
     def test_dashboard_context_exposes_frontend_metric_keys(self):
         response = self.client.get(reverse("dashboard"))
@@ -184,7 +194,11 @@ class DashboardContextTests(TestCase):
         self.assertEqual(response.context["assigned_assets"], 1)
         self.assertEqual(response.context["available_assets"], 1)
         self.assertEqual(response.context["maintenance_assets"], 1)
+        self.assertEqual(response.context["employee_count"], 2)
+        self.assertEqual(response.context["total_employees"], 2)
         self.assertEqual(response.context["overdue_assets_count"], 0)
+        self.assertContains(response, "Total Employees")
+        self.assertContains(response, '<span class="quick-stat-value">2</span>', html=True)
 
     def test_dashboard_overdue_count_uses_creation_or_recent_maintenance_date(self):
         recent_asset = Asset.objects.create(

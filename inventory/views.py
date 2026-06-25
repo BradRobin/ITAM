@@ -197,6 +197,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         status_counts = Asset.objects.values("status").annotate(total=Count("id"))
+        employee_count = Employee.objects.count()
         aggregate_counts = Asset.objects.aggregate(
             total_assets=Count("id"),
             available_assets=Count(
@@ -221,6 +222,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 "assigned_assets": aggregate_counts["assigned_assets"],
                 "available_assets": aggregate_counts["available_assets"],
                 "maintenance_assets": aggregate_counts["maintenance_assets"],
+                "employee_count": employee_count,
+                "total_employees": employee_count,
                 "status_counts": status_counts,
                 "asset_summary": aggregate_counts,
                 "overdue_assets": overdue_assets,
