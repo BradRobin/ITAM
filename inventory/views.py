@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Exists, Max, OuterRef, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -287,11 +287,16 @@ class AssetListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
+        active_assignee = Assignment.objects.filter(
+            asset=OuterRef("pk"),
+            date_returned__isnull=True,
+        ).values("employee__name")[:1]
         queryset = (
             Asset.objects.annotate(
                 last_maintenance_date=Max("maintenance_logs__date"),
                 last_assigned_date=Max("assignments__date_assigned"),
                 last_returned_date=Max("assignments__date_returned"),
+                assigned_employee_name=Subquery(active_assignee),
             )
             .all()
             .order_by("name", "serial_number")

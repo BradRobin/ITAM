@@ -18,6 +18,7 @@
         // Cache DOM elements
         elements = {
             assetTable: document.querySelector('.asset-table'),
+            assetTableBody: document.querySelector('#asset-table-body'),
             filterForm: document.querySelector('.filter-form'),
             assignButtons: document.querySelectorAll('.action-assign'),
             returnButtons: document.querySelectorAll('.action-return'),
@@ -27,8 +28,142 @@
         // Setup event listeners
         setupFilterForm();
         setupActionButtons();
+        loadAssetTable();
         
         console.log('Asset module initialized.');
+    }
+
+    // ============================================
+    // Asset Table Rendering
+    // ============================================
+    async function loadAssetTable() {
+        if (!elements.assetTableBody || !window.Utils || typeof window.Utils.apiRequest !== 'function') {
+            return;
+        }
+
+        renderSkeletonRows();
+
+        try {
+            const assets = await window.Utils.apiRequest(getAssetListUrl());
+            renderAssetRows(assets);
+        } catch (error) {
+            console.error('Failed to load assets:', error);
+            renderTableMessage('Unable to load assets. Please refresh the page.');
+
+            if (typeof window.Utils.showToast === 'function') {
+                window.Utils.showToast('Unable to load assets.', 'error');
+            }
+        }
+    }
+
+    function getAssetListUrl() {
+        const apiUrl = elements.assetTableBody.dataset.apiUrl || '/api/assets';
+        const currentParams = new URLSearchParams(window.location.search);
+        const apiParams = new URLSearchParams();
+
+        ['type', 'status'].forEach(function(key) {
+            const value = currentParams.get(key);
+            if (value) {
+                apiParams.set(key, value);
+            }
+        });
+
+        const queryString = apiParams.toString();
+        return queryString ? apiUrl + '?' + queryString : apiUrl;
+    }
+
+    function renderSkeletonRows() {
+        const rows = [];
+
+        for (let rowIndex = 0; rowIndex < 6; rowIndex += 1) {
+            rows.push(
+                '<tr class="skeleton-row" aria-hidden="true">' +
+                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
+                    '<td><span class="skeleton skeleton-text"></span></td>' +
+                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
+                    '<td><span class="skeleton skeleton-badge"></span></td>' +
+                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
+                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
+                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
+                    '<td><span class="skeleton skeleton-text"></span></td>' +
+                    '<td><span class="skeleton skeleton-actions"></span></td>' +
+                '</tr>'
+            );
+        }
+
+        elements.assetTableBody.innerHTML = rows.join('');
+    }
+
+    function renderAssetRows(assets) {
+        if (!Array.isArray(assets) || assets.length === 0) {
+            renderTableMessage('No assets found.');
+            return;
+        }
+
+        elements.assetTableBody.innerHTML = assets.map(renderAssetRow).join('');
+    }
+
+    function renderAssetRow(asset) {
+        const statusLabel = asset.status_label || asset.status || '';
+        const statusClass = String(statusLabel).toLowerCase().replace(/\s+/g, '');
+        const assignee = asset.assigned_employee ? asset.assigned_employee.name : '-';
+
+        return (
+            '<tr>' +
+                '<td><a href="/assets/' + encodeURIComponent(asset.id) + '/">' + escapeHtml(asset.name) + '</a></td>' +
+                '<td>' + escapeHtml(asset.type) + '</td>' +
+                '<td>' + escapeHtml(asset.serial_number) + '</td>' +
+                '<td><span class="badge badge-' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
+                '<td>' + escapeHtml(assignee) + '</td>' +
+                '<td>' + formatDateTime(asset.date_created) + '</td>' +
+                '<td>' + formatDateTime(asset.date_assigned) + '</td>' +
+                '<td>' + formatDateTime(asset.date_returned) + '</td>' +
+                '<td class="actions-cell">' +
+                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/" class="btn btn-sm btn-primary">View</a>' +
+                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/edit/" class="btn btn-sm btn-secondary">Edit</a>' +
+                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/delete/" class="btn btn-sm btn-danger">Delete</a>' +
+                '</td>' +
+            '</tr>'
+        );
+    }
+
+    function renderTableMessage(message) {
+        elements.assetTableBody.innerHTML =
+            '<tr>' +
+                '<td colspan="9" class="empty-state">' +
+                    '<div class="empty-state-content">' +
+                        '<h3>' + escapeHtml(message) + '</h3>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function formatDateTime(value) {
+        if (!value) {
+            return '-';
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '-';
+        }
+
+        const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date);
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+
+        return month + ' ' + day + ', ' + year + ' ' + hour + ':' + minute;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
     
     // ============================================

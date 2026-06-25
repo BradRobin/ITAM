@@ -467,6 +467,29 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.json()[0]["status"], "available")
         self.assertEqual(response.json()[0]["status_label"], "Available")
 
+    def test_asset_api_list_returns_assigned_employee(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.asset.status = Asset.AssetStatus.ASSIGNED
+        self.asset.save(update_fields=["status"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("api_asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()[0]["assigned_employee"]["name"], "API Employee")
+
+    def test_asset_list_table_displays_assigned_employee(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.asset.status = Asset.AssetStatus.ASSIGNED
+        self.asset.save(update_fields=["status"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Assignee")
+        self.assertContains(response, "API Employee")
+
     def test_asset_api_assignment_updates_state(self):
         self.client.force_login(self.admin)
         today = timezone.localdate().isoformat()

@@ -37,20 +37,21 @@
     </div>
 
     <div class="table-wrapper">
-        <table>
+        <table class="asset-table">
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Type</th>
                     <th>Serial Number</th>
                     <th>Status</th>
+                    <th>Assignee</th>
                     <th>Created</th>
                     <th>Assigned</th>
                     <th>Returned</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
                 {% for asset in assets %}
                     <tr>
                         <td><a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a></td>
@@ -61,6 +62,7 @@
                                 {{ asset.status }}
                             </span>
                         </td>
+                        <td>{{ asset.assigned_employee_name|default:"-" }}</td>
                         <td>{{ asset.date_created|date:"M d, Y H:i" }}</td>
                         <td>{{ asset.last_assigned_date|date:"M d, Y H:i"|default:"-" }}</td>
                         <td>{{ asset.last_returned_date|date:"M d, Y H:i"|default:"-" }}</td>
@@ -72,7 +74,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <div class="empty-state-content">
                                 <h3>No assets found</h3>
                                 <p>Start by adding your first asset.</p>

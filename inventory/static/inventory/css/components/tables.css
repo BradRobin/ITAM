@@ -63,6 +63,55 @@ tbody td {
 }
 
 /* ==========================================
+   TABLE SKELETON LOADING
+   ========================================== */
+.skeleton-row:hover {
+    background: var(--bg-card);
+}
+
+.skeleton {
+    display: block;
+    min-height: 0.875rem;
+    border-radius: var(--radius-sm, 4px);
+    background: linear-gradient(
+        90deg,
+        var(--bg-tertiary) 25%,
+        var(--border-color) 37%,
+        var(--bg-tertiary) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+}
+
+.skeleton-text {
+    width: 5rem;
+}
+
+.skeleton-wide {
+    width: 8rem;
+}
+
+.skeleton-badge {
+    width: 6rem;
+    height: 1.5rem;
+    border-radius: var(--radius-full, 9999px);
+}
+
+.skeleton-actions {
+    width: 9rem;
+    height: 1.75rem;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* ==========================================
    TABLE ACTIONS
    ========================================== */
 .actions-cell {
