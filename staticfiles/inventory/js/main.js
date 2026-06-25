@@ -1,334 +1,219 @@
 /**
- * ============================================================
- * MAIN ENTRY POINT - ITAM SYSTEM
- * Path: inventory/js/main.js
- * ============================================================
- * Orchestrates page detection, module initialization,
- * global events, and error handling.
- * ============================================================
+ * MAIN ENTRY POINT
+ * Orchestrates all modules and initializes the application
  */
 
-// ============================================================
-// 1. PAGE DETECTION
-// ============================================================
-
-function getCurrentPage() {
-    const body = document.body;
-    if (body.dataset.page) return body.dataset.page;
-
-    const path = window.location.pathname;
-    if (path.includes('/dashboard') || path === '/') return 'dashboard';
-    if (path.includes('/assets')) return 'assets';
-    if (path.includes('/employees')) return 'employees';
-    if (path.includes('/assignments')) return 'assignments';
-    return 'dashboard';
-}
-
-// ============================================================
-// 2. PROFILE DROPDOWN TOGGLE
-// ============================================================
-
-function initProfileDropdown() {
-    const profileToggle = document.getElementById('profileToggle');
-    const profileDropdown = document.getElementById('profileDropdown');
+(function() {
+    'use strict';
     
-    if (profileToggle && profileDropdown) {
-        // Toggle dropdown on click
-        profileToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const parent = this.closest('.profile-dropdown');
-            parent.classList.toggle('open');
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.profile-dropdown')) {
-                document.querySelectorAll('.profile-dropdown').forEach(function(el) {
-                    el.classList.remove('open');
-                });
-            }
-        });
-        
-        // Close dropdown on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.profile-dropdown').forEach(function(el) {
-                    el.classList.remove('open');
-                });
-            }
-        });
-    }
-}
-
-// ============================================================
-// 3. THEME TOGGLE
-// ============================================================
-
-function initThemeToggle() {
-    const themeToggle = document.getElementById('themeToggle');
-    if (!themeToggle) return;
-
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Set initial theme
-    if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeUI(savedTheme);
-    } else if (prefersDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        updateThemeUI('dark');
-    }
-    
-    // Toggle theme on click
-    themeToggle.addEventListener('click', function() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeUI(newTheme);
-        
-        // Close dropdown after theme change
-        const dropdown = this.closest('.profile-dropdown');
-        if (dropdown) {
-            dropdown.classList.remove('open');
+    // ============================================
+    // Page Detection
+    // ============================================
+    function getCurrentPage() {
+        var path = window.location.pathname;
+        if (path === '/' || path === '/dashboard/' || path.includes('dashboard')) {
+            return 'dashboard';
         }
-    });
-}
-
-function updateThemeUI(theme) {
-    // Update icon and text in dropdown
-    const themeIcon = document.querySelector('#themeToggle .theme-icon');
-    const themeText = document.querySelector('#themeToggle .theme-text');
-    if (themeIcon) {
-        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (path.includes('assets')) return 'assets';
+        if (path.includes('employees')) return 'employees';
+        if (path.includes('assign')) return 'assignments';
+        if (path.includes('login') || path.includes('signup')) return 'auth';
+        if (path.includes('logout')) return 'auth';
+        return 'dashboard';
     }
-    if (themeText) {
-        themeText.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    }
-}
-
-// ============================================================
-// 4. MOBILE NAVIGATION TOGGLE
-// ============================================================
-
-function initMobileNav() {
-    const toggleBtn = document.getElementById('navbarToggle');
-    const navMenu = document.getElementById('navbarNav');
     
-    if (toggleBtn && navMenu) {
-        toggleBtn.addEventListener('click', function() {
-            navMenu.classList.toggle('open');
-            toggleBtn.classList.toggle('open');
+    // ============================================
+    // Load Core Modules
+    // ============================================
+    function loadCoreModules() {
+        var modules = ['Utils', 'Loader', 'Theme', 'Navigation', 'Alerts'];
+        var loaded = [];
+        var missing = [];
+        
+        modules.forEach(function(module) {
+            if (typeof window[module] !== 'undefined') {
+                loaded.push(module);
+            } else {
+                missing.push(module);
+            }
         });
         
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.navbar')) {
-                navMenu.classList.remove('open');
-                toggleBtn.classList.remove('open');
-            }
-        });
-    }
-}
-
-// ============================================================
-// 5. MODULE LOADER
-// ============================================================
-
-function initializePage(page) {
-    console.log('Initializing page:', page);
-
-    const loader = document.getElementById('page-loader');
-    if (loader) loader.style.display = 'none';
-
-    const content = document.getElementById('main-content');
-    if (content) content.style.display = 'block';
-
-    switch (page) {
-        case 'dashboard':
-            if (window.Dashboard?.init) window.Dashboard.init();
-            else if (window.Dashboard?.refresh) window.Dashboard.refresh();
-            break;
-
-        case 'assets':
-            if (window.assetManager?.refreshAssetList) window.assetManager.refreshAssetList();
-            else if (typeof refreshAssetList === 'function') refreshAssetList();
-            break;
-
-        case 'employees':
-            if (window.EmployeeManager?.refresh) window.EmployeeManager.refresh();
-            else if (typeof refreshEmployeeList === 'function') refreshEmployeeList();
-            break;
-
-        case 'assignments':
-            const container = document.getElementById('assignment-container');
-            if (container) {
-                container.innerHTML = `
-                    <div class="alert alert-info">
-                        <h5>Assignment Center</h5>
-                        <p>Use the "Assign" button on any asset card.</p>
-                        <a href="/assets/" class="btn btn-primary">Go to Assets</a>
-                    </div>
-                `;
-            }
-            break;
-
-        default:
-            if (window.Dashboard?.init) window.Dashboard.init();
-            break;
-    }
-}
-
-// ============================================================
-// 6. GLOBAL EVENTS
-// ============================================================
-
-function setupGlobalEvents() {
-    // Highlight active nav
-    const currentPage = getCurrentPage();
-    document.querySelectorAll('.nav-link, .sidebar-link').forEach(function(link) {
-        const href = link.getAttribute('href');
-        if (href && href.includes(currentPage)) {
-            link.classList.add('active');
+        if (missing.length > 0) {
+            console.warn('Missing core modules:', missing.join(', '));
         } else {
-            link.classList.remove('active');
+            console.log('All core modules loaded:', loaded.join(', '));
         }
-    });
-
-    // Toast notifications via custom events
-    window.addEventListener('show-notification', function(event) {
-        const { message, type = 'info', duration = 3000 } = event.detail || {};
-        showToast(message, type, duration);
-    });
-
-    console.log('Global event listeners set up.');
-}
-
-// ============================================================
-// 7. TOAST SYSTEM
-// ============================================================
-
-function showToast(message, type, duration) {
-    type = type || 'info';
-    duration = duration || 3000;
-    
-    const container = document.getElementById('toast-container');
-    if (!container) {
-        alert(message);
-        return;
+        
+        return loaded;
     }
-
-    const colors = {
-        success: 'bg-success text-white',
-        error: 'bg-danger text-white',
-        warning: 'bg-warning text-dark',
-        info: 'bg-primary text-white',
+    
+    // ============================================
+    // Load Page-Specific Modules
+    // ============================================
+    function loadPageModules(page) {
+        console.log('Loading page modules for:', page);
+        
+        switch (page) {
+            case 'dashboard':
+                if (typeof window.Dashboard !== 'undefined' && typeof window.Dashboard.init === 'function') {
+                    window.Dashboard.init();
+                } else {
+                    console.warn('Dashboard module not loaded.');
+                }
+                break;
+                
+            case 'assets':
+                if (typeof window.AssetManager !== 'undefined' && typeof window.AssetManager.init === 'function') {
+                    window.AssetManager.init();
+                } else {
+                    console.warn('AssetManager module not loaded.');
+                }
+                break;
+                
+            case 'employees':
+                if (typeof window.EmployeeManager !== 'undefined' && typeof window.EmployeeManager.init === 'function') {
+                    window.EmployeeManager.init();
+                } else {
+                    console.warn('EmployeeManager module not loaded.');
+                }
+                break;
+                
+            case 'assignments':
+                if (typeof window.AssignmentManager !== 'undefined' && typeof window.AssignmentManager.init === 'function') {
+                    window.AssignmentManager.init();
+                } else {
+                    console.warn('AssignmentManager module not loaded.');
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    
+    // ============================================
+    // Initialize Forms
+    // ============================================
+    function initForms() {
+        if (typeof window.FormManager !== 'undefined' && typeof window.FormManager.init === 'function') {
+            window.FormManager.init();
+        }
+    }
+    
+    // ============================================
+    // Setup Loader - FIXED
+    // ============================================
+    function setupLoader() {
+        if (typeof window.Loader !== 'undefined') {
+            try {
+                // Show loader on form submissions
+                if (typeof window.Loader.showOnSubmit === 'function') {
+                    window.Loader.showOnSubmit('form[data-loader="true"]');
+                }
+                // Show loader on navigation links
+                if (typeof window.Loader.showOnNavigation === 'function') {
+                    window.Loader.showOnNavigation('a[data-loader="true"]');
+                }
+                // Show loader on AJAX requests
+                if (typeof window.Loader.showOnAjax === 'function') {
+                    window.Loader.showOnAjax();
+                }
+            } catch (error) {
+                console.warn('Error setting up loader:', error.message);
+            }
+        }
+    }
+    
+    // ============================================
+    // Initialize Application
+    // ============================================
+    function initApp() {
+        try {
+            console.log('ITAM System initializing...');
+            
+            // Load core modules check
+            loadCoreModules();
+            
+            // Setup loader
+            setupLoader();
+            
+            // Initialize forms
+            initForms();
+            
+            // Detect current page and load modules
+            var page = getCurrentPage();
+            loadPageModules(page);
+            
+            // Dispatch ready event
+            document.dispatchEvent(new CustomEvent('itam-ready', {
+                detail: { page: page }
+            }));
+            
+            console.log('ITAM System ready. Page:', page);
+            
+            // Hide loader if it was shown during page load
+            if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
+                setTimeout(function() {
+                    try {
+                        window.Loader.hide();
+                    } catch (e) {
+                        // Ignore
+                    }
+                }, 500);
+            }
+            
+        } catch (error) {
+            console.error('Failed to initialize application:', error);
+            try {
+                if (window.Loader && typeof window.Loader.hide === 'function') {
+                    window.Loader.hide();
+                }
+            } catch (e) {
+                // Ignore
+            }
+            if (window.Utils && typeof window.Utils.showToast === 'function') {
+                window.Utils.showToast('Failed to initialize application. Please refresh the page.', 'error');
+            }
+        }
+    }
+    
+    // ============================================
+    // Start Application
+    // ============================================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (typeof window.Loader !== 'undefined' && window.Loader.show) {
+                    window.Loader.show('Loading ITAM System...');
+                }
+            } catch (e) {
+                // Ignore
+            }
+            initApp();
+        });
+    } else {
+        try {
+            if (typeof window.Loader !== 'undefined' && window.Loader.show) {
+                window.Loader.show('Loading ITAM System...');
+            }
+        } catch (e) {
+            // Ignore
+        }
+        initApp();
+    }
+    
+    // ============================================
+    // Export
+    // ============================================
+    window.MainApp = {
+        getCurrentPage: getCurrentPage,
+        init: initApp,
+        refresh: function() {
+            var page = getCurrentPage();
+            loadPageModules(page);
+        }
     };
-
-    const toast = document.createElement('div');
-    toast.className = 'toast align-items-center ' + (colors[type] || colors.info) + ' border-0 show';
-    toast.role = 'alert';
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-
-    container.appendChild(toast);
-    setTimeout(function() { 
-        if (toast.parentNode) toast.remove(); 
-    }, duration);
-}
-
-// ============================================================
-// 8. GLOBAL ERROR HANDLING
-// ============================================================
-
-function setupGlobalErrorHandling() {
-    window.addEventListener('unhandledrejection', function(event) {
-        console.error('Unhandled Promise Rejection:', event.reason);
-        var msg = event.reason?.message || 'An unexpected error occurred.';
-        if (window.showToast) {
-            window.showToast(msg, 'error');
-        } else {
-            alert('Error: ' + msg);
-        }
-        event.preventDefault();
-    });
-
-    window.addEventListener('error', function(event) {
-        console.error('Global Error:', event.message, event.filename, event.lineno);
-        if (event.message && !event.message.includes('404')) {
-            if (window.showToast) {
-                window.showToast(event.message, 'error');
-            }
-        }
-    });
-
-    console.log('Global error handling set up.');
-}
-
-// ============================================================
-// 9. AUTO-DISMISS ALERTS
-// ============================================================
-
-function initAutoDismissAlerts() {
-    var alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            alert.style.transition = 'opacity 0.5s ease';
-            alert.style.opacity = '0';
-            setTimeout(function() {
-                alert.remove();
-            }, 500);
-        }, 5000);
-    });
-}
-
-// ============================================================
-// 10. MAIN INIT
-// ============================================================
-
-function initApp() {
-    console.log('ITAM Application starting...');
-
-    var page = getCurrentPage();
-
-    initProfileDropdown();
-    initThemeToggle();
-    initMobileNav();
-    initAutoDismissAlerts();
-    setupGlobalEvents();
-    setupGlobalErrorHandling();
-
-    window.showToast = showToast;
-
-    initializePage(page);
-
-    document.dispatchEvent(new CustomEvent('itam-ready', { detail: { page: page } }));
-    console.log('ITAM Application ready. Page:', page);
-}
-
-// ============================================================
-// 11. START
-// ============================================================
-
-document.addEventListener('DOMContentLoaded', initApp);
-
-// ============================================================
-// 12. EXPOSE
-// ============================================================
-
-window.MainApp = {
-    getCurrentPage: getCurrentPage,
-    initializePage: initializePage,
-    refresh: function() { 
-        initializePage(getCurrentPage()); 
-    },
-    showToast: showToast,
-};
-
-console.log('main.js loaded.');
+    
+    console.log('main.js loaded successfully.');
+    
+})();

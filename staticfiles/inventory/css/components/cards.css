@@ -1,0 +1,111 @@
+/* ========================================
+   CARDS.CSS - Card Styles
+   ======================================== */
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* ==========================================
+   CARD VARIANTS
+   ========================================== */
+.card-primary {
+    border-top: 4px solid var(--primary-500);
+}
+
+.card-success {
+    border-top: 4px solid var(--success-500);
+}
+
+.card-warning {
+    border-top: 4px solid var(--warning-500);
+}
+
+.card-danger {
+    border-top: 4px solid var(--danger-500);
+}
+
+/* ==========================================
+   CARD SECTIONS
+   ========================================== */
+.card-header {
+    padding: var(--spacing-4) var(--spacing-5);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.card-body {
+    padding: var(--spacing-5);
+}
+
+.card-footer {
+    padding: var(--spacing-4) var(--spacing-5);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+/* ==========================================
+   CARD SIZES
+   ========================================== */
+.card-sm .card-header,
+.card-sm .card-body,
+.card-sm .card-footer {
+    padding: var(--spacing-3);
+}
+
+.card-lg .card-header,
+.card-lg .card-body,
+.card-lg .card-footer {
+    padding: var(--spacing-6);
+}
+
+/* ==========================================
+   CARD GRID
+   ========================================== */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-4);
+}
+
+/* ==========================================
+   CARD WITH IMAGE
+   ========================================== */
+.card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+/* ==========================================
+   CARD ACTIONS
+   ========================================== */
+.card-actions {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+}
+
+/* ==========================================
+   RESPONSIVE CARDS
+   ========================================== */
+@media (max-width: 640px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+}

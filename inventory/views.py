@@ -17,6 +17,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -26,6 +27,7 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from django.utils.decorators import method_decorator
 
 from .forms import AssetForm, AssignmentForm
 from .models import Asset, Assignment, Employee, MaintenanceLog
@@ -232,6 +234,11 @@ class AuthLoginView(LoginView):
         context = super().get_context_data(**kwargs)
         context["page"] = "login"
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("dashboard")
+        return super().dispatch(request, *args, **kwargs)
 
 
 class SignUpView(CreateView):
@@ -773,3 +780,13 @@ class EmployeeAPIDetailView(LoginRequiredMixin, View):
                 status=400,
             )
         return JsonResponse({"deleted": True})
+
+
+# ============================================
+# SETTINGS VIEW
+# ============================================
+class SettingsView(LoginRequiredMixin, TemplateView):
+    """
+    Settings page view for user preferences and application configuration.
+    """
+    template_name = "inventory/settings.html"

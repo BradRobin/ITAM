@@ -4,11 +4,12 @@
 {% block title %}{{ asset.name }} - Asset Details{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/cards.css' %}">
 {% endblock %}
 
 {% block content %}
-    <div class="detail-header">
+    <div class="page-header">
         <div class="detail-header-left">
             <h1>{{ asset.name }}</h1>
             <p class="detail-subtitle">
@@ -20,73 +21,71 @@
                 {% endif %}
             </p>
         </div>
-        <div class="detail-header-actions">
+        <div class="actions">
             <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-danger">Delete</a>
             <a href="{% url 'asset_list' %}" class="btn btn-secondary">Back</a>
         </div>
     </div>
 
-    <div class="detail-grid">
-        <div class="detail-card">
-            <h3>Asset Information</h3>
-            <div class="detail-field">
-                <span class="field-label">Type</span>
-                <span class="field-value">{{ asset.type }}</span>
+    <div class="card-grid">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3>Asset Information</h3>
             </div>
-            <div class="detail-field">
-                <span class="field-label">Serial Number</span>
-                <span class="field-value"><strong>{{ asset.serial_number }}</strong></span>
-            </div>
-            <div class="detail-field">
-                <span class="field-label">Status</span>
-                <span class="field-value">
-                    <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
-                        {{ asset.status }}
+            <div class="card-body">
+                <div class="detail-field">
+                    <span class="field-label">Type</span>
+                    <span class="field-value">{{ asset.type }}</span>
+                </div>
+                <div class="detail-field">
+                    <span class="field-label">Serial Number</span>
+                    <span class="field-value"><strong>{{ asset.serial_number }}</strong></span>
+                </div>
+                <div class="detail-field">
+                    <span class="field-label">Status</span>
+                    <span class="field-value">
+                        <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                            {{ asset.status }}
+                        </span>
                     </span>
-                </span>
+                </div>
             </div>
         </div>
 
-        <div class="detail-card">
-            <h3>Current Assignment</h3>
-            {% if active_assignment %}
-                <div class="assignment-active">
-                    <p><strong>Assigned to:</strong> {{ active_assignment.employee.name }}</p>
-                    <p><strong>Department:</strong> {{ active_assignment.employee.department }}</p>
-                    <p><strong>Email:</strong> {{ active_assignment.employee.email }}</p>
-                    <p><strong>Assigned on:</strong> {{ active_assignment.date_assigned }}</p>
-                    <form
-                        method="post"
-                        action="{% url 'return_asset' asset.pk %}"
-                        style="margin-top: 1rem;"
-                        data-confirm-card
-                        data-confirm-title="Confirm Asset Return"
-                        data-confirm-message="Return {{ asset.name }} back to inventory storage?"
-                        data-confirm-details="<p><strong>Serial:</strong> {{ asset.serial_number }}</p><p><strong>Assigned to:</strong> {{ active_assignment.employee.name }}</p>"
-                        data-confirm-label="Return Asset"
-                        data-confirm-variant="warning"
-                    >
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-success">Return Asset</button>
-                    </form>
-                </div>
-            {% elif asset.status == "Available" %}
-                <div class="assignment-available">
-                    <p>This asset is <strong>available</strong> for assignment.</p>
-                    <a href="{% url 'assign_asset' asset.pk %}" class="btn btn-primary" style="margin-top: 0.5rem;">Assign Asset</a>
-                </div>
-            {% else %}
-                <div class="assignment-unavailable">
-                    <p>This asset is currently <strong>{{ asset.status }}</strong>.</p>
-                    <p>It cannot be assigned until it is available.</p>
-                </div>
-            {% endif %}
+        <div class="card card-success">
+            <div class="card-header">
+                <h3>Current Assignment</h3>
+            </div>
+            <div class="card-body">
+                {% if active_assignment %}
+                    <div class="assignment-active">
+                        <p><strong>Assigned to:</strong> {{ active_assignment.employee.name }}</p>
+                        <p><strong>Department:</strong> {{ active_assignment.employee.department }}</p>
+                        <p><strong>Email:</strong> {{ active_assignment.employee.email }}</p>
+                        <p><strong>Assigned on:</strong> {{ active_assignment.date_assigned }}</p>
+                        <form method="post" action="{% url 'return_asset' asset.pk %}" class="mt-2">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">Return Asset</button>
+                        </form>
+                    </div>
+                {% elif asset.status == "Available" %}
+                    <div class="assignment-available">
+                        <p>This asset is <strong>available</strong> for assignment.</p>
+                        <a href="{% url 'assign_asset' asset.pk %}" class="btn btn-primary mt-2">Assign Asset</a>
+                    </div>
+                {% else %}
+                    <div class="assignment-unavailable">
+                        <p>This asset is currently <strong>{{ asset.status }}</strong>.</p>
+                        <p>It cannot be assigned until it is available.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <section>
-        <h3>Assignment History</h3>
+    <section class="mt-4">
+        <h2>Assignment History</h2>
         {% if assignment_history %}
             <div class="table-wrapper">
                 <table>
@@ -115,8 +114,8 @@
         {% endif %}
     </section>
 
-    <section>
-        <h3>Maintenance Logs</h3>
+    <section class="mt-4">
+        <h2>Maintenance Logs</h2>
         {% if maintenance_logs %}
             <div class="maintenance-timeline">
                 {% for log in maintenance_logs %}
@@ -139,5 +138,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/assets.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}"></script>
 {% endblock %}

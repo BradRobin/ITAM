@@ -1,10 +1,10 @@
- {% extends 'inventory/base.html' %}
+{% extends 'inventory/base.html' %}
 {% load static %}
 
 {% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Employee{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/forms.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -64,5 +64,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/forms.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/forms.js' %}"></script>
 {% endblock %}

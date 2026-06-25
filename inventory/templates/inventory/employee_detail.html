@@ -4,24 +4,27 @@
 {% block title %}{{ employee.name }} - Employee Details{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/cards.css' %}">
 {% endblock %}
 
 {% block content %}
-    <div class="detail-header">
+    <div class="page-header">
         <div class="detail-header-left">
             <h1>{{ employee.name }}</h1>
         </div>
-        <div class="detail-header-actions">
+        <div class="actions">
             <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-secondary">Edit</a>
             <a href="{% url 'employee_delete' employee.pk %}" class="btn btn-danger">Delete</a>
             <a href="{% url 'employee_list' %}" class="btn btn-secondary">Back</a>
         </div>
     </div>
 
-    <div class="detail-grid">
-        <div class="detail-card">
+    <div class="card">
+        <div class="card-header">
             <h3>Employee Information</h3>
+        </div>
+        <div class="card-body">
             <div class="detail-field">
                 <span class="field-label">Department</span>
                 <span class="field-value">{{ employee.department }}</span>
@@ -33,8 +36,8 @@
         </div>
     </div>
 
-    <section>
-        <h3>Active Assignments</h3>
+    <section class="mt-4">
+        <h2>Active Assignments</h2>
         {% if active_assignments %}
             <div class="table-wrapper">
                 <table>
@@ -51,17 +54,7 @@
                                 <td><a href="{% url 'asset_detail' assignment.asset.pk %}">{{ assignment.asset.name }}</a></td>
                                 <td>{{ assignment.date_assigned }}</td>
                                 <td>
-                                    <form
-                                        method="post"
-                                        action="{% url 'return_asset' assignment.asset.pk %}"
-                                        style="display:inline;"
-                                        data-confirm-card
-                                        data-confirm-title="Confirm Asset Return"
-                                        data-confirm-message="Return {{ assignment.asset.name }} back to inventory storage?"
-                                        data-confirm-details="<p><strong>Employee:</strong> {{ employee.name }}</p><p><strong>Assigned on:</strong> {{ assignment.date_assigned }}</p>"
-                                        data-confirm-label="Return Asset"
-                                        data-confirm-variant="warning"
-                                    >
+                                    <form method="post" action="{% url 'return_asset' assignment.asset.pk %}" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm btn-success">Return</button>
                                     </form>
@@ -76,8 +69,8 @@
         {% endif %}
     </section>
 
-    <section>
-        <h3>Assignment History</h3>
+    <section class="mt-4">
+        <h2>Assignment History</h2>
         {% if assignment_history %}
             <div class="table-wrapper">
                 <table>
@@ -106,5 +99,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/employees.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/employees.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,301 @@
+/* ========================================
+   TABLES.CSS - Table Styles
+   ======================================== */
+
+/* ==========================================
+   TABLE WRAPPER
+   ========================================== */
+.table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg, 12px);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================
+   TABLE
+   ========================================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm, 0.875rem);
+    background: var(--bg-card);
+    min-width: 600px;
+}
+
+thead {
+    background: var(--bg-table-header);
+    border-bottom: 2px solid var(--border-color);
+}
+
+thead th {
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    text-align: left;
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s ease;
+    background: var(--bg-card);
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: var(--bg-table-stripe);
+}
+
+tbody td {
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    vertical-align: middle;
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   TABLE ACTIONS
+   ========================================== */
+.actions-cell {
+    display: flex;
+    gap: var(--spacing-1, 0.25rem);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.actions-cell .btn {
+    min-height: 28px;
+    padding: 0 var(--spacing-2, 0.5rem);
+    font-size: var(--font-size-xs, 0.75rem);
+}
+
+/* ==========================================
+   PAGE HEADER
+   ========================================== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4, 1rem);
+    flex-wrap: wrap;
+    gap: var(--spacing-3, 0.75rem);
+}
+
+.page-header h1 {
+    font-size: var(--font-size-2xl, 1.5rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.page-header .actions {
+    display: flex;
+    gap: var(--spacing-2, 0.5rem);
+    flex-wrap: wrap;
+}
+
+/* ==========================================
+   FILTERS
+   ========================================== */
+.filters {
+    background: var(--bg-card);
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    border-radius: var(--radius-lg, 12px);
+    margin-bottom: var(--spacing-4, 1rem);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2, 0.5rem);
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.filter-select {
+    padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 8px);
+    font-size: var(--font-size-sm, 0.875rem);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    min-width: 130px;
+    min-height: 36px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ==========================================
+   PAGINATION
+   ========================================== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: var(--spacing-4, 1rem);
+    padding: var(--spacing-2, 0.5rem);
+    gap: var(--spacing-2, 0.5rem);
+    flex-wrap: wrap;
+}
+
+.pagination .step-links {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2, 0.5rem);
+    flex-wrap: wrap;
+}
+
+.pagination .current-page {
+    padding: var(--spacing-1, 0.25rem) var(--spacing-3, 0.75rem);
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-8, 2rem) var(--spacing-4, 1rem);
+    color: var(--text-muted);
+}
+
+.empty-state-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3, 0.75rem);
+}
+
+.empty-icon {
+    font-size: 3rem;
+}
+
+.empty-state-content h3 {
+    font-size: var(--font-size-lg, 1.125rem);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.empty-state-content p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================
+   RESPONSIVE TABLES
+   ========================================== */
+
+/* Tablet (768px and down) */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-2, 0.5rem);
+    }
+
+    .page-header .actions {
+        justify-content: stretch;
+    }
+
+    .page-header .actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .filters {
+        padding: var(--spacing-2, 0.5rem);
+    }
+
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-2, 0.5rem);
+    }
+
+    .filter-select {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        font-size: var(--font-size-xs, 0.75rem);
+        min-width: 500px;
+    }
+
+    thead th,
+    tbody td {
+        padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+    }
+
+    .actions-cell {
+        flex-direction: column;
+        gap: var(--spacing-1, 0.25rem);
+    }
+
+    .actions-cell .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 32px;
+    }
+
+    .pagination .step-links {
+        justify-content: center;
+        gap: var(--spacing-1, 0.25rem);
+    }
+
+    .pagination .btn {
+        font-size: var(--font-size-xs, 0.75rem);
+        padding: 0 var(--spacing-2, 0.5rem);
+        min-height: 28px;
+    }
+}
+
+/* Small Mobile (480px and down) */
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: var(--font-size-xl, 1.25rem);
+    }
+
+    table {
+        font-size: 0.7rem;
+        min-width: 400px;
+    }
+
+    thead th,
+    tbody td {
+        padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+    }
+
+    .pagination .btn {
+        font-size: 0.65rem;
+        padding: 0 var(--spacing-1, 0.25rem);
+        min-height: 24px;
+    }
+}

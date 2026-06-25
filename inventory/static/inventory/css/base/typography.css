@@ -1,0 +1,246 @@
+/* ========================================
+   TYPOGRAPHY.CSS - Global Typography
+   ======================================== */
+
+/* ==========================================
+   BASE BODY
+   ========================================== */
+body {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    transition: background var(--transition-base), color var(--transition-base);
+}
+
+/* ==========================================
+   HEADINGS
+   ========================================== */
+h1, .h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-4);
+}
+
+h2, .h2 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);
+}
+
+h3, .h3 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);
+}
+
+h4, .h4 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);
+}
+
+h5, .h5 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-1);
+}
+
+h6, .h6 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-1);
+}
+
+/* ==========================================
+   PARAGRAPHS
+   ========================================== */
+p {
+    margin-bottom: var(--spacing-4);
+    color: var(--text-secondary);
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================
+   LINKS - NO UNDERLINE EVER
+   ========================================== */
+a {
+    color: var(--text-link);
+    text-decoration: none !important;
+    transition: color var(--transition-fast);
+}
+
+a:hover,
+a:focus,
+a:active {
+    color: var(--primary-700);
+    text-decoration: none !important;
+}
+
+/* Only show underline on specific text links if needed */
+a.text-link {
+    text-decoration: underline !important;
+}
+
+a.text-link:hover {
+    text-decoration: underline !important;
+}
+
+/* ==========================================
+   LISTS
+   ========================================== */
+ul, ol {
+    margin-bottom: var(--spacing-4);
+    padding-left: var(--spacing-6);
+}
+
+ul {
+    list-style: disc;
+}
+
+ol {
+    list-style: decimal;
+}
+
+li {
+    margin-bottom: var(--spacing-1);
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   BLOCKQUOTES
+   ========================================== */
+blockquote {
+    padding: var(--spacing-4) var(--spacing-6);
+    margin-bottom: var(--spacing-4);
+    border-left: 4px solid var(--border-color);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================
+   CODE
+   ========================================== */
+code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    padding: 0.1rem 0.3rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+}
+
+pre {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-4);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin-bottom: var(--spacing-4);
+}
+
+pre code {
+    padding: 0;
+    background: transparent;
+}
+
+/* ==========================================
+   SMALL TEXT
+   ========================================== */
+small {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+/* ==========================================
+   MUTED TEXT
+   ========================================== */
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* ==========================================
+   TEXT UTILITIES
+   ========================================== */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-uppercase {
+    text-transform: uppercase;
+}
+
+.text-capitalize {
+    text-transform: capitalize;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   RESPONSIVE TYPOGRAPHY
+   ========================================== */
+@media (max-width: 768px) {
+    h1, .h1 {
+        font-size: var(--font-size-3xl);
+    }
+    
+    h2, .h2 {
+        font-size: var(--font-size-2xl);
+    }
+    
+    h3, .h3 {
+        font-size: var(--font-size-xl);
+    }
+    
+    h4, .h4 {
+        font-size: var(--font-size-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    h1, .h1 {
+        font-size: var(--font-size-2xl);
+    }
+    
+    h2, .h2 {
+        font-size: var(--font-size-xl);
+    }
+    
+    body {
+        font-size: var(--font-size-sm);
+    }
+}

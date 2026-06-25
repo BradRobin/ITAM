@@ -1,0 +1,353 @@
+/* ========================================
+   FORMS.CSS - Form Styles
+   ======================================== */
+
+/* ==========================================
+   FORM CONTAINER
+   ========================================== */
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ==========================================
+   FORM
+   ========================================== */
+form {
+    background: var(--bg-card);
+    padding: var(--spacing-8);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================
+   FORM HEADER
+   ========================================== */
+.form-header {
+    margin-bottom: var(--spacing-6);
+}
+
+.form-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.form-header .form-subtitle {
+    color: var(--text-muted);
+    margin-top: var(--spacing-1);
+    font-size: var(--font-size-sm);
+}
+
+/* ==========================================
+   FORM GRID
+   ========================================== */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-5);
+}
+
+.form-grid .form-group:has(textarea) {
+    grid-column: span 2;
+}
+
+/* ==========================================
+   FORM GROUP
+   ========================================== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.form-group.has-error .form-label {
+    color: var(--danger-600);
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: var(--danger-500);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* ==========================================
+   FORM LABEL
+   ========================================== */
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+}
+
+.required-asterisk {
+    color: var(--danger-500);
+    margin-left: var(--spacing-1);
+}
+
+/* ==========================================
+   FORM INPUTS
+   ========================================== */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    min-height: 40px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+    border-color: var(--gray-400);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-3) center;
+    padding-right: var(--spacing-8);
+    cursor: pointer;
+}
+
+[data-theme="dark"] .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+
+/* ==========================================
+   HELP TEXT
+   ========================================== */
+.help-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-1);
+}
+
+/* ==========================================
+   FIELD ERRORS
+   ========================================== */
+.field-errors {
+    margin-top: var(--spacing-1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.error-message {
+    font-size: var(--font-size-xs);
+    color: var(--danger-600);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.error-message::before {
+    content: '⚠️';
+    font-size: 0.75rem;
+}
+
+/* ==========================================
+   FORM ERRORS
+   ========================================== */
+.form-errors {
+    margin-bottom: var(--spacing-4);
+}
+
+/* ==========================================
+   FORM ACTIONS
+   ========================================== */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-5);
+    border-top: 1px solid var(--border-color);
+}
+
+.form-actions .btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* ==========================================
+   ASSET SUMMARY
+   ========================================== */
+.asset-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+    background: var(--bg-secondary);
+    padding: var(--spacing-4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-6);
+    border: 1px solid var(--border-color);
+}
+
+.asset-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.summary-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summary-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+/* ==========================================
+   DELETE CONFIRMATION
+   ========================================== */
+.delete-confirmation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    padding: var(--spacing-4);
+}
+
+.delete-confirmation-card {
+    background: var(--bg-card);
+    padding: var(--spacing-8);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.delete-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-4);
+}
+
+.delete-confirmation-card h1 {
+    font-size: var(--font-size-xl);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);
+}
+
+.delete-warning {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-4);
+}
+
+.delete-detail {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    padding: var(--spacing-3);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-4);
+    text-align: left;
+}
+
+.delete-warning-box {
+    background: var(--warning-50);
+    border: 1px solid var(--warning-200);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-sm);
+    color: var(--warning-700);
+    text-align: left;
+}
+
+[data-theme="dark"] .delete-warning-box {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: var(--warning-400);
+}
+
+.delete-warning-box strong {
+    color: var(--warning-800);
+}
+
+.delete-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    justify-content: center;
+}
+
+.delete-actions .btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* ==========================================
+   RESPONSIVE FORMS
+   ========================================== */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+
+    .form-grid .form-group:has(textarea) {
+        grid-column: span 1;
+    }
+
+    form {
+        padding: var(--spacing-4);
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .asset-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .delete-confirmation-card {
+        padding: var(--spacing-4);
+        margin: var(--spacing-4);
+    }
+
+    .delete-actions {
+        flex-direction: column;
+    }
+
+    .delete-actions .btn {
+        width: 100%;
+        min-width: auto;
+    }
+}

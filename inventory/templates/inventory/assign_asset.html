@@ -4,7 +4,7 @@
 {% block title %}Assign Asset{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/forms.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -39,15 +39,7 @@
             </div>
         </div>
         
-        <form
-            method="post"
-            novalidate
-            data-confirm-card
-            data-confirm-title="Confirm Asset Assignment"
-            data-confirm-message="Assign {{ asset.name }} to the selected employee?"
-            data-confirm-details="<p><strong>Serial:</strong> {{ asset.serial_number }}</p><p><strong>Current status:</strong> {{ asset.status }}</p>"
-            data-confirm-label="Assign Asset"
-        >
+        <form method="post" novalidate>
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -91,5 +83,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/assignments.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/assignments.js' %}"></script>
 {% endblock %}

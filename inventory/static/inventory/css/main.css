@@ -1,0 +1,183 @@
+
+/* ========================================
+   MAIN.CSS - Main Entry Point
+   ======================================== */
+
+@import url('base/variables.css');
+@import url('base/reset.css');
+@import url('base/typography.css');
+@import url('layouts/grid.css');
+
+@import url('components/buttons.css');
+@import url('components/badges.css');
+@import url('components/alerts.css');
+@import url('components/forms.css');
+@import url('components/tables.css');
+@import url('components/cards.css');
+@import url('components/sidebar.css');
+@import url('components/topbar.css');
+@import url('components/spinner.css');
+
+@import url('layouts/auth.css');
+@import url('layouts/dashboard.css');
+
+/* ==========================================
+   MAIN WRAPPER - FIXED
+   ========================================== */
+.main-wrapper {
+    margin-left: 240px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease;
+    flex: 1;
+    width: auto;
+    overflow: visible !important;
+}
+
+@media (max-width: 768px) {
+    .main-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* ==========================================
+   MAIN CONTENT - FIXED WIDTH & SCROLLING
+   ========================================== */
+main {
+    flex: 1 0 auto;
+    max-width: 100%;
+    width: 100%;
+    padding: 1.5rem 2rem 3rem 2rem;
+    box-sizing: border-box;
+    overflow: visible !important;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    main {
+        padding: 0.75rem;
+    }
+}
+
+/* ==========================================
+   BODY - FIXED
+   ========================================== */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--bg-secondary, #f8fafc);
+    transition: background 0.3s ease;
+    margin: 0;
+    padding: 0;
+    overflow: visible !important;
+    overflow-y: auto !important;
+    height: auto !important;
+}
+
+[data-theme="dark"] body {
+    background: var(--bg-secondary, #1e293b);
+}
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-column { display: flex; flex-direction: column; }
+
+.gap-1 { gap: var(--spacing-1, 0.25rem); }
+.gap-2 { gap: var(--spacing-2, 0.5rem); }
+.gap-3 { gap: var(--spacing-3, 0.75rem); }
+.gap-4 { gap: var(--spacing-4, 1rem); }
+.gap-6 { gap: var(--spacing-6, 1.5rem); }
+
+.mt-1 { margin-top: var(--spacing-1, 0.25rem); }
+.mt-2 { margin-top: var(--spacing-2, 0.5rem); }
+.mt-3 { margin-top: var(--spacing-3, 0.75rem); }
+.mt-4 { margin-top: var(--spacing-4, 1rem); }
+.mt-6 { margin-top: var(--spacing-6, 1.5rem); }
+
+.mb-1 { margin-bottom: var(--spacing-1, 0.25rem); }
+.mb-2 { margin-bottom: var(--spacing-2, 0.5rem); }
+.mb-3 { margin-bottom: var(--spacing-3, 0.75rem); }
+.mb-4 { margin-bottom: var(--spacing-4, 1rem); }
+.mb-6 { margin-bottom: var(--spacing-6, 1.5rem); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.relative { position: relative; }
+.absolute { position: absolute; }
+.sticky { position: sticky; }
+.hidden { display: none !important; }
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ==========================================
+   SCROLLBAR STYLING
+   ========================================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: var(--radius-full, 9999px);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-400, #94a3b8);
+    border-radius: var(--radius-full, 9999px);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500, #64748b);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-400, #94a3b8) var(--bg-secondary, #f8fafc);
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .btn, .sidebar, .topbar, .loading-overlay { display: none !important; }
+    main { padding: 0 !important; max-width: 100% !important; }
+    .main-wrapper { margin-left: 0 !important; }
+}
+
+/* ==========================================
+   REMOVE ALL UNDERLINES GLOBALLY
+   ========================================== */
+a, a:link, a:visited, a:hover, a:active, a:focus,
+button, button:hover, button:focus, button:active,
+.sidebar-link, .sidebar-link:hover, .sidebar-link:focus,
+.dropdown-item, .dropdown-item:hover,
+.btn, .btn:hover,
+.nav-link, .nav-link:hover {
+    text-decoration: none !important;
+}

@@ -1,0 +1,11 @@
+#!/bin/zsh
+export SECRET_KEY="lte16)_@tqxav&0c1a%$kyt0%m!l7*s&n1#mtev=#ctdph8-mg"
+export DEBUG="True"
+export ALLOWED_HOSTS="localhost,127.0.0.1"
+export DB_NAME="postgres"
+export DB_USER="postgres.rmkwzwateojpebimoqwp"
+export DB_PASSWORD="ItamICTA1.!"
+export DB_HOST="aws-0-eu-west-1.pooler.supabase.com"
+export DB_PORT="6543"
+export DB_SSLMODE="require"
+export DB_GSSENCMODE="disable"

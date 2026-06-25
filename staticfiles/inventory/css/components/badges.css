@@ -1,0 +1,97 @@
+/* ========================================
+   BADGES.CSS - Badge Styles
+   ======================================== */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding: 0.15rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: capitalize;
+    letter-spacing: 0.025em;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   BADGE VARIANTS
+   ========================================== */
+.badge-available {
+    background: var(--success-50);
+    color: var(--success-700);
+}
+
+[data-theme="dark"] .badge-available {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success-400);
+}
+
+.badge-assigned {
+    background: var(--primary-50);
+    color: var(--primary-700);
+}
+
+[data-theme="dark"] .badge-assigned {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary-400);
+}
+
+.badge-under-maintenance {
+    background: var(--warning-50);
+    color: var(--warning-700);
+}
+
+[data-theme="dark"] .badge-under-maintenance {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning-400);
+}
+
+.badge-overdue {
+    background: var(--danger-50);
+    color: var(--danger-700);
+}
+
+[data-theme="dark"] .badge-overdue {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger-400);
+}
+
+.badge-disposed {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+[data-theme="dark"] .badge-disposed {
+    background: var(--gray-700);
+    color: var(--gray-300);
+}
+
+/* ==========================================
+   BADGE SIZES
+   ========================================== */
+.badge-sm {
+    font-size: 0.6rem;
+    padding: 0.05rem 0.5rem;
+}
+
+.badge-lg {
+    font-size: var(--font-size-sm);
+    padding: 0.25rem 1rem;
+}
+
+/* ==========================================
+   BADGE WITH ICON
+   ========================================== */
+.badge-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.badge-icon .badge-icon-svg {
+    width: 12px;
+    height: 12px;
+}

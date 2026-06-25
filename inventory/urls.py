@@ -1,13 +1,21 @@
 from django.urls import path
-
 from . import views
 
 
 urlpatterns = [
+    # Authentication URLs
     path("login/", views.AuthLoginView.as_view(), name="login"),
     path("signup/", views.SignUpView.as_view(), name="signup"),
     path("logout/", views.AuthLogoutView.as_view(), name="logout"),
+    
+    # Dashboard
     path("", views.DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", views.DashboardView.as_view(), name="dashboard_redirect"),
+    
+    # Settings
+    path("settings/", views.SettingsView.as_view(), name="settings"),
+    
+    # API URLs
     path("api/assets", views.AssetAPIListView.as_view(), name="api_asset_list"),
     path("api/assets/", views.AssetAPIListView.as_view(), name="api_asset_list_slash"),
     path(
@@ -40,6 +48,8 @@ urlpatterns = [
         views.EmployeeAPIDetailView.as_view(),
         name="api_employee_detail",
     ),
+    
+    # Asset URLs
     path("assets/", views.AssetListView.as_view(), name="asset_list"),
     path(
         "assets/export/csv/",
@@ -51,6 +61,10 @@ urlpatterns = [
     path("assets/<int:pk>/", views.AssetDetailView.as_view(), name="asset_detail"),
     path("assets/<int:pk>/edit/", views.AssetUpdateView.as_view(), name="asset_edit"),
     path("assets/<int:pk>/delete/", views.AssetDeleteView.as_view(), name="asset_delete"),
+    path("assets/<int:pk>/assign/", views.AssignAssetView.as_view(), name="assign_asset"),
+    path("assets/<int:pk>/return/", views.ReturnAssetView.as_view(), name="return_asset"),
+    
+    # Employee URLs
     path("employees/", views.EmployeeListView.as_view(), name="employee_list"),
     path("employees/add/", views.EmployeeCreateView.as_view(), name="employee_add"),
     path(
@@ -63,6 +77,4 @@ urlpatterns = [
         views.EmployeeDeleteView.as_view(),
         name="employee_delete",
     ),
-    path("assets/<int:pk>/assign/", views.AssignAssetView.as_view(), name="assign_asset"),
-    path("assets/<int:pk>/return/", views.ReturnAssetView.as_view(), name="return_asset"),
 ]

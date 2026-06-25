@@ -6,30 +6,58 @@
 {% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/auth.css' %}">
+    <style>
+        /* Hide sidebar and topbar on auth pages */
+        .sidebar, .topbar, .sidebar-overlay {
+            display: none !important;
+        }
+        .main-wrapper {
+            margin-left: 0 !important;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+        }
+        body {
+            background: #0f172a;
+        }
+        main {
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        .messages-container {
+            display: none !important;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
 
 {% if page == 'login' %}
-    <!-- ============================================ -->
-    <!-- LOGIN PAGE                                   -->
-    <!-- ============================================ -->
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-icon">🔐</div>
+                <div class="auth-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <span>ITAM System</span>
+                </div>
                 <h1>Welcome Back</h1>
                 <p>Sign in to manage your IT assets</p>
             </div>
 
             {% if form.errors %}
-                <div class="error-message">
+                <div class="auth-error">
                     Invalid username or password. Please try again.
                 </div>
             {% endif %}
 
-            <form method="post" class="auth-form">
+            <form method="post" class="auth-form" action="{% url 'login' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_username" class="form-label">Username</label>
@@ -54,19 +82,23 @@
     </div>
 
 {% elif page == 'signup' %}
-    <!-- ============================================ -->
-    <!-- SIGN UP PAGE                                -->
-    <!-- ============================================ -->
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-icon">📝</div>
+                <div class="auth-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <span>ITAM System</span>
+                </div>
                 <h1>Create Account</h1>
                 <p>Join ITAM System to manage your assets</p>
             </div>
 
             {% if form.errors %}
-                <div class="error-message">
+                <div class="auth-error">
                     <ul>
                         {% for field, errors in form.errors.items %}
                             {% for error in errors %}
@@ -77,7 +109,7 @@
                 </div>
             {% endif %}
 
-            <form method="post" class="auth-form">
+            <form method="post" class="auth-form" action="{% url 'signup' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_username" class="form-label">Username</label>
@@ -108,19 +140,23 @@
     </div>
 
 {% elif page == 'logout' %}
-    <!-- ============================================ -->
-    <!-- LOGOUT PAGE                                 -->
-    <!-- ============================================ -->
     <div class="auth-container">
         <div class="auth-card logout-card">
             <div class="auth-header">
-                <div class="auth-icon-large">👋</div>
-                <h1>You've Been Logged Out</h1>
+                <div class="auth-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <span>ITAM System</span>
+                </div>
+                <h1>Logged Out</h1>
                 <p class="auth-message">
                     You have successfully logged out of the ITAM System.
                 </p>
                 <p class="auth-submessage">
-                    Thank you for using our service. We hope to see you again soon!
+                    Thank you for using our service.
                 </p>
             </div>
             <div class="auth-actions">
@@ -131,7 +167,6 @@
     </div>
 
 {% else %}
-    <!-- Fallback: Redirect to login -->
     <meta http-equiv="refresh" content="0; url={% url 'login' %}">
 {% endif %}
 

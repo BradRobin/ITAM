@@ -4,13 +4,12 @@
 {% block title %}Delete Asset{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/forms.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="delete-confirmation-container">
         <div class="delete-confirmation-card">
-            <div class="delete-icon">🗑️</div>
             <h1>Delete Asset</h1>
             <p class="delete-warning">
                 Are you sure you want to delete <strong>"{{ object.name }}"</strong>?
@@ -47,5 +46,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/forms.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/forms.js' %}"></script>
 {% endblock %}

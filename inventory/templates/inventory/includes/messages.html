@@ -1,0 +1,10 @@
+{% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <span class="alert-message">{{ message }}</span>
+                <button class="alert-close" onclick="this.parentElement.remove();" aria-label="Close alert">&times;</button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
