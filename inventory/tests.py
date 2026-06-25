@@ -2,7 +2,7 @@ import datetime
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -507,6 +507,25 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.json()["status"], "available")
         self.assertEqual(response.json()["status_label"], "Available")
         self.assertTrue(response.json()["date_created"].startswith(timezone.localdate().isoformat()))
+
+    @override_settings(TIME_ZONE="Africa/Nairobi")
+    def test_asset_api_serializes_created_timestamp_in_local_timezone(self):
+        self.client.force_login(self.user)
+        created_at = datetime.datetime(
+            2026,
+            6,
+            25,
+            8,
+            0,
+            tzinfo=datetime.timezone.utc,
+        )
+        self.asset.date_created = created_at
+        self.asset.save(update_fields=["date_created"])
+
+        response = self.client.get(reverse("api_asset_detail", kwargs={"pk": self.asset.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["date_created"], "2026-06-25T11:00:00+03:00")
 
     def test_asset_api_return_updates_calendar_dates(self):
         self.client.force_login(self.admin)
