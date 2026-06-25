@@ -28,6 +28,13 @@ class Asset(models.Model):
 
     class Meta:
         ordering = ["name", "serial_number"]
+        indexes = [
+            models.Index(fields=["status"], name="asset_status_idx"),
+            models.Index(fields=["type"], name="asset_type_idx"),
+            models.Index(fields=["date_created"], name="asset_created_idx"),
+            models.Index(fields=["status", "type"], name="asset_status_type_idx"),
+            models.Index(fields=["name", "serial_number"], name="asset_name_serial_idx"),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.serial_number})"
@@ -40,6 +47,11 @@ class Employee(models.Model):
 
     class Meta:
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"], name="employee_name_idx"),
+            models.Index(fields=["department"], name="employee_department_idx"),
+            models.Index(fields=["email"], name="employee_email_idx"),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -61,6 +73,24 @@ class Assignment(models.Model):
 
     class Meta:
         ordering = ["-date_assigned", "-id"]
+        indexes = [
+            models.Index(
+                fields=["asset", "date_returned"],
+                name="assignment_asset_return_idx",
+            ),
+            models.Index(
+                fields=["employee", "date_returned"],
+                name="assignment_emp_return_idx",
+            ),
+            models.Index(
+                fields=["asset", "-date_assigned"],
+                name="assignment_asset_date_idx",
+            ),
+            models.Index(
+                fields=["employee", "-date_assigned"],
+                name="assignment_emp_date_idx",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.asset} assigned to {self.employee}"
@@ -79,6 +109,11 @@ class MaintenanceLog(models.Model):
 
     class Meta:
         ordering = ["-date", "-id"]
+        indexes = [
+            models.Index(fields=["asset", "-date"], name="maintenance_asset_date_idx"),
+            models.Index(fields=["date"], name="maintenance_date_idx"),
+            models.Index(fields=["resolved", "date"], name="maintenance_resolved_idx"),
+        ]
 
     def __str__(self) -> str:
         return f"{self.asset} maintenance on {self.date}"
