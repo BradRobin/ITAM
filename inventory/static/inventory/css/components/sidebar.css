@@ -21,6 +21,9 @@
     background: #0f1a2e;
 }
 
+/* ==========================================
+   SIDEBAR BRAND
+   ========================================== */
 .sidebar-brand {
     display: flex;
     align-items: center;
@@ -48,6 +51,9 @@
     color: #ffffff;
 }
 
+/* ==========================================
+   SIDEBAR NAVIGATION
+   ========================================== */
 .sidebar-nav {
     flex: 1;
     padding: 0.75rem 0.5rem;
@@ -132,6 +138,9 @@
     transition: opacity 0.2s ease;
 }
 
+/* ==========================================
+   SIDEBAR BOTTOM
+   ========================================== */
 .sidebar-bottom {
     margin-top: auto;
     padding: 0.5rem 0.5rem 0.75rem;
@@ -210,6 +219,9 @@
     border-top-color: rgba(255, 255, 255, 0.04);
 }
 
+/* ==========================================
+   SIDEBAR OVERLAY
+   ========================================== */
 .sidebar-overlay {
     position: fixed;
     top: 0;
@@ -228,6 +240,56 @@
     visibility: visible;
 }
 
+/* ==========================================
+   SIDEBAR TOGGLE BUTTON (Hamburger)
+   ========================================== */
+.sidebar-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.sidebar-toggle span {
+    display: block;
+    height: 2.5px;
+    width: 100%;
+    background: var(--text-primary, #1e293b);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .sidebar-toggle span {
+    background: #e2e8f0;
+}
+
+.sidebar-toggle.open span:nth-child(1) {
+    transform: translateY(7.5px) rotate(45deg);
+}
+
+.sidebar-toggle.open span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.sidebar-toggle.open span:nth-child(3) {
+    transform: translateY(-7.5px) rotate(-45deg);
+}
+
+.sidebar-toggle:hover {
+    opacity: 0.8;
+}
+
+/* ==========================================
+   RESPONSIVE - Mobile
+   ========================================== */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
@@ -242,10 +304,20 @@
         opacity: 1;
         visibility: visible;
     }
+    
+    /* Show toggle button on mobile */
+    .sidebar-toggle {
+        display: flex !important;
+    }
 }
 
 @media (min-width: 769px) {
     .sidebar-overlay {
         display: none;
+    }
+    
+    /* Hide toggle button on desktop */
+    .sidebar-toggle {
+        display: none !important;
     }
 }

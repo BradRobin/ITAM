@@ -26,7 +26,7 @@
     var statsObserver = null;
     
     // ============================================
-    // Greeting Function
+    // Greeting Function with Font Awesome Icons
     // ============================================
     function getGreeting() {
         var hour = new Date().getHours();
@@ -35,16 +35,16 @@
         
         if (hour >= 5 && hour < 12) {
             message = 'Good Morning';
-            icon = '🌅';
+            icon = 'fa-sun';
         } else if (hour >= 12 && hour < 17) {
             message = 'Good Afternoon';
-            icon = '☀️';
+            icon = 'fa-cloud-sun';
         } else if (hour >= 17 && hour < 21) {
             message = 'Good Evening';
-            icon = '🌆';
+            icon = 'fa-moon';
         } else {
             message = 'Good Night';
-            icon = '🌙';
+            icon = 'fa-star';
         }
         
         return { message: message, icon: icon };
@@ -62,7 +62,8 @@
             greetingElement.textContent = greeting.message;
         }
         if (iconElement) {
-            iconElement.textContent = greeting.icon;
+            // Update Font Awesome icon
+            iconElement.className = 'fas ' + greeting.icon + ' greeting-icon';
         }
     }
     
@@ -220,12 +221,10 @@
         var statsSection = document.querySelector('.dashboard-stats');
         if (!statsSection) return;
         
-        // Create observer
         if ('IntersectionObserver' in window) {
             statsObserver = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
                     if (entry.isIntersecting) {
-                        // Reset and animate stats
                         resetStats();
                         animateStats();
                         animateProgressBars();
@@ -239,7 +238,6 @@
             
             statsObserver.observe(statsSection);
         } else {
-            // Fallback for older browsers
             animateStats();
             animateProgressBars();
             animateOverdueCards();
@@ -272,6 +270,7 @@
     // Refresh Dashboard Data
     // ============================================
     function refreshDashboardData() {
+        // Only update the clock - NO page reload
         updateClock();
     }
     
@@ -283,12 +282,17 @@
         
         updateGreeting();
         updateClock();
+        
+        // Update clock every second
         setInterval(updateClock, 1000);
+        
+        // Typewriter effect
         typewriterEffect();
         
         // Setup scroll observer for stats
         setupScrollObserver();
         
+        // Refresh data every minute (NO page reload)
         setInterval(refreshDashboardData, 60000);
         
         console.log('Dashboard module initialized.');

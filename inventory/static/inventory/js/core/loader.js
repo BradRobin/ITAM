@@ -196,18 +196,21 @@
     }
     
     // ============================================
-    // Show Loader on Navigation
+    // Show Loader on Navigation - FIXED: Only intercept data-loader links
     // ============================================
     function showLoaderOnNavigation(linksSelector) {
+        // Prevent duplicate interception
         if (navigationIntercepted) {
             return;
         }
         navigationIntercepted = true;
         
+        // ONLY intercept links with data-loader="true"
         var links = document.querySelectorAll(linksSelector || 'a[data-loader="true"]');
         links.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 var href = this.getAttribute('href');
+                // Skip if it's a javascript: link or empty href
                 if (!href || href === '#' || href.startsWith('javascript:')) {
                     return;
                 }
@@ -217,6 +220,9 @@
             });
         });
         
+        // REMOVED: The following code was causing the page to reload
+        // by intercepting ALL sidebar links
+        /*
         var sidebarLinks = document.querySelectorAll('.sidebar-link');
         sidebarLinks.forEach(function(link) {
             if (link.hasAttribute('data-loader')) {
@@ -231,6 +237,7 @@
                 showLoader('Loading');
             });
         });
+        */
     }
     
     // ============================================
@@ -242,6 +249,7 @@
         }
         ajaxIntercepted = true;
         
+        // Intercept fetch requests - ONLY for API calls
         if (typeof window.fetch === 'function') {
             var originalFetch = window.fetch;
             window.fetch = function() {
@@ -268,6 +276,7 @@
             };
         }
         
+        // Intercept XMLHttpRequest - ONLY for API calls
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function() {
             var args = arguments;
