@@ -40,8 +40,26 @@
             return;
         }
         
-        // Load initial count
-        loadNotificationCount();
+        // Check if we just came back from notifications page
+        var justViewed = sessionStorage.getItem('notifications_viewed');
+        if (justViewed === 'true') {
+            // Clear the badge immediately
+            updateBadge(0);
+            sessionStorage.removeItem('notifications_viewed');
+            // Fetch fresh count
+            fetchNotifications();
+        } else {
+            loadNotificationCount();
+        }
+        
+        // Listen for click on bell - clear badge immediately
+        bell.addEventListener('click', function(e) {
+            // Mark as viewed when clicking the bell
+            sessionStorage.setItem('notifications_viewed', 'true');
+            // Clear badge immediately
+            updateBadge(0);
+            // Allow navigation to proceed
+        });
         
         // Start polling for updates
         startPolling();
@@ -50,6 +68,20 @@
         document.addEventListener('new-notification', function(e) {
             if (e.detail && e.detail.count) {
                 updateBadge(e.detail.count);
+            }
+        });
+        
+        // Listen for page visibility change to refresh badge
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Page became visible again, check if notifications were viewed
+                var viewed = sessionStorage.getItem('notifications_viewed');
+                if (viewed === 'true') {
+                    updateBadge(0);
+                    sessionStorage.removeItem('notifications_viewed');
+                } else {
+                    fetchNotifications();
+                }
             }
         });
         
@@ -124,6 +156,7 @@
         } else {
             badge.classList.add('hidden');
             badge.classList.remove('many');
+            badge.textContent = '';
         }
     }
     
@@ -160,6 +193,7 @@
             if (data.success) {
                 updateBadge(0);
                 sessionStorage.removeItem('notification_count');
+                sessionStorage.setItem('notifications_viewed', 'true');
                 
                 // Dispatch event
                 document.dispatchEvent(new CustomEvent('notifications-cleared'));
@@ -222,14 +256,21 @@
         pollInterval = setInterval(function() {
             // Only poll if document is visible
             if (!document.hidden) {
-                fetchNotifications();
+                // Only fetch if not viewed recently
+                var viewed = sessionStorage.getItem('notifications_viewed');
+                if (viewed !== 'true') {
+                    fetchNotifications();
+                }
             }
         }, CONFIG.POLL_INTERVAL);
         
         // Also poll when page becomes visible again
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                fetchNotifications();
+                var viewed = sessionStorage.getItem('notifications_viewed');
+                if (viewed !== 'true') {
+                    fetchNotifications();
+                }
             }
         });
     }

@@ -33,7 +33,13 @@
                 <div class="notification-content-page">
                     <div class="notification-title-page">{{ notification.title }}</div>
                     <div class="notification-message-page">{{ notification.message }}</div>
-                    <div class="notification-time-page">{{ notification.time|timesince }} ago</div>
+                    <div class="notification-time-page">
+                        {% if notification.time %}
+                            {{ notification.time|timesince }} ago
+                        {% else %}
+                            Just now
+                        {% endif %}
+                    </div>
                 </div>
                 {% if not notification.read %}
                 <button class="notification-mark-read" data-id="{{ notification.id }}">
@@ -58,6 +64,19 @@
     (function() {
         'use strict';
 
+        function getCSRFToken() {
+            var cookieValue = null;
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.startsWith('csrftoken=')) {
+                    cookieValue = cookie.substring('csrftoken='.length, cookie.length);
+                    break;
+                }
+            }
+            return cookieValue || '';
+        }
+
         // Mark single notification as read
         document.querySelectorAll('.notification-mark-read').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
@@ -68,7 +87,7 @@
                 fetch('/api/notifications/' + id + '/read/', {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'X-CSRFToken': getCSRFToken(),
                         'Content-Type': 'application/json'
                     }
                 })
@@ -76,12 +95,12 @@
                 .then(function(data) {
                     if (data.success) {
                         item.classList.remove('unread');
-                        item.querySelector('.notification-mark-read')?.remove();
+                        var markBtn = item.querySelector('.notification-mark-read');
+                        if (markBtn) markBtn.remove();
                         // Update badge count
+                        var unreadCount = document.querySelectorAll('.notification-item-page.unread').length;
                         if (window.Notifications) {
-                            window.Notifications.updateBadge(
-                                parseInt(document.querySelectorAll('.notification-item-page.unread').length)
-                            );
+                            window.Notifications.updateBadge(unreadCount);
                         }
                     }
                 })
@@ -98,7 +117,7 @@
                 fetch('/api/notifications/mark-all-read/', {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'X-CSRFToken': getCSRFToken(),
                         'Content-Type': 'application/json'
                     }
                 })
@@ -107,7 +126,8 @@
                     if (data.success) {
                         document.querySelectorAll('.notification-item-page').forEach(function(item) {
                             item.classList.remove('unread');
-                            item.querySelector('.notification-mark-read')?.remove();
+                            var markBtn = item.querySelector('.notification-mark-read');
+                            if (markBtn) markBtn.remove();
                         });
                         markAllBtn.style.display = 'none';
                         if (window.Notifications) {
@@ -128,11 +148,19 @@
                     return;
                 }
                 var link = this.getAttribute('data-link');
-                if (link) {
+                if (link && link !== '#') {
                     window.location.href = link;
                 }
             });
         });
+
+        // Mark all as viewed when page loads - this clears the badge
+        sessionStorage.setItem('notifications_viewed', 'true');
+        
+        // Clear badge immediately when page loads
+        if (window.Notifications) {
+            window.Notifications.updateBadge(0);
+        }
 
     })();
 </script>

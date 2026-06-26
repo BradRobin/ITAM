@@ -1095,7 +1095,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['is_superuser'] = self.request.user.is_superuser
         return context
 
-
 # ============================================
 # NOTIFICATIONS
 # ============================================
@@ -1112,6 +1111,13 @@ class NotificationListView(LoginRequiredMixin, TemplateView):
         # Get real notifications from session
         notifications = self.request.session.get('notifications', [])
         
+        # Mark all notifications as read when viewing the page
+        for notification in notifications:
+            notification['read'] = True
+        
+        # Save the updated notifications back to session
+        self.request.session['notifications'] = notifications
+        
         # Convert time strings back to datetime objects for template
         display_notifications = []
         for notification in notifications:
@@ -1127,9 +1133,8 @@ class NotificationListView(LoginRequiredMixin, TemplateView):
                 notif_copy['time'] = timezone.now()
             display_notifications.append(notif_copy)
         
-        unread_count = sum(1 for n in display_notifications if not n.get('read', False))
         context['notifications'] = display_notifications
-        context['unread_count'] = unread_count
+        context['unread_count'] = 0  # All are now read
         return context
 
 
@@ -1213,3 +1218,110 @@ class NotificationMarkAllReadView(LoginRequiredMixin, View):
         
         request.session['notifications'] = notifications
         return JsonResponse({'success': True})
+    # ============================================
+# REPORTS VIEW
+# ============================================
+
+class ReportsView(LoginRequiredMixin, TemplateView):
+    """
+    Reports page with charts and analytics for assets
+    """
+    template_name = "inventory/reports.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Basic stats
+        total_assets = Asset.objects.count()
+        available_assets = Asset.objects.filter(status=Asset.AssetStatus.AVAILABLE).count()
+        assigned_assets = Asset.objects.filter(status=Asset.AssetStatus.ASSIGNED).count()
+        maintenance_assets = Asset.objects.filter(status=Asset.AssetStatus.UNDER_MAINTENANCE).count()
+        total_employees = Employee.objects.count()
+        
+        # Asset by type
+        asset_by_type = {}
+        for type_choice in Asset.AssetType.choices:
+            count = Asset.objects.filter(type=type_choice[0]).count()
+            if count > 0:
+                asset_by_type[type_choice[1]] = count
+        
+        # Asset by status
+        asset_by_status = {
+            'Available': available_assets,
+            'Assigned': assigned_assets,
+            'Under Maintenance': maintenance_assets
+        }
+        
+        # Monthly asset creation (last 6 months)
+        monthly_assets = []
+        for i in range(5, -1, -1):
+            month = timezone.now() - datetime.timedelta(days=30 * i)
+            start_date = month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if i == 0:
+                end_date = timezone.now()
+            else:
+                next_month = month.replace(day=28) + datetime.timedelta(days=4)
+                end_date = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            count = Asset.objects.filter(date_created__gte=start_date, date_created__lt=end_date).count()
+            monthly_assets.append({
+                'month': start_date.strftime('%b %Y'),
+                'count': count
+            })
+        
+        # Asset utilization rate
+        utilization_rate = (assigned_assets / total_assets * 100) if total_assets > 0 else 0
+        
+        # Maintenance logs (last 6 months)
+        maintenance_by_month = []
+        for i in range(5, -1, -1):
+            month = timezone.now() - datetime.timedelta(days=30 * i)
+            start_date = month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if i == 0:
+                end_date = timezone.now()
+            else:
+                next_month = month.replace(day=28) + datetime.timedelta(days=4)
+                end_date = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            count = MaintenanceLog.objects.filter(date__gte=start_date, date__lt=end_date).count()
+            maintenance_by_month.append({
+                'month': start_date.strftime('%b %Y'),
+                'count': count
+            })
+        
+        # Top 5 most assigned assets
+        top_assets = Asset.objects.annotate(
+            assignment_count=Count('assignments')
+        ).order_by('-assignment_count')[:5]
+        
+        top_assets_data = []
+        for asset in top_assets:
+            top_assets_data.append({
+                'name': asset.name,
+                'assignments': asset.assignment_count
+            })
+        
+        # Department distribution
+        department_counts = {}
+        for employee in Employee.objects.all():
+            dept = employee.department or 'Unassigned'
+            department_counts[dept] = department_counts.get(dept, 0) + 1
+        
+        # Overdue assets count
+        overdue_count = get_overdue_assets_queryset().count()
+        
+        context.update({
+            'total_assets': total_assets,
+            'available_assets': available_assets,
+            'assigned_assets': assigned_assets,
+            'maintenance_assets': maintenance_assets,
+            'total_employees': total_employees,
+            'asset_by_type': json.dumps(asset_by_type),
+            'asset_by_status': json.dumps(asset_by_status),
+            'monthly_assets': json.dumps(monthly_assets),
+            'maintenance_by_month': json.dumps(maintenance_by_month),
+            'top_assets_data': json.dumps(top_assets_data),
+            'department_counts': json.dumps(department_counts),
+            'utilization_rate': round(utilization_rate, 1),
+            'overdue_count': overdue_count,
+        })
+        
+        return context

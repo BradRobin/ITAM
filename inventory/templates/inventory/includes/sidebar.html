@@ -1,11 +1,7 @@
 {% load static %}
 <aside class="sidebar" id="sidebar" role="navigation">
     <div class="sidebar-brand">
-        <svg class="brand-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
+        <i class="fas fa-cubes brand-icon"></i>
         <span class="brand-text">ITAM System</span>
     </div>
     
@@ -16,12 +12,7 @@
                href="{% url 'dashboard' %}" 
                data-loader="true"
                data-loader-message="Loading Dashboard...">
-                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7" rx="1"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1"/>
-                </svg>
+                <i class="fas fa-th-large sidebar-icon"></i>
                 <span class="sidebar-label">Dashboard</span>
             </a>
         </li>
@@ -30,10 +21,7 @@
                href="{% url 'asset_list' %}" 
                data-loader="true"
                data-loader-message="Loading Assets...">
-                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
+                <i class="fas fa-laptop sidebar-icon"></i>
                 <span class="sidebar-label">Assets</span>
             </a>
         </li>
@@ -42,11 +30,17 @@
                href="{% url 'employee_list' %}" 
                data-loader="true"
                data-loader-message="Loading Employees...">
-                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
+                <i class="fas fa-users sidebar-icon"></i>
                 <span class="sidebar-label">Employees</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'reports' in request.path %}active{% endif %}" 
+               href="{% url 'reports' %}" 
+               data-loader="true"
+               data-loader-message="Loading Reports...">
+                <i class="fas fa-chart-bar sidebar-icon"></i>
+                <span class="sidebar-label">Reports</span>
             </a>
         </li>
         <li class="sidebar-item">
@@ -54,11 +48,7 @@
                href="{% url 'profile' %}" 
                data-loader="true"
                data-loader-message="Loading Profile...">
-                <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                    <path d="M12 11c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
+                <i class="fas fa-user-circle sidebar-icon"></i>
                 <span class="sidebar-label">My Profile</span>
             </a>
         </li>
@@ -73,20 +63,13 @@
                    href="{% url 'settings' %}" 
                    data-loader="true"
                    data-loader-message="Loading Settings...">
-                    <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
+                    <i class="fas fa-cog sidebar-icon"></i>
                     <span class="sidebar-label">Settings</span>
                 </a>
             </li>
             <li class="sidebar-item">
                 <a class="sidebar-link sidebar-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">
-                    <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
+                    <i class="fas fa-sign-out-alt sidebar-icon"></i>
                     <span class="sidebar-label">Logout</span>
                 </a>
             </li>

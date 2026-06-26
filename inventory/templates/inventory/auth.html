@@ -7,6 +7,47 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/auth.css' %}">
+    <style>
+        .sidebar, .topbar, .sidebar-overlay {
+            display: none !important;
+        }
+        
+        .main-wrapper {
+            margin-left: 0 !important;
+            min-height: 100vh !important;
+            height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #0f172a !important;
+            width: 100% !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        
+        main {
+            padding: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 1 !important;
+            background: transparent !important;
+            overflow: hidden !important;
+        }
+        
+        .messages-container {
+            display: none !important;
+        }
+        
+        body {
+            background: #0f172a !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -33,7 +74,7 @@
                 </div>
             {% endif %}
 
-            <form method="post" class="auth-form" action="{% url 'login' %}">
+            <form method="post" class="auth-form" id="loginForm" action="{% url 'login' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_username" class="form-label">Username</label>
@@ -48,7 +89,10 @@
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Sign In</button>
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="spinner-inline"></span>
+                </button>
             </form>
 
             <div class="auth-divider">or</div>
@@ -87,7 +131,7 @@
                 </div>
             {% endif %}
 
-            <form method="post" class="auth-form" action="{% url 'signup' %}">
+            <form method="post" class="auth-form" id="signupForm" action="{% url 'signup' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_username" class="form-label">Username</label>
@@ -111,7 +155,10 @@
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success">Create Account</button>
+                <button type="submit" class="btn btn-success" id="signupBtn">
+                    <span class="btn-text">Create Account</span>
+                    <span class="spinner-inline"></span>
+                </button>
             </form>
 
             <div class="auth-divider">or</div>
@@ -154,6 +201,7 @@
     (function() {
         'use strict';
 
+        // Password toggle functionality
         function togglePassword(inputId, toggleId) {
             var input = document.getElementById(inputId);
             var toggle = document.getElementById(toggleId);
@@ -175,6 +223,28 @@
         togglePassword('id_password', 'togglePasswordLogin');
         togglePassword('id_password1', 'togglePassword1');
         togglePassword('id_password2', 'togglePassword2');
+
+        // Button loading state for Login
+        var loginForm = document.getElementById('loginForm');
+        var loginBtn = document.getElementById('loginBtn');
+        
+        if (loginForm && loginBtn) {
+            loginForm.addEventListener('submit', function() {
+                loginBtn.classList.add('btn-loading');
+                loginBtn.querySelector('.btn-text').textContent = 'Signing In...';
+            });
+        }
+
+        // Button loading state for Signup
+        var signupForm = document.getElementById('signupForm');
+        var signupBtn = document.getElementById('signupBtn');
+        
+        if (signupForm && signupBtn) {
+            signupForm.addEventListener('submit', function() {
+                signupBtn.classList.add('btn-loading');
+                signupBtn.querySelector('.btn-text').textContent = 'Creating Account...';
+            });
+        }
 
     })();
 </script>

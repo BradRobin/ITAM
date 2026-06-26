@@ -16,6 +16,7 @@
         }
         if (path.includes('assets')) return 'assets';
         if (path.includes('employees')) return 'employees';
+        if (path.includes('reports')) return 'reports';
         if (path.includes('assign')) return 'assignments';
         if (path.includes('login') || path.includes('signup')) return 'auth';
         if (path.includes('logout')) return 'auth';
@@ -57,32 +58,24 @@
             case 'dashboard':
                 if (typeof window.Dashboard !== 'undefined' && typeof window.Dashboard.init === 'function') {
                     window.Dashboard.init();
-                } else {
-                    console.warn('Dashboard module not loaded.');
                 }
                 break;
                 
             case 'assets':
                 if (typeof window.AssetManager !== 'undefined' && typeof window.AssetManager.init === 'function') {
                     window.AssetManager.init();
-                } else {
-                    console.warn('AssetManager module not loaded.');
                 }
                 break;
                 
             case 'employees':
                 if (typeof window.EmployeeManager !== 'undefined' && typeof window.EmployeeManager.init === 'function') {
                     window.EmployeeManager.init();
-                } else {
-                    console.warn('EmployeeManager module not loaded.');
                 }
                 break;
                 
-            case 'assignments':
-                if (typeof window.AssignmentManager !== 'undefined' && typeof window.AssignmentManager.init === 'function') {
-                    window.AssignmentManager.init();
-                } else {
-                    console.warn('AssignmentManager module not loaded.');
+            case 'reports':
+                if (typeof window.Reports !== 'undefined' && typeof window.Reports.init === 'function') {
+                    // Reports will initialize with data from template
                 }
                 break;
                 
@@ -101,7 +94,7 @@
     }
     
     // ============================================
-    // Setup Loader - FIXED
+    // Setup Loader
     // ============================================
     function setupLoader() {
         if (typeof window.Loader !== 'undefined') {
@@ -110,11 +103,11 @@
                 if (typeof window.Loader.showOnSubmit === 'function') {
                     window.Loader.showOnSubmit('form[data-loader="true"]');
                 }
-                // Show loader on navigation links
+                // Show loader on navigation links - IMMEDIATE!
                 if (typeof window.Loader.showOnNavigation === 'function') {
                     window.Loader.showOnNavigation('a[data-loader="true"]');
                 }
-                // Show loader on AJAX requests
+                // Show loader on AJAX requests (API calls only)
                 if (typeof window.Loader.showOnAjax === 'function') {
                     window.Loader.showOnAjax();
                 }
@@ -131,27 +124,20 @@
         try {
             console.log('ITAM System initializing...');
             
-            // Load core modules check
             loadCoreModules();
-            
-            // Setup loader
             setupLoader();
-            
-            // Initialize forms
             initForms();
             
-            // Detect current page and load modules
             var page = getCurrentPage();
             loadPageModules(page);
             
-            // Dispatch ready event
             document.dispatchEvent(new CustomEvent('itam-ready', {
                 detail: { page: page }
             }));
             
             console.log('ITAM System ready. Page:', page);
             
-            // Hide loader if it was shown during page load
+            // Hide loader after page load
             if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
                 setTimeout(function() {
                     try {
@@ -164,41 +150,24 @@
             
         } catch (error) {
             console.error('Failed to initialize application:', error);
-            try {
-                if (window.Loader && typeof window.Loader.hide === 'function') {
-                    window.Loader.hide();
-                }
-            } catch (e) {
-                // Ignore
-            }
-            if (window.Utils && typeof window.Utils.showToast === 'function') {
-                window.Utils.showToast('Failed to initialize application. Please refresh the page.', 'error');
+            if (window.Loader && typeof window.Loader.hide === 'function') {
+                window.Loader.hide();
             }
         }
     }
     
     // ============================================
-    // Start Application
+    // Start Application - Only once
     // ============================================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            try {
-                if (typeof window.Loader !== 'undefined' && window.Loader.show) {
-                    window.Loader.show('Loading ITAM System...');
-                }
-            } catch (e) {
-                // Ignore
-            }
+            if (window._itam_initialized) return;
+            window._itam_initialized = true;
             initApp();
         });
     } else {
-        try {
-            if (typeof window.Loader !== 'undefined' && window.Loader.show) {
-                window.Loader.show('Loading ITAM System...');
-            }
-        } catch (e) {
-            // Ignore
-        }
+        if (window._itam_initialized) return;
+        window._itam_initialized = true;
         initApp();
     }
     
@@ -207,7 +176,6 @@
     // ============================================
     window.MainApp = {
         getCurrentPage: getCurrentPage,
-        init: initApp,
         refresh: function() {
             var page = getCurrentPage();
             loadPageModules(page);

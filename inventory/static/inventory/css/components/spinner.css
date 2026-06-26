@@ -11,8 +11,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,7 +21,8 @@
     z-index: 9999;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loading-overlay.active {
@@ -32,15 +34,32 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-4, 1rem);
+    gap: 1.25rem;
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.loading-overlay.active .spinner-container {
+    transform: scale(1);
 }
 
 .loading-overlay .spinner-text {
     color: #ffffff;
-    font-size: var(--font-size-sm, 0.875rem);
-    font-weight: var(--font-weight-medium, 500);
+    font-size: 0.95rem;
+    font-weight: 500;
     letter-spacing: 0.05em;
     animation: pulseText 1.5s ease-in-out infinite;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.loading-overlay .spinner-subtext {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    margin: -0.5rem 0 0 0;
+    animation: pulseText 2s ease-in-out infinite 0.5s;
 }
 
 /* ==========================================
@@ -49,22 +68,69 @@
 .spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.1);
+    border: 3.5px solid rgba(255, 255, 255, 0.08);
     border-top-color: var(--primary-500, #3b82f6);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.8s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+    position: relative;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
+}
+
+/* Spinner with glow effect */
+.spinner-glow {
+    animation: spin 0.8s cubic-bezier(0.6, 0, 0.4, 1) infinite,
+               glow 2s ease-in-out infinite;
 }
 
 .spinner-sm {
     width: 24px;
     height: 24px;
-    border-width: 3px;
+    border-width: 2.5px;
 }
 
 .spinner-lg {
     width: 64px;
     height: 64px;
+    border-width: 4px;
+}
+
+.spinner-xl {
+    width: 80px;
+    height: 80px;
     border-width: 5px;
+}
+
+/* Spinner with multiple rings */
+.spinner-multi {
+    position: relative;
+}
+
+.spinner-multi .spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.spinner-multi .spinner:nth-child(1) {
+    animation: spin 1s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+
+.spinner-multi .spinner:nth-child(2) {
+    width: 36px;
+    height: 36px;
+    top: 6px;
+    left: 6px;
+    border-top-color: var(--success-500, #22c55e);
+    animation: spin 1.5s cubic-bezier(0.6, 0, 0.4, 1) infinite reverse;
+}
+
+.spinner-multi .spinner:nth-child(3) {
+    width: 24px;
+    height: 24px;
+    top: 12px;
+    left: 12px;
+    border-top-color: var(--warning-500, #f59e0b);
+    animation: spin 2s cubic-bezier(0.6, 0, 0.4, 1) infinite;
 }
 
 /* ==========================================
@@ -90,6 +156,18 @@
     border-top-color: #ffffff;
 }
 
+.spinner-purple {
+    border-top-color: #8b5cf6;
+}
+
+.spinner-pink {
+    border-top-color: #ec4899;
+}
+
+.spinner-cyan {
+    border-top-color: #06b6d4;
+}
+
 /* ==========================================
    INLINE SPINNER (for buttons)
    ========================================== */
@@ -100,9 +178,26 @@
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-top-color: #ffffff;
     border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    margin-right: var(--spacing-2, 0.5rem);
+    animation: spin 0.6s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+    margin-right: 0.5rem;
     vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.spinner-inline-dark {
+    border-color: rgba(0, 0, 0, 0.15);
+    border-top-color: var(--text-primary, #1e293b);
+}
+
+/* Button with spinner */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading .spinner-inline {
+    margin-right: 0.5rem;
 }
 
 /* ==========================================
@@ -116,6 +211,10 @@
     overflow: hidden;
 }
 
+[data-theme="dark"] .skeleton {
+    background: var(--bg-tertiary, #334155);
+}
+
 .skeleton::after {
     content: '';
     position: absolute;
@@ -126,15 +225,25 @@
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.08),
         transparent
     );
     animation: shimmerSlide 1.5s ease-in-out infinite;
 }
 
+[data-theme="dark"] .skeleton::after {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.04),
+        transparent
+    );
+}
+
 .skeleton-text {
     height: 12px;
-    margin-bottom: var(--spacing-2, 0.5rem);
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
 }
 
 .skeleton-text:last-child {
@@ -153,7 +262,8 @@
 .skeleton-title {
     height: 28px;
     width: 40%;
-    margin-bottom: var(--spacing-4, 1rem);
+    margin-bottom: 1rem;
+    border-radius: 6px;
 }
 
 .skeleton-card {
@@ -167,19 +277,102 @@
     border-radius: 50%;
 }
 
+.skeleton-avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.skeleton-image {
+    width: 100%;
+    height: 200px;
+    border-radius: var(--radius-md, 8px);
+}
+
+/* Skeleton grid layout */
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.skeleton-grid .skeleton-card {
+    height: 150px;
+}
+
+/* Skeleton list */
+.skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.skeleton-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-card, #ffffff);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--border-color, #e2e8f0);
+}
+
+[data-theme="dark"] .skeleton-list-item {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border-color, #334155);
+}
+
 /* ==========================================
    TABLE SKELETON
    ========================================== */
 .skeleton-table-row {
     display: flex;
-    gap: var(--spacing-4, 1rem);
-    padding: var(--spacing-3, 0.75rem) 0;
+    gap: 1rem;
+    padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+[data-theme="dark"] .skeleton-table-row {
+    border-color: var(--border-color, #334155);
 }
 
 .skeleton-table-row .skeleton {
     flex: 1;
     height: 16px;
+}
+
+/* ==========================================
+   PROGRESS LOADER
+   ========================================== */
+.progress-loader {
+    width: 200px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-loader .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-500, #3b82f6), var(--primary-400, #60a5fa));
+    border-radius: 9999px;
+    animation: progress 1.5s ease-in-out infinite;
+    width: 0;
+}
+
+@keyframes progress {
+    0% {
+        width: 0;
+        transform: translateX(-100%);
+    }
+    50% {
+        width: 100%;
+        transform: translateX(0);
+    }
+    100% {
+        width: 0;
+        transform: translateX(100%);
+    }
 }
 
 /* ==========================================
@@ -194,12 +387,23 @@
     }
 }
 
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.25);
+    }
+}
+
 @keyframes pulseText {
     0%, 100% {
-        opacity: 0.6;
+        opacity: 0.7;
+        transform: scale(1);
     }
     50% {
         opacity: 1;
+        transform: scale(1.02);
     }
 }
 
@@ -224,9 +428,37 @@
     }
 }
 
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* ==========================================
    DARK MODE
    ========================================== */
+[data-theme="dark"] .loading-overlay {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
 [data-theme="dark"] .skeleton {
     background: var(--bg-tertiary, #334155);
 }
@@ -235,11 +467,76 @@
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.04),
         transparent
     );
 }
 
-[data-theme="dark"] .loading-overlay {
-    background: rgba(0, 0, 0, 0.8);
+[data-theme="dark"] .skeleton-list-item {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border-color, #334155);
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+    .loading-overlay .spinner-text {
+        font-size: 0.85rem;
+    }
+    
+    .spinner-lg {
+        width: 48px;
+        height: 48px;
+        border-width: 3.5px;
+    }
+    
+    .spinner-xl {
+        width: 56px;
+        height: 56px;
+        border-width: 4px;
+    }
+    
+    .skeleton-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .loading-overlay .spinner-text {
+        font-size: 0.8rem;
+    }
+    
+    .spinner-lg {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+    }
+    
+    .loading-overlay .spinner-container {
+        gap: 0.75rem;
+    }
+    
+    .skeleton-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY
+   ========================================== */
+@media (prefers-reduced-motion: reduce) {
+    .spinner,
+    .spinner-inline,
+    .loading-overlay .spinner-text,
+    .skeleton,
+    .skeleton::after,
+    .progress-loader .progress-bar {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+    
+    .loading-overlay {
+        transition: opacity 0.01ms ease !important;
+    }
 }

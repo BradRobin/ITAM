@@ -9,8 +9,8 @@
     // ============================================
     // Configuration
     // ============================================
-    var TYPING_SPEED = 80;
-    var ERASING_SPEED = 40;
+    var TYPING_SPEED = 70;
+    var ERASING_SPEED = 35;
     var PAUSE_BEFORE_ERASE = 3000;
     var PAUSE_BEFORE_TYPING = 500;
     
@@ -21,6 +21,9 @@
         'Stay on top of maintenance',
         'Your IT assets, organized'
     ];
+    
+    var isStatsAnimated = false;
+    var statsObserver = null;
     
     // ============================================
     // Greeting Function
@@ -165,6 +168,9 @@
             var increment = target / steps;
             var stepTime = duration / steps;
             
+            // Reset to 0 first
+            stat.textContent = '0';
+            
             var timer = setInterval(function() {
                 current += increment;
                 if (current >= target) {
@@ -177,20 +183,88 @@
     }
     
     // ============================================
+    // Animate Progress Bars
+    // ============================================
+    function animateProgressBars() {
+        var progressFills = document.querySelectorAll('.progress-fill');
+        progressFills.forEach(function(fill) {
+            var width = fill.style.width;
+            fill.style.width = '0';
+            setTimeout(function() {
+                fill.style.width = width;
+            }, 100);
+        });
+    }
+    
+    // ============================================
     // Animate Overdue Cards
     // ============================================
     function animateOverdueCards() {
-        var cards = document.querySelectorAll('.overdue-card[data-delay]');
-        cards.forEach(function(card) {
-            var delay = parseInt(card.getAttribute('data-delay')) * 100;
+        var cards = document.querySelectorAll('.overdue-card');
+        cards.forEach(function(card, index) {
+            var delay = (index + 1) * 100;
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
-            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.classList.remove('visible');
             
             setTimeout(function() {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
+                card.classList.add('visible');
             }, delay);
+        });
+    }
+    
+    // ============================================
+    // Setup Scroll Observer for Stats
+    // ============================================
+    function setupScrollObserver() {
+        var statsSection = document.querySelector('.dashboard-stats');
+        if (!statsSection) return;
+        
+        // Create observer
+        if ('IntersectionObserver' in window) {
+            statsObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        // Reset and animate stats
+                        resetStats();
+                        animateStats();
+                        animateProgressBars();
+                        animateOverdueCards();
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            statsObserver.observe(statsSection);
+        } else {
+            // Fallback for older browsers
+            animateStats();
+            animateProgressBars();
+            animateOverdueCards();
+        }
+    }
+    
+    // ============================================
+    // Reset Stats for Re-animation
+    // ============================================
+    function resetStats() {
+        var statNumbers = document.querySelectorAll('.stat-number[data-count]');
+        statNumbers.forEach(function(stat) {
+            stat.textContent = '0';
+        });
+        
+        var progressFills = document.querySelectorAll('.progress-fill');
+        progressFills.forEach(function(fill) {
+            fill.style.width = '0';
+        });
+        
+        var cards = document.querySelectorAll('.overdue-card');
+        cards.forEach(function(card) {
+            card.classList.remove('visible');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
         });
     }
     
@@ -208,19 +282,12 @@
         console.log('Dashboard module initializing...');
         
         updateGreeting();
-        
         updateClock();
         setInterval(updateClock, 1000);
-        
         typewriterEffect();
         
-        setTimeout(function() {
-            animateStats();
-        }, 300);
-        
-        setTimeout(function() {
-            animateOverdueCards();
-        }, 500);
+        // Setup scroll observer for stats
+        setupScrollObserver();
         
         setInterval(refreshDashboardData, 60000);
         
@@ -233,7 +300,9 @@
     window.Dashboard = {
         init: init,
         refresh: refreshDashboardData,
-        getGreeting: getGreeting
+        getGreeting: getGreeting,
+        animateStats: animateStats,
+        resetStats: resetStats
     };
     
     console.log('Dashboard module loaded.');

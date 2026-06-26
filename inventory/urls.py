@@ -23,6 +23,8 @@ urlpatterns = [
     path("api/notifications/", views.NotificationAPIView.as_view(), name="api_notifications"),
     path("api/notifications/<int:pk>/read/", views.NotificationMarkReadView.as_view(), name="api_notification_read"),
     path("api/notifications/mark-all-read/", views.NotificationMarkAllReadView.as_view(), name="api_notification_mark_all_read"),
+    # Reports
+path("reports/", views.ReportsView.as_view(), name="reports"),
     
     # API URLs
     path("api/assets", views.AssetAPIListView.as_view(), name="api_asset_list"),

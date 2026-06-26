@@ -19,6 +19,7 @@
     var spinner = null;
     var textEl = null;
     var ajaxIntercepted = false;
+    var navigationIntercepted = false;
     
     // ============================================
     // Create Loading Overlay
@@ -134,20 +135,52 @@
     }
     
     // ============================================
-    // Show Loader on Navigation
+    // Show Loader on Navigation - FIXED: Show loader immediately
     // ============================================
     function showLoaderOnNavigation(linksSelector) {
+        // Prevent duplicate interception
+        if (navigationIntercepted) {
+            return;
+        }
+        navigationIntercepted = true;
+        
         var links = document.querySelectorAll(linksSelector || 'a[data-loader="true"]');
         links.forEach(function(link) {
-            link.addEventListener('click', function() {
+            link.addEventListener('click', function(e) {
+                var href = this.getAttribute('href');
+                // Skip if it's a javascript: link or empty href
+                if (!href || href === '#' || href.startsWith('javascript:')) {
+                    return;
+                }
+                
                 var message = this.dataset.loaderMessage || 'Loading...';
                 showLoader(message);
+                
+                // The page will naturally navigate, loader will be hidden on page load
+                // Keep loader visible until page loads
+            });
+        });
+        
+        // Also intercept all sidebar links that don't have data-loader attribute
+        var sidebarLinks = document.querySelectorAll('.sidebar-link');
+        sidebarLinks.forEach(function(link) {
+            // Skip if already has data-loader
+            if (link.hasAttribute('data-loader')) {
+                return;
+            }
+            
+            link.addEventListener('click', function(e) {
+                var href = this.getAttribute('href');
+                if (!href || href === '#' || href.startsWith('javascript:')) {
+                    return;
+                }
+                showLoader('Loading...');
             });
         });
     }
     
     // ============================================
-    // Show Loader on AJAX Requests - FIXED
+    // Show Loader on AJAX Requests
     // ============================================
     function showLoaderOnAjax() {
         // Prevent duplicate interception
@@ -156,44 +189,56 @@
         }
         ajaxIntercepted = true;
         
-        // Intercept fetch requests
+        // Intercept fetch requests - ONLY for API calls
         if (typeof window.fetch === 'function') {
             var originalFetch = window.fetch;
             window.fetch = function() {
                 var args = arguments;
                 var url = args[0];
-                // Don't show loader for static files
-                if (typeof url === 'string' && 
-                    !url.includes('/static/') && 
-                    !url.includes('.css') && 
-                    !url.includes('.js') &&
-                    !url.includes('favicon') &&
-                    !url.includes('manifest')) {
+                var isApiCall = false;
+                
+                // Check if this is an API call
+                if (typeof url === 'string') {
+                    isApiCall = url.includes('/api/') || 
+                               (url.includes('?') && !url.includes('/static/') && 
+                                !url.includes('.css') && !url.includes('.js') &&
+                                !url.includes('favicon') && !url.includes('manifest'));
+                }
+                
+                if (isApiCall) {
                     showLoader('Loading data...');
                 }
+                
                 return originalFetch.apply(this, args).finally(function() {
-                    hideLoader();
+                    if (isApiCall) {
+                        hideLoader();
+                    }
                 });
             };
         }
         
-        // Intercept XMLHttpRequest
+        // Intercept XMLHttpRequest - ONLY for API calls
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function() {
             var args = arguments;
             var url = args[1];
-            if (typeof url === 'string' && 
-                !url.includes('/static/') && 
-                !url.includes('.css') && 
-                !url.includes('.js') &&
-                !url.includes('favicon') &&
-                !url.includes('manifest')) {
+            var isApiCall = false;
+            
+            if (typeof url === 'string') {
+                isApiCall = url.includes('/api/') || 
+                           (url.includes('?') && !url.includes('/static/') && 
+                            !url.includes('.css') && !url.includes('.js') &&
+                            !url.includes('favicon') && !url.includes('manifest'));
+            }
+            
+            if (isApiCall) {
                 showLoader('Loading data...');
             }
+            
             var xhr = this;
             var originalOnReadyStateChange = xhr.onreadystatechange;
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
+                if (xhr.readyState === 4 && isApiCall) {
                     hideLoader();
                 }
                 if (originalOnReadyStateChange) {
@@ -201,7 +246,9 @@
                 }
             };
             xhr.addEventListener('loadend', function() {
-                hideLoader();
+                if (isApiCall) {
+                    hideLoader();
+                }
             });
             return originalXHROpen.apply(this, args);
         };
