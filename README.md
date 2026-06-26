@@ -20,6 +20,7 @@ ITAM is a Django-based internal tool for tracking company IT assets, assignments
 - PostgreSQL via Supabase
 - `django-environ` for environment configuration
 - `gunicorn` and `whitenoise` for production hosting
+- Render runtime pinned via `runtime.txt`
 
 ## Local Setup
 

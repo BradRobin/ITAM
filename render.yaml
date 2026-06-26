@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: python manage.py migrate && gunicorn tracker.wsgi:application
+    startCommand: python manage.py migrate && python -m gunicorn tracker.wsgi:application
     envVars:
       - key: SECRET_KEY
         generateValue: true
