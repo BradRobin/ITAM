@@ -120,6 +120,11 @@ class AssignmentStateMachineViewTests(TestCase):
             ],
         )
 
+    def test_employee_department_abbreviation_supports_legacy_departments(self):
+        employee = Employee(name="Legacy Employee", department="IT Operations")
+
+        self.assertEqual(employee.department_abbreviation, "IO")
+
     def test_assign_asset_creates_assignment_and_marks_asset_assigned(self):
         response = self.client.post(
             reverse("assign_asset", kwargs={"pk": self.asset.pk}),

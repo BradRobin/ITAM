@@ -149,7 +149,18 @@
             'Institutional Support & Advisory Operations': 'ISAO'
         };
 
-        return abbreviations[department] || department || '';
+        if (abbreviations[department]) {
+            return abbreviations[department];
+        }
+
+        return String(department || '')
+            .replace(/&/g, ' ')
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(function(word) {
+                return word.charAt(0).toUpperCase();
+            })
+            .join('');
     }
 
     function renderTableMessage(message) {

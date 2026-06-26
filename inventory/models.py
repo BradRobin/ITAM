@@ -77,7 +77,11 @@ class Employee(models.Model):
             self.Department.CAPACITY_BUILDING_INNOVATION: "CBID",
             self.Department.INSTITUTIONAL_SUPPORT_ADVISORY: "ISAO",
         }
-        return abbreviations.get(self.department, self.department)
+        if self.department in abbreviations:
+            return abbreviations[self.department]
+
+        words = str(self.department).replace("&", " ").split()
+        return "".join(word[0].upper() for word in words if word) or self.department
 
 
 class Assignment(models.Model):
