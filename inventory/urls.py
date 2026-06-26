@@ -68,6 +68,21 @@ urlpatterns = [
         views.CompleteMaintenanceView.as_view(),
         name="maintenance_done",
     ),
+    path(
+        "assets/<int:asset_pk>/maintenance/add/",
+        views.MaintenanceLogCreateView.as_view(),
+        name="maintenance_log_add",
+    ),
+    path(
+        "maintenance/<int:pk>/edit/",
+        views.MaintenanceLogUpdateView.as_view(),
+        name="maintenance_log_edit",
+    ),
+    path(
+        "maintenance/<int:pk>/delete/",
+        views.MaintenanceLogDeleteView.as_view(),
+        name="maintenance_log_delete",
+    ),
     
     # Employee URLs
     path("employees/", views.EmployeeListView.as_view(), name="employee_list"),

@@ -13,6 +13,7 @@ class AssetAdmin(admin.ModelAdmin):
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ("name", "department", "email")
+    list_filter = ("department",)
     search_fields = ("name", "department", "email")
 
 

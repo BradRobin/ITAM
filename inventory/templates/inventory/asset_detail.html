@@ -131,7 +131,12 @@
     </section>
 
     <section class="mt-4">
-        <h2>Maintenance Logs</h2>
+        <div class="section-header">
+            <h2>Maintenance Logs</h2>
+            {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'maintenance_log_add' asset.pk %}" class="btn btn-sm btn-primary">Add Maintenance Log</a>
+            {% endif %}
+        </div>
         {% if maintenance_logs %}
             <div class="maintenance-timeline">
                 {% for log in maintenance_logs %}
@@ -144,6 +149,12 @@
                         </div>
                         <div class="issue">{{ log.issue_description }}</div>
                         <div class="technician">Technician: {{ log.technician }}</div>
+                        {% if user.is_staff or user.is_superuser %}
+                            <div class="maintenance-actions mt-2">
+                                <a href="{% url 'maintenance_log_edit' log.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                                <a href="{% url 'maintenance_log_delete' log.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

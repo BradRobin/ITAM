@@ -347,6 +347,7 @@ class InventoryAdminConfigurationTests(TestCase):
         model_admin = admin.site._registry[Employee]
 
         self.assertEqual(model_admin.list_display, ("name", "department", "email"))
+        self.assertEqual(model_admin.list_filter, ("department",))
         self.assertEqual(model_admin.search_fields, ("name", "department", "email"))
 
     def test_assignment_admin_configuration(self):
@@ -709,3 +710,116 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertFalse(
             Employee.objects.filter(email="invalid.department@example.com").exists()
         )
+
+
+class MaintenanceLogCRUDTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="maintenance-admin",
+            email="maintenance-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.user = get_user_model().objects.create_user(
+            username="maintenance-viewer",
+            email="maintenance-viewer@example.com",
+            password="test-pass-12345",
+        )
+        self.asset = Asset.objects.create(
+            name="Maintenance Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="MAINT-CRUD-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+    def test_asset_detail_links_to_maintenance_log_crud_for_admins(self):
+        log = MaintenanceLog.objects.create(
+            asset=self.asset,
+            issue_description="Battery replacement",
+            technician="Ada",
+            date=timezone.localdate(),
+            resolved=False,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("maintenance_log_add", kwargs={"asset_pk": self.asset.pk}))
+        self.assertContains(response, reverse("maintenance_log_edit", kwargs={"pk": log.pk}))
+        self.assertContains(response, reverse("maintenance_log_delete", kwargs={"pk": log.pk}))
+
+    def test_admin_can_create_maintenance_log_for_asset(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("maintenance_log_add", kwargs={"asset_pk": self.asset.pk}),
+            data={
+                "issue_description": "Keyboard repair",
+                "technician": "Grace",
+                "date": timezone.localdate().isoformat(),
+                "resolved": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+        log = MaintenanceLog.objects.get(asset=self.asset)
+        self.assertEqual(log.issue_description, "Keyboard repair")
+        self.assertEqual(log.technician, "Grace")
+        self.assertTrue(log.resolved)
+
+    def test_admin_can_update_maintenance_log(self):
+        log = MaintenanceLog.objects.create(
+            asset=self.asset,
+            issue_description="Initial diagnosis",
+            technician="Ada",
+            date=timezone.localdate(),
+            resolved=False,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("maintenance_log_edit", kwargs={"pk": log.pk}),
+            data={
+                "issue_description": "Initial diagnosis completed",
+                "technician": "Ada",
+                "date": timezone.localdate().isoformat(),
+                "resolved": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+        log.refresh_from_db()
+        self.assertEqual(log.issue_description, "Initial diagnosis completed")
+        self.assertTrue(log.resolved)
+
+    def test_admin_can_delete_maintenance_log(self):
+        log = MaintenanceLog.objects.create(
+            asset=self.asset,
+            issue_description="Old log",
+            technician="Ada",
+            date=timezone.localdate(),
+            resolved=True,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("maintenance_log_delete", kwargs={"pk": log.pk}))
+
+        self.assertRedirects(response, reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+        self.assertFalse(MaintenanceLog.objects.filter(pk=log.pk).exists())
+
+    def test_non_admin_cannot_create_maintenance_log(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("maintenance_log_add", kwargs={"asset_pk": self.asset.pk}),
+            data={
+                "issue_description": "Unauthorized",
+                "technician": "Viewer",
+                "date": timezone.localdate().isoformat(),
+                "resolved": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(MaintenanceLog.objects.filter(asset=self.asset).exists())

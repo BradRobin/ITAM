@@ -13,7 +13,7 @@ from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
@@ -28,7 +28,7 @@ from django.views.generic import (
 )
 from django.utils.decorators import method_decorator
 
-from .forms import AssetForm, AssignmentForm, EmployeeForm
+from .forms import AssetForm, AssignmentForm, EmployeeForm, MaintenanceLogForm
 from .models import Asset, Assignment, Employee, MaintenanceLog
 
 
@@ -608,6 +608,92 @@ class CompleteMaintenanceView(LoginRequiredMixin, UserPassesTestMixin, View):
             "Maintenance marked as done. Asset is now available.",
         )
         return redirect("asset_detail", pk=asset.pk)
+
+
+class MaintenanceLogCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = MaintenanceLog
+    form_class = MaintenanceLogForm
+    template_name = "inventory/maintenance_log_form.html"
+
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def dispatch(self, request, *args, **kwargs):
+        self.asset = get_object_or_404(Asset, pk=kwargs["asset_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["asset"] = self.asset
+        context["page_title"] = "Add Maintenance Log"
+        return context
+
+    def form_valid(self, form):
+        form.instance.asset = self.asset
+        messages.success(self.request, "Maintenance log added successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("asset_detail", kwargs={"pk": self.asset.pk})
+
+
+class MaintenanceLogUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = MaintenanceLog
+    form_class = MaintenanceLogForm
+    template_name = "inventory/maintenance_log_form.html"
+
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def get_queryset(self):
+        return MaintenanceLog.objects.select_related("asset")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["asset"] = self.object.asset
+        context["page_title"] = "Edit Maintenance Log"
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "Maintenance log updated successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("asset_detail", kwargs={"pk": self.object.asset.pk})
+
+
+class MaintenanceLogDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = MaintenanceLog
+    template_name = "inventory/maintenance_log_confirm_delete.html"
+
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def get_queryset(self):
+        return MaintenanceLog.objects.select_related("asset")
+
+    def form_valid(self, form):
+        self.asset_pk = self.object.asset.pk
+        messages.success(self.request, "Maintenance log deleted successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("asset_detail", kwargs={"pk": self.asset_pk})
 
 
 class ExportAssetCSVView(LoginRequiredMixin, UserPassesTestMixin, View):

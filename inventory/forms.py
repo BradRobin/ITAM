@@ -49,7 +49,7 @@ class AssignmentForm(forms.ModelForm):
 class MaintenanceLogForm(forms.ModelForm):
     class Meta:
         model = MaintenanceLog
-        fields = ["asset", "issue_description", "technician", "date", "resolved"]
-
-        #add user friendly error tareting to point out to the specific err
-
+        fields = ["issue_description", "technician", "date", "resolved"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+        }
