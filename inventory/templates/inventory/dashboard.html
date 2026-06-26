@@ -169,22 +169,6 @@
             <span class="footer-stat-label">Last Updated</span>
             <span class="footer-stat-value" id="lastUpdated">{% now "Y-m-d H:i:s" %}</span>
         </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label">Total Assets</span>
-            <span class="footer-stat-value">{{ total_assets|default:"0" }}</span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label">Utilization Rate</span>
-            <span class="footer-stat-value">
-                {% if total_assets > 0 %}
-                    {% widthratio assigned_assets total_assets 100 %}%
-                {% else %}0%{% endif %}
-            </span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label">Total Employees</span>
-            <span class="footer-stat-value">{{ employee_count|default:"0" }}</span>
-        </div>
     </div>
 {% endblock %}
 

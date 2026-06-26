@@ -431,7 +431,7 @@
    ========================================== */
 .dashboard-footer {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 1fr;
     gap: var(--spacing-4, 1rem);
     padding: var(--spacing-4, 1rem) var(--spacing-5, 1.25rem);
     background: var(--bg-card);
