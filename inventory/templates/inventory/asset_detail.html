@@ -82,6 +82,12 @@
                     <div class="assignment-unavailable">
                         <p>This asset is currently <strong>{{ asset.status }}</strong>.</p>
                         <p>It cannot be assigned until it is available.</p>
+                        {% if asset.status == "Under Maintenance" %}
+                            <form method="post" action="{% url 'maintenance_done' asset.pk %}" class="mt-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">Maintenance Done</button>
+                            </form>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>

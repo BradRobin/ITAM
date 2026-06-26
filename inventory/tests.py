@@ -170,6 +170,52 @@ class AssignmentStateMachineViewTests(TestCase):
         self.assertEqual(self.asset.status, Asset.AssetStatus.AVAILABLE)
         self.assertIsNotNone(assignment.date_returned)
 
+    def test_asset_detail_shows_maintenance_done_button_for_maintenance_asset(self):
+        self.asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
+        self.asset.save(update_fields=["status"])
+
+        response = self.client.get(reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Maintenance Done")
+        self.assertContains(response, reverse("maintenance_done", kwargs={"pk": self.asset.pk}))
+
+    def test_maintenance_done_marks_asset_available_and_logs_completion(self):
+        self.asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
+        self.asset.save(update_fields=["status"])
+
+        response = self.client.post(
+            reverse("maintenance_done", kwargs={"pk": self.asset.pk})
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("asset_detail", kwargs={"pk": self.asset.pk}),
+        )
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.status, Asset.AssetStatus.AVAILABLE)
+        log = MaintenanceLog.objects.get(asset=self.asset)
+        self.assertTrue(log.resolved)
+        self.assertEqual(log.date, timezone.localdate())
+        self.assertEqual(log.technician, self.user.username)
+        self.assertEqual(
+            log.issue_description,
+            "Maintenance completed and asset returned to available status.",
+        )
+
+    def test_maintenance_done_rejects_assets_not_under_maintenance(self):
+        response = self.client.post(
+            reverse("maintenance_done", kwargs={"pk": self.asset.pk})
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("asset_detail", kwargs={"pk": self.asset.pk}),
+        )
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.status, Asset.AssetStatus.AVAILABLE)
+        self.assertFalse(MaintenanceLog.objects.filter(asset=self.asset).exists())
+
 
 class DashboardContextTests(TestCase):
     def setUp(self):

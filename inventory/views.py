@@ -563,6 +563,47 @@ class ReturnAssetView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect("asset_detail", pk=asset.pk)
 
 
+class CompleteMaintenanceView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def post(self, request, pk):
+        with transaction.atomic():
+            asset = get_object_or_404(Asset.objects.select_for_update(), pk=pk)
+
+            if asset.status != Asset.AssetStatus.UNDER_MAINTENANCE:
+                messages.error(
+                    request,
+                    "Only assets under maintenance can be marked as maintenance done.",
+                )
+                return redirect("asset_detail", pk=asset.pk)
+
+            technician = request.user.get_full_name() or request.user.username
+            MaintenanceLog.objects.create(
+                asset=asset,
+                issue_description=(
+                    "Maintenance completed and asset returned to available status."
+                ),
+                technician=technician,
+                date=timezone.localdate(),
+                resolved=True,
+            )
+
+            asset.status = Asset.AssetStatus.AVAILABLE
+            asset.save(update_fields=["status"])
+
+        messages.success(
+            request,
+            "Maintenance marked as done. Asset is now available.",
+        )
+        return redirect("asset_detail", pk=asset.pk)
+
+
 class ExportAssetCSVView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self) -> bool:
         return user_has_admin_access(self.request.user)
