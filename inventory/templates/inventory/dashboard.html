@@ -47,10 +47,6 @@
                 <p class="stat-number" data-count="{{ total_assets|default:"0" }}">{{ total_assets|default:"0" }}</p>
                 <span class="stat-trend">All equipments that are registered in the system. This includes all assets that are in the system, including those that are not assigned to any employee.</span>
             </div>
-            <div class="stat-progress">
-                <span class="stat-percent">100%</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
-            </div>
         </div>
         
         <div class="stat-card stat-available">
@@ -58,16 +54,6 @@
                 <h3>Available</h3>
                 <p class="stat-number" data-count="{{ available_assets|default:"0" }}">{{ available_assets|default:"0" }}</p>
                 <span class="stat-trend">Ready for assignment</span>
-            </div>
-            <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio available_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
-                </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio available_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
-                </div>
             </div>
         </div>
         
@@ -77,16 +63,6 @@
                 <p class="stat-number" data-count="{{ assigned_assets|default:"0" }}">{{ assigned_assets|default:"0" }}</p>
                 <span class="stat-trend">Currently with employees</span>
             </div>
-            <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio assigned_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
-                </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio assigned_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
-                </div>
-            </div>
         </div>
         
         <div class="stat-card stat-maintenance">
@@ -94,16 +70,6 @@
                 <h3>Under Maintenance</h3>
                 <p class="stat-number" data-count="{{ maintenance_assets|default:"0" }}">{{ maintenance_assets|default:"0" }}</p>
                 <span class="stat-trend">In repair shop</span>
-            </div>
-            <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio maintenance_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
-                </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio maintenance_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
-                </div>
             </div>
         </div>
     </div>
