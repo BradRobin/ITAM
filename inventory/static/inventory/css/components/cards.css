@@ -64,6 +64,24 @@
     color: inherit;
 }
 
+.maintenance-timeline,
+.maintenance-item,
+.maintenance-item .meta,
+.maintenance-item .issue,
+.maintenance-item .technician {
+    color: var(--text-primary);
+}
+
+.maintenance-item .date,
+.maintenance-item .technician {
+    color: var(--text-secondary);
+}
+
+.maintenance-item .status-badge {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
 .card-footer {
     padding: var(--spacing-4) var(--spacing-5);
     border-top: 1px solid var(--border-color);
