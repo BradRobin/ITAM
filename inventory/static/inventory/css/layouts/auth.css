@@ -193,14 +193,13 @@
 }
 
 /* ==========================================
-   BUTTON LOADING STATE - WITH WORKING SPINNER
+   BUTTON LOADING STATE - IMPROVED SPINNER
    ========================================== */
 .btn {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
     font-weight: var(--font-weight-semibold, 600);
@@ -216,38 +215,43 @@
 }
 
 .btn .btn-text {
-    transition: visibility 0.3s ease, opacity 0.3s ease;
+    transition: all 0.3s ease;
     display: inline-block;
+    position: relative;
+    z-index: 1;
 }
 
 /* ==========================================
-   SPINNER RING - WORKING
+   SPINNER - PERFECTLY CENTERED AND WORKING
    ========================================== */
 .btn .spinner-inline {
     display: none;
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top: 3px solid #ffffff;
-    border-radius: 50%;
     position: absolute;
     top: 50%;
     left: 50%;
+    width: 24px;
+    height: 24px;
     margin-top: -12px;
     margin-left: -12px;
+    border: 3px solid rgba(255, 255, 255, 0.25);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
     animation: spin 0.7s linear infinite;
     box-sizing: border-box;
+    z-index: 2;
 }
 
-/* For success button spinner */
-.btn-success .spinner-inline {
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top: 3px solid #ffffff;
+/* Dark spinner for light backgrounds */
+.btn-outline .spinner-inline,
+.btn-secondary .spinner-inline {
+    border: 3px solid rgba(0, 0, 0, 0.15);
+    border-top: 3px solid #1e293b;
 }
 
-/* Loading State - Shows spinner */
+/* Loading State */
 .btn-loading {
     pointer-events: none;
+    cursor: wait;
     opacity: 0.85;
     transform: scale(0.98);
 }
@@ -263,10 +267,10 @@
 
 @keyframes spin {
     0% {
-        transform: rotate(0deg);
+        transform: translate(-50%, -50%) rotate(0deg);
     }
     100% {
-        transform: rotate(360deg);
+        transform: translate(-50%, -50%) rotate(360deg);
     }
 }
 

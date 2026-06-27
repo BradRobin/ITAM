@@ -1,42 +1,45 @@
 /**
- * LOADER MODULE
- * Handles loading spinner management with animated dots
+ * LOADER MODULE - Best Practice Implementation
+ * Single, unified loader with immediate feedback
  */
 
 (function() {
     'use strict';
     
     // ============================================
+    // State Management
+    // ============================================
+    var state = {
+        isActive: false,
+        message: 'Loading',
+        timeoutId: null,
+        pendingCalls: 0,
+        overlay: null,
+        textEl: null,
+        dotContainer: null,
+        dotInterval: null
+    };
+    
+    // ============================================
     // Configuration
     // ============================================
-    var DEFAULT_MESSAGE = 'Loading';
-    var DEFAULT_TIMEOUT = 30000; // 30 seconds
+    var CONFIG = {
+        DEFAULT_MESSAGE: 'Loading',
+        TIMEOUT: 30000,        // 30 seconds safety net
+        DOT_INTERVAL: 400,     // Dot animation speed
+        TRANSITION_DELAY: 300  // Hide transition delay
+    };
     
     // ============================================
-    // DOM Elements
+    // Create Loader Elements (Lazy Loading)
     // ============================================
-    var overlay = null;
-    var spinner = null;
-    var textEl = null;
-    var dotContainer = null;
-    var ajaxIntercepted = false;
-    var navigationIntercepted = false;
-    var dotInterval = null;
-    
-    // ============================================
-    // Create Loading Overlay with animated dots
-    // ============================================
-    function createOverlay() {
-        // Remove existing overlay if present
-        var existing = document.getElementById('loading-overlay');
-        if (existing) {
-            existing.remove();
-        }
+    function createLoaderElements() {
+        if (state.overlay) return;
         
-        overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
+        state.overlay = document.createElement('div');
+        state.overlay.id = 'loading-overlay';
+        state.overlay.className = 'loading-overlay';
+        state.overlay.innerHTML = `
             <div class="spinner-container">
                 <div class="spinner-wrapper">
                     <svg class="spinner-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,7 +49,7 @@
                     </svg>
                 </div>
                 <div class="spinner-text-wrapper">
-                    <span class="spinner-text" id="loaderText">${DEFAULT_MESSAGE}</span>
+                    <span class="spinner-text" id="loaderText">${CONFIG.DEFAULT_MESSAGE}</span>
                     <span class="dots-container" id="dotsContainer">
                         <span class="dot">.</span>
                         <span class="dot">.</span>
@@ -56,21 +59,18 @@
             </div>
         `;
         
-        document.body.appendChild(overlay);
-        
-        textEl = overlay.querySelector('.spinner-text');
-        dotContainer = overlay.querySelector('.dots-container');
-        
-        return overlay;
+        document.body.appendChild(state.overlay);
+        state.textEl = state.overlay.querySelector('.spinner-text');
+        state.dotContainer = state.overlay.querySelector('.dots-container');
     }
     
     // ============================================
-    // Animate Dots - Only 3 dots
+    // Animate Dots
     // ============================================
     function animateDots() {
-        if (!dotContainer) return;
+        if (!state.dotContainer) return;
         
-        var dots = dotContainer.querySelectorAll('.dot');
+        var dots = state.dotContainer.querySelectorAll('.dot');
         if (dots.length !== 3) return;
         
         var dotIndex = 0;
@@ -80,11 +80,11 @@
             dot.style.transform = 'translateY(0)';
         });
         
-        if (dotInterval) {
-            clearInterval(dotInterval);
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
         }
         
-        dotInterval = setInterval(function() {
+        state.dotInterval = setInterval(function() {
             dots.forEach(function(dot) {
                 dot.style.opacity = '0.3';
                 dot.style.transform = 'translateY(0)';
@@ -96,160 +96,145 @@
             }
             
             dotIndex = (dotIndex + 1) % dots.length;
-        }, 400);
+        }, CONFIG.DOT_INTERVAL);
     }
     
     // ============================================
-    // Show Loader
+    // Show Loader - Core Function
     // ============================================
-    function showLoader(message) {
-        message = message || DEFAULT_MESSAGE;
-        
-        if (!overlay || !document.body.contains(overlay)) {
-            createOverlay();
-        }
-        
-        if (textEl) {
-            textEl.textContent = message;
-        }
-        
-        if (dotInterval) {
-            clearInterval(dotInterval);
-            dotInterval = null;
-        }
-        
-        void overlay.offsetWidth;
-        
-        overlay.classList.add('active');
-        
-        setTimeout(function() {
-            animateDots();
-        }, 100);
-        
-        clearTimeout(overlay._timeout);
-        overlay._timeout = setTimeout(function() {
-            hideLoader();
-        }, DEFAULT_TIMEOUT);
-    }
-    
-    // ============================================
-    // Hide Loader
-    // ============================================
-    function hideLoader() {
-        if (dotInterval) {
-            clearInterval(dotInterval);
-            dotInterval = null;
-        }
-        
-        if (overlay) {
-            overlay.classList.remove('active');
-            clearTimeout(overlay._timeout);
-            
-            setTimeout(function() {
-                if (overlay && overlay.parentNode) {
-                    overlay.remove();
-                    overlay = null;
-                    textEl = null;
-                    dotContainer = null;
-                }
-            }, 400);
-        }
-    }
-    
-    // ============================================
-    // Update Loader Message
-    // ============================================
-    function updateLoaderMessage(message) {
-        if (textEl) {
-            textEl.textContent = message || DEFAULT_MESSAGE;
-        }
-    }
-    
-    // ============================================
-    // Create Inline Spinner
-    // ============================================
-    function createInlineSpinner(size) {
-        size = size || 'sm';
-        var spinnerEl = document.createElement('span');
-        spinnerEl.className = 'spinner-inline';
-        if (size === 'sm') {
-            spinnerEl.style.width = '16px';
-            spinnerEl.style.height = '16px';
-        } else if (size === 'lg') {
-            spinnerEl.style.width = '24px';
-            spinnerEl.style.height = '24px';
-        }
-        return spinnerEl;
-    }
-    
-    // ============================================
-    // Show Loader on Form Submit
-    // ============================================
-    function showLoaderOnSubmit(formSelector) {
-        var forms = document.querySelectorAll(formSelector || 'form[data-loader="true"]');
-        forms.forEach(function(form) {
-            form.addEventListener('submit', function() {
-                var message = this.dataset.loaderMessage || 'Saving';
-                showLoader(message);
-            });
-        });
-    }
-    
-    // ============================================
-    // Show Loader on Navigation - FIXED: Only intercept data-loader links
-    // ============================================
-    function showLoaderOnNavigation(linksSelector) {
-        // Prevent duplicate interception
-        if (navigationIntercepted) {
+    function show(message) {
+        // Prevent duplicate
+        if (state.isActive) {
+            // Update message if provided
+            if (message && state.textEl) {
+                state.textEl.textContent = message;
+            }
             return;
         }
-        navigationIntercepted = true;
         
-        // ONLY intercept links with data-loader="true"
-        var links = document.querySelectorAll(linksSelector || 'a[data-loader="true"]');
+        // Create elements if needed
+        createLoaderElements();
+        
+        // Update message
+        var msg = message || CONFIG.DEFAULT_MESSAGE;
+        if (state.textEl) {
+            state.textEl.textContent = msg;
+        }
+        
+        // Clear any existing timeout
+        if (state.timeoutId) {
+            clearTimeout(state.timeoutId);
+            state.timeoutId = null;
+        }
+        
+        // Show with slight delay to ensure DOM is ready
+        requestAnimationFrame(function() {
+            state.overlay.classList.add('active');
+            state.isActive = true;
+            
+            // Start dot animation
+            setTimeout(animateDots, 100);
+        });
+        
+        // Safety timeout
+        state.timeoutId = setTimeout(function() {
+            hide();
+        }, CONFIG.TIMEOUT);
+        
+        return state.isActive;
+    }
+    
+    // ============================================
+    // Hide Loader - Core Function
+    // ============================================
+    function hide() {
+        if (!state.isActive) return;
+        
+        state.isActive = false;
+        
+        // Clear intervals and timeouts
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
+            state.dotInterval = null;
+        }
+        
+        if (state.timeoutId) {
+            clearTimeout(state.timeoutId);
+            state.timeoutId = null;
+        }
+        
+        // Hide with transition
+        state.overlay.classList.remove('active');
+        
+        // Remove from DOM after transition
+        setTimeout(function() {
+            if (state.overlay && state.overlay.parentNode) {
+                state.overlay.remove();
+                state.overlay = null;
+                state.textEl = null;
+                state.dotContainer = null;
+            }
+        }, CONFIG.TRANSITION_DELAY);
+    }
+    
+    // ============================================
+    // Update Message
+    // ============================================
+    function updateMessage(message) {
+        if (state.textEl && message) {
+            state.textEl.textContent = message;
+        }
+    }
+    
+    // ============================================
+    // Check if Active
+    // ============================================
+    function isActive() {
+        return state.isActive;
+    }
+    
+    // ============================================
+    // Setup Navigation Interceptor (Best Practice)
+    // ============================================
+    function setupNavigationInterceptor() {
+        var links = document.querySelectorAll('a[data-loader="true"], .sidebar-link');
+        
         links.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 var href = this.getAttribute('href');
-                // Skip if it's a javascript: link or empty href
                 if (!href || href === '#' || href.startsWith('javascript:')) {
                     return;
                 }
                 
-                var message = this.dataset.loaderMessage || 'Loading';
-                showLoader(message);
+                // Show loader immediately
+                var message = this.dataset.loaderMessage || CONFIG.DEFAULT_MESSAGE;
+                show(message);
+                
+                // Let navigation happen naturally
+                // Loader stays visible until page loads
             });
         });
-        
-        // REMOVED: The following code was causing the page to reload
-        // by intercepting ALL sidebar links
-        /*
-        var sidebarLinks = document.querySelectorAll('.sidebar-link');
-        sidebarLinks.forEach(function(link) {
-            if (link.hasAttribute('data-loader')) {
-                return;
-            }
-            
-            link.addEventListener('click', function(e) {
-                var href = this.getAttribute('href');
-                if (!href || href === '#' || href.startsWith('javascript:')) {
-                    return;
-                }
-                showLoader('Loading');
-            });
-        });
-        */
     }
     
     // ============================================
-    // Show Loader on AJAX Requests
+    // Setup Form Submit Interceptor
     // ============================================
-    function showLoaderOnAjax() {
-        if (ajaxIntercepted) {
-            return;
-        }
-        ajaxIntercepted = true;
+    function setupFormInterceptor() {
+        var forms = document.querySelectorAll('form[data-loader="true"]');
         
-        // Intercept fetch requests - ONLY for API calls
+        forms.forEach(function(form) {
+            form.addEventListener('submit', function() {
+                var message = this.dataset.loaderMessage || 'Processing';
+                show(message);
+            });
+        });
+    }
+    
+    // ============================================
+    // Setup AJAX Interceptor (Only for API calls)
+    // ============================================
+    function setupAjaxInterceptor() {
+        // Intercept fetch
         if (typeof window.fetch === 'function') {
             var originalFetch = window.fetch;
             window.fetch = function() {
@@ -258,25 +243,25 @@
                 var isApiCall = false;
                 
                 if (typeof url === 'string') {
-                    isApiCall = url.includes('/api/') || 
-                               (url.includes('?') && !url.includes('/static/') && 
-                                !url.includes('.css') && !url.includes('.js') &&
-                                !url.includes('favicon') && !url.includes('manifest'));
+                    isApiCall = url.includes('/api/') && 
+                               !url.includes('/static/') && 
+                               !url.includes('.css') && 
+                               !url.includes('.js');
                 }
                 
                 if (isApiCall) {
-                    showLoader('Loading data');
+                    show('Loading');
                 }
                 
                 return originalFetch.apply(this, args).finally(function() {
                     if (isApiCall) {
-                        hideLoader();
+                        hide();
                     }
                 });
             };
         }
         
-        // Intercept XMLHttpRequest - ONLY for API calls
+        // Intercept XMLHttpRequest
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function() {
             var args = arguments;
@@ -284,55 +269,78 @@
             var isApiCall = false;
             
             if (typeof url === 'string') {
-                isApiCall = url.includes('/api/') || 
-                           (url.includes('?') && !url.includes('/static/') && 
-                            !url.includes('.css') && !url.includes('.js') &&
-                            !url.includes('favicon') && !url.includes('manifest'));
+                isApiCall = url.includes('/api/') && 
+                           !url.includes('/static/') && 
+                           !url.includes('.css') && 
+                           !url.includes('.js');
             }
             
             if (isApiCall) {
-                showLoader('Loading data');
+                show('Loading');
             }
             
             var xhr = this;
             var originalOnReadyStateChange = xhr.onreadystatechange;
+            
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && isApiCall) {
-                    hideLoader();
+                    hide();
                 }
                 if (originalOnReadyStateChange) {
                     originalOnReadyStateChange.apply(this, arguments);
                 }
             };
+            
             xhr.addEventListener('loadend', function() {
                 if (isApiCall) {
-                    hideLoader();
+                    hide();
                 }
             });
+            
             return originalXHROpen.apply(this, args);
         };
     }
     
     // ============================================
-    // Check if Loader is Active
+    // Initialize - Best Practice
     // ============================================
-    function isActive() {
-        return overlay ? overlay.classList.contains('active') : false;
+    function init() {
+        console.log('Loader module initializing...');
+        
+        // Setup interceptors
+        setupNavigationInterceptor();
+        setupFormInterceptor();
+        setupAjaxInterceptor();
+        
+        // Hide loader on page load
+        if (document.readyState === 'complete') {
+            setTimeout(hide, 300);
+        } else {
+            window.addEventListener('load', function() {
+                setTimeout(hide, 300);
+            });
+        }
+        
+        console.log('Loader module initialized.');
     }
     
     // ============================================
     // Export
     // ============================================
     window.Loader = {
-        show: showLoader,
-        hide: hideLoader,
-        updateMessage: updateLoaderMessage,
-        createInline: createInlineSpinner,
-        showOnSubmit: showLoaderOnSubmit,
-        showOnNavigation: showLoaderOnNavigation,
-        showOnAjax: showLoaderOnAjax,
-        isActive: isActive
+        show: show,
+        hide: hide,
+        updateMessage: updateMessage,
+        isActive: isActive,
+        init: init
     };
+    
+    // Auto-init
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
     
     console.log('Loader module loaded.');
     

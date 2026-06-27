@@ -183,33 +183,53 @@
         togglePassword('id_password1', 'togglePassword1');
         togglePassword('id_password2', 'togglePassword2');
 
-        // Button loading state for Login
-        var loginForm = document.getElementById('loginForm');
-        var loginBtn = document.getElementById('loginBtn');
-        
-        if (loginForm && loginBtn) {
-            loginForm.addEventListener('submit', function() {
-                // Add loading class to button
-                loginBtn.classList.add('btn-loading');
+        // Improved loading state function
+        function setupLoadingButton(formId, buttonId) {
+            var form = document.getElementById(formId);
+            var button = document.getElementById(buttonId);
+            
+            if (!form || !button) return;
+
+            form.addEventListener('submit', function(e) {
+                // Prevent double submission
+                if (button.classList.contains('btn-loading')) {
+                    e.preventDefault();
+                    return false;
+                }
                 
-                // Disable the button to prevent double submission
-                loginBtn.disabled = true;
+                // Add loading state
+                button.classList.add('btn-loading');
+                button.disabled = true;
+                
+                // The spinner is already in the HTML, it will show automatically
+                // due to the CSS rules we have
             });
         }
 
-        // Button loading state for Signup
-        var signupForm = document.getElementById('signupForm');
-        var signupBtn = document.getElementById('signupBtn');
-        
-        if (signupForm && signupBtn) {
-            signupForm.addEventListener('submit', function() {
-                // Add loading class to button
-                signupBtn.classList.add('btn-loading');
-                
-                // Disable the button to prevent double submission
-                signupBtn.disabled = true;
+        // Setup both forms
+        setupLoadingButton('loginForm', 'loginBtn');
+        setupLoadingButton('signupForm', 'signupBtn');
+
+        // Handle form validation errors - remove loading state if form has errors
+        // This is useful if the server returns errors without page reload
+        var errorElements = document.querySelectorAll('.auth-error');
+        if (errorElements.length > 0) {
+            // If there are errors, remove loading state from buttons
+            var buttons = document.querySelectorAll('.btn-loading');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
             });
         }
+
+        // Handle browser back/forward navigation
+        window.addEventListener('pageshow', function(event) {
+            var buttons = document.querySelectorAll('.btn-loading');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            });
+        });
 
     })();
 </script>

@@ -11,6 +11,7 @@
     var unreadCount = 0;
     var badge = null;
     var bell = null;
+    var isFetching = false;
     
     // ============================================
     // Configuration
@@ -71,20 +72,6 @@
             }
         });
         
-        // Listen for page visibility change to refresh badge
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                // Page became visible again, check if notifications were viewed
-                var viewed = sessionStorage.getItem('notifications_viewed');
-                if (viewed === 'true') {
-                    updateBadge(0);
-                    sessionStorage.removeItem('notifications_viewed');
-                } else {
-                    fetchNotifications();
-                }
-            }
-        });
-        
         initialized = true;
         console.log('Notification module initialized.');
     }
@@ -109,6 +96,14 @@
     // Fetch Notifications from Server
     // ============================================
     function fetchNotifications() {
+        // Prevent multiple simultaneous fetches
+        if (isFetching) {
+            console.log('Notification fetch already in progress, skipping...');
+            return;
+        }
+        
+        isFetching = true;
+        
         fetch(CONFIG.BADGE_UPDATE_URL, {
             method: 'GET',
             headers: {
@@ -131,6 +126,9 @@
         })
         .catch(function(error) {
             console.warn('Error fetching notifications:', error);
+        })
+        .finally(function() {
+            isFetching = false;
         });
     }
     
@@ -178,7 +176,6 @@
         fetch(CONFIG.MARK_READ_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken(),
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -246,17 +243,19 @@
     }
     
     // ============================================
-    // Start Polling
+    // Start Polling - Single interval only
     // ============================================
     function startPolling() {
+        // Clear any existing interval
         if (pollInterval) {
             clearInterval(pollInterval);
+            pollInterval = null;
         }
         
+        // Set a single interval for polling
         pollInterval = setInterval(function() {
-            // Only poll if document is visible
-            if (!document.hidden) {
-                // Only fetch if not viewed recently
+            // Only poll if document is visible and not already fetching
+            if (!document.hidden && !isFetching) {
                 var viewed = sessionStorage.getItem('notifications_viewed');
                 if (viewed !== 'true') {
                     fetchNotifications();
@@ -264,15 +263,7 @@
             }
         }, CONFIG.POLL_INTERVAL);
         
-        // Also poll when page becomes visible again
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                var viewed = sessionStorage.getItem('notifications_viewed');
-                if (viewed !== 'true') {
-                    fetchNotifications();
-                }
-            }
-        });
+        console.log('Notification polling started with interval:', CONFIG.POLL_INTERVAL, 'ms');
     }
     
     // ============================================
@@ -282,6 +273,7 @@
         if (pollInterval) {
             clearInterval(pollInterval);
             pollInterval = null;
+            console.log('Notification polling stopped.');
         }
     }
     
@@ -304,7 +296,9 @@
         updateBadge: updateBadge,
         incrementBadge: incrementBadge,
         markAllAsRead: markAllAsRead,
-        getUnreadCount: function() { return unreadCount; }
+        getUnreadCount: function() { return unreadCount; },
+        stopPolling: stopPolling,
+        startPolling: startPolling
     };
     
     // Auto-init when DOM is ready
