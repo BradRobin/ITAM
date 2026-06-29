@@ -4,7 +4,7 @@
 {% block title %}Dashboard - ITAM System{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=4">
 {% endblock %}
 
 {% block content %}
@@ -16,9 +16,11 @@
             <div class="greeting-section">
                 <i class="fas fa-sun greeting-icon" id="greetingIcon"></i>
                 <div class="greeting-text">
-                    <h1 class="greeting-title" id="greetingMessage">Good Morning</h1>
-                    <div class="user-welcome">
+                    <h1 class="greeting-title">
+                        <span id="greetingMessage">Good Morning</span>
                         <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                    </h1>
+                    <div class="user-welcome">
                         <span class="user-role">{% if user.is_staff %}Administrator{% else %}Team Member{% endif %}</span>
                     </div>
                 </div>

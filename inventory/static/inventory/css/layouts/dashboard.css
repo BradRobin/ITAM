@@ -65,11 +65,16 @@
 
 .greeting-text {
     display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .greeting-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-wrap: wrap;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary, #1e293b);
