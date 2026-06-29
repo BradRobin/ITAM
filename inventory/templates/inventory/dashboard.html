@@ -4,17 +4,17 @@
 {% block title %}Dashboard - ITAM System{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
     <!-- ========================================== -->
-    <!-- WELCOME SECTION WITH GREETING              -->
+    <!-- WELCOME SECTION                           -->
     <!-- ========================================== -->
     <div class="dashboard-welcome">
         <div class="welcome-content">
             <div class="greeting-section">
-                <span class="greeting-icon" id="greetingIcon">🌅</span>
+                <i class="fas fa-sun greeting-icon" id="greetingIcon"></i>
                 <div class="greeting-text">
                     <h1 class="greeting-title" id="greetingMessage">Good Morning</h1>
                     <div class="user-welcome">
@@ -45,11 +45,13 @@
     <!-- STATS CARDS                               -->
     <!-- ========================================== -->
     <div class="dashboard-stats">
+        {% with total=total_assets|default:0 avail=available_assets|default:0 assigned=assigned_assets|default:0 maint=maintenance_assets|default:0 %}
+        
         <div class="stat-card stat-total">
             <i class="fas fa-boxes stat-icon"></i>
             <div class="stat-content">
                 <h3>Total Assets</h3>
-                <p class="stat-number" data-count="{{ total_assets|default:"0" }}">0</p>
+                <p class="stat-number" data-count="{{ total }}">{{ total }}</p>
                 <span class="stat-trend">All equipment</span>
             </div>
             <div class="stat-progress">
@@ -62,18 +64,13 @@
             <i class="fas fa-check-circle stat-icon"></i>
             <div class="stat-content">
                 <h3>Available</h3>
-                <p class="stat-number" data-count="{{ available_assets|default:"0" }}">0</p>
+                <p class="stat-number" data-count="{{ avail }}">{{ avail }}</p>
                 <span class="stat-trend">Ready for assignment</span>
             </div>
             <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio available_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
-                </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio available_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
-                </div>
+                {% widthratio avail total 100 as avail_pct %}
+                <span class="stat-percent">{{ avail_pct|default:0 }}%</span>
+                <div class="progress-bar"><div class="progress-fill" style="width:{{ avail_pct|default:0 }}%"></div></div>
             </div>
         </div>
         
@@ -81,18 +78,15 @@
             <i class="fas fa-user-check stat-icon"></i>
             <div class="stat-content">
                 <h3>Assigned</h3>
-                <p class="stat-number" data-count="{{ assigned_assets|default:"0" }}">0</p>
+                <p class="stat-number" data-count="{{ assigned }}">
+                    {{ assigned }} / {{ total }}
+                </p>
                 <span class="stat-trend">Currently with employees</span>
             </div>
             <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio assigned_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
-                </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio assigned_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
-                </div>
+                {% widthratio assigned total 100 as assigned_pct %}
+                <span class="stat-percent">{{ assigned_pct|default:0 }}%</span>
+                <div class="progress-bar"><div class="progress-fill" style="width:{{ assigned_pct|default:0 }}%"></div></div>
             </div>
         </div>
         
@@ -100,113 +94,106 @@
             <i class="fas fa-tools stat-icon"></i>
             <div class="stat-content">
                 <h3>Under Maintenance</h3>
-                <p class="stat-number" data-count="{{ maintenance_assets|default:"0" }}">0</p>
+                <p class="stat-number" data-count="{{ maint }}">{{ maint }}</p>
                 <span class="stat-trend">In repair shop</span>
             </div>
             <div class="stat-progress">
-                <span class="stat-percent">
-                    {% if total_assets > 0 %}
-                        {% widthratio maintenance_assets total_assets 100 %}%
-                    {% else %}0%{% endif %}
+                {% widthratio maint total 100 as maint_pct %}
+                <span class="stat-percent">{{ maint_pct|default:0 }}%</span>
+                <div class="progress-bar"><div class="progress-fill" style="width:{{ maint_pct|default:0 }}%"></div></div>
+            </div>
+        </div>
+        
+        {% endwith %}
+    </div>
+
+    <!-- ========================================== -->
+    <!-- QUICK STATS & OVERDUE SECTION             -->
+    <!-- ========================================== -->
+    <div class="dashboard-grid">
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="quick-stat-item">
+                <span class="quick-stat-label"><i class="fas fa-chart-pie"></i> Utilization Rate</span>
+                <span class="quick-stat-value">
+                    {% widthratio assigned_assets|default:0 total_assets|default:0 100 as util_rate %}
+                    {{ util_rate|default:0 }}%
                 </span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width:{% if total_assets > 0 %}{% widthratio maintenance_assets total_assets 100 %}{% else %}0{% endif %}%"></div>
+            </div>
+            <div class="quick-stat-item">
+                <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
+                <span class="quick-stat-value">{{ employee_count|default:"0" }}</span>
+            </div>
+            <div class="quick-stat-item">
+                <span class="quick-stat-label"><i class="fas fa-wrench"></i> In Maintenance</span>
+                <span class="quick-stat-value">{{ maintenance_assets|default:"0" }}</span>
+            </div>
+            <div class="quick-stat-item">
+                <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
+                {% widthratio maintenance_assets|default:0 total_assets|default:0 100 as health_rate %}
+                <span class="quick-stat-value {% if health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}">
+                    {{ health_rate|default:0 }}% issues
+                </span>
+            </div>
+        </div>
+
+        <!-- Overdue Section -->
+        {% if overdue_assets %}
+            <div class="overdue-section">
+                <div class="overdue-header">
+                    <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Overdue Service</h2>
+                    <span class="overdue-badge">{{ overdue_assets|length }}</span>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- QUICK STATS BAR                           -->
-    <!-- ========================================== -->
-    <div class="quick-stats">
-        <div class="quick-stat-item">
-            <span class="quick-stat-label"><i class="fas fa-chart-pie"></i> Utilization Rate</span>
-            <span class="quick-stat-value">
-                {% if total_assets > 0 %}
-                    {% widthratio assigned_assets total_assets 100 %}%
-                {% else %}0%{% endif %}
-            </span>
-        </div>
-        <div class="quick-stat-item">
-            <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
-            <span class="quick-stat-value">{{ employee_count|default:"0" }}</span>
-        </div>
-        <div class="quick-stat-item">
-            <span class="quick-stat-label"><i class="fas fa-wrench"></i> Assets in Maintenance</span>
-            <span class="quick-stat-value">{{ maintenance_assets|default:"0" }}</span>
-        </div>
-        <div class="quick-stat-item">
-            <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
-            <span class="quick-stat-value {% if total_assets > 0 and maintenance_assets|default:0 < total_assets|divisibleby:10 %}healthy{% else %}warning{% endif %}">
-                {% if total_assets > 0 %}
-                    {% widthratio maintenance_assets total_assets 100 %}%
-                {% else %}0%{% endif %} issues
-            </span>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- OVERDUE ASSETS SECTION                    -->
-    <!-- ========================================== -->
-    {% if overdue_assets %}
-        <div class="overdue-section">
-            <div class="overdue-header">
-                <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Assets Overdue for Service</h2>
-                <span class="overdue-badge">{{ overdue_assets|length }}</span>
-            </div>
-            <p class="overdue-subtitle">
-                These assets haven't been serviced in over 6 months (since {{ overdue_cutoff }}).
-                <strong>Service is overdue!</strong>
-            </p>
-            <div class="overdue-grid">
-                {% for asset in overdue_assets|slice:":6" %}
-                    <div class="overdue-card" data-delay="{{ forloop.counter0|add:1|stringformat:"s" }}">
-                        <div class="overdue-card-header">
-                            <span class="overdue-icon"></span>
-                            <strong>{{ asset.name }}</strong>
+                <p class="overdue-subtitle">
+                    <strong>{{ overdue_assets|length }}</strong> asset{% if overdue_assets|length > 1 %}s{% endif %} overdue since {{ overdue_cutoff }}
+                </p>
+                <div class="overdue-grid">
+                    {% for asset in overdue_assets|slice:":6" %}
+                        <div class="overdue-card" data-delay="{{ forloop.counter0|add:1 }}">
+                            <div class="overdue-card-header">
+                                <span class="overdue-icon"></span>
+                                <strong>{{ asset.name }}</strong>
+                            </div>
+                            <div class="overdue-card-body">
+                                <p><span>Type</span> {{ asset.type }}</p>
+                                <p><span>Serial</span> {{ asset.serial_number }}</p>
+                                <p><span>Status</span> 
+                                    <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                        {{ asset.status }}
+                                    </span>
+                                </p>
+                                <p><span>Last Service</span> 
+                                    {{ asset.last_maintenance_date|default:"Never" }}
+                                </p>
+                            </div>
+                            <div class="overdue-card-footer">
+                                <a href="{% url 'asset_detail' asset.pk %}" class="btn-sm">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </div>
                         </div>
-                        <div class="overdue-card-body">
-                            <p><strong>Type:</strong> {{ asset.type }}</p>
-                            <p><strong>Serial:</strong> {{ asset.serial_number }}</p>
-                            <p><strong>Status:</strong> 
-                                <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
-                                    {{ asset.status }}
-                                </span>
-                            </p>
-                            {% if asset.last_maintenance_date %}
-                                <p><strong>Last Service:</strong> {{ asset.last_maintenance_date }}</p>
-                            {% else %}
-                                <p><strong>Last Service:</strong> <em>Never serviced</em></p>
-                            {% endif %}
-                        </div>
-                        <div class="overdue-card-footer">
-                            <a href="{% url 'asset_detail' asset.pk %}" class="btn-sm">
-                                <i class="fas fa-eye"></i> View Details
-                            </a>
-                        </div>
+                    {% endfor %}
+                </div>
+                {% if overdue_assets|length > 6 %}
+                    <div class="overdue-more">
+                        <a href="{% url 'asset_list' %}?status=overdue" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> View All {{ overdue_assets|length }}
+                        </a>
                     </div>
-                {% endfor %}
+                {% endif %}
             </div>
-            {% if overdue_assets|length > 6 %}
-                <div class="overdue-more">
-                    <a href="{% url 'asset_list' %}?status=overdue" class="btn btn-secondary">
-                        <i class="fas fa-list"></i> View All {{ overdue_assets|length }} Overdue Assets
-                    </a>
+        {% else %}
+            <div class="overdue-section overdue-clear">
+                <div class="overdue-header">
+                    <h2><i class="fas fa-check-circle" style="color: var(--success-500, #22c55e);"></i> All Up to Date</h2>
                 </div>
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="overdue-section overdue-clear">
-            <div class="overdue-header">
-                <h2><i class="fas fa-check-circle" style="color: var(--success-500, #22c55e);"></i> All Assets Up to Date</h2>
+                <p class="overdue-clear-message"><i class="fas fa-check"></i> All assets serviced within 6 months</p>
             </div>
-            <p class="overdue-clear-message"><i class="fas fa-check"></i> All assets have been serviced within the last 6 months.</p>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 
     <!-- ========================================== -->
-    <!-- DASHBOARD FOOTER                          -->
+    <!-- FOOTER STATS                              -->
     <!-- ========================================== -->
     <div class="dashboard-footer">
         <div class="footer-stat">
@@ -218,15 +205,14 @@
             <span class="footer-stat-value">{{ total_assets|default:"0" }}</span>
         </div>
         <div class="footer-stat">
-            <span class="footer-stat-label"><i class="fas fa-chart-line"></i> Utilization Rate</span>
+            <span class="footer-stat-label"><i class="fas fa-chart-line"></i> Utilization</span>
             <span class="footer-stat-value">
-                {% if total_assets > 0 %}
-                    {% widthratio assigned_assets total_assets 100 %}%
-                {% else %}0%{% endif %}
+                {% widthratio assigned_assets|default:0 total_assets|default:0 100 as util %}
+                {{ util|default:0 }}%
             </span>
         </div>
         <div class="footer-stat">
-            <span class="footer-stat-label"><i class="fas fa-user-tie"></i> Total Employees</span>
+            <span class="footer-stat-label"><i class="fas fa-user-tie"></i> Employees</span>
             <span class="footer-stat-value">{{ employee_count|default:"0" }}</span>
         </div>
     </div>

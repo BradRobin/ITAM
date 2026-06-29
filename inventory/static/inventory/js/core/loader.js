@@ -1,53 +1,71 @@
 /**
- * LOADER MODULE
- * Handles loading spinner management with animated dots
+ * LOADER MODULE - Logo + Text with Animated Dots
+ * Animated logo with pulsing effect + "Please wait..." with bouncing dots
  */
 
 (function() {
     'use strict';
     
     // ============================================
+    // State
+    // ============================================
+    var state = {
+        isActive: false,
+        overlay: null,
+        textEl: null,
+        dotsEl: null,
+        message: 'Please wait',
+        dotInterval: null,
+        timeoutId: null
+    };
+    
+    // ============================================
     // Configuration
     // ============================================
-    var DEFAULT_MESSAGE = 'Loading';
-    var DEFAULT_TIMEOUT = 30000; // 30 seconds
+    var CONFIG = {
+        DEFAULT_MESSAGE: 'Please wait',
+        TIMEOUT: 30000,
+        DOT_INTERVAL: 400,
+        FADE_DURATION: 300,
+        SKIP_PAGES: ['/login', '/signup', '/logout', '/auth/']
+    };
     
     // ============================================
-    // DOM Elements
+    // Check if current page is auth page
     // ============================================
-    var overlay = null;
-    var spinner = null;
-    var textEl = null;
-    var dotContainer = null;
-    var ajaxIntercepted = false;
-    var navigationIntercepted = false;
-    var dotInterval = null;
-    
-    // ============================================
-    // Create Loading Overlay with animated dots
-    // ============================================
-    function createOverlay() {
-        // Remove existing overlay if present
-        var existing = document.getElementById('loading-overlay');
-        if (existing) {
-            existing.remove();
+    function isAuthPage() {
+        var currentPath = window.location.pathname;
+        for (var i = 0; i < CONFIG.SKIP_PAGES.length; i++) {
+            if (currentPath.includes(CONFIG.SKIP_PAGES[i])) {
+                return true;
+            }
         }
+        return false;
+    }
+    
+    // ============================================
+    // Create Loader Elements - Logo + Text with Dots
+    // ============================================
+    function createLoaderElements() {
+        if (state.overlay) return;
         
-        overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="spinner-container">
-                <div class="spinner-wrapper">
-                    <svg class="spinner-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        state.overlay = document.createElement('div');
+        state.overlay.id = 'loading-overlay';
+        state.overlay.className = 'loading-overlay';
+        state.overlay.innerHTML = `
+            <div class="loader-container">
+                <!-- Animated Logo -->
+                <div class="loader-logo-wrapper">
+                    <svg class="loader-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                         <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                         <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <div class="spinner-text-wrapper">
-                    <span class="spinner-text" id="loaderText">${DEFAULT_MESSAGE}</span>
-                    <span class="dots-container" id="dotsContainer">
+                <!-- Text with Dots -->
+                <div class="loader-text-wrapper">
+                    <span class="loader-text" id="loaderText">${CONFIG.DEFAULT_MESSAGE}</span>
+                    <span class="loader-dots" id="loaderDots">
                         <span class="dot">.</span>
                         <span class="dot">.</span>
                         <span class="dot">.</span>
@@ -56,179 +74,176 @@
             </div>
         `;
         
-        document.body.appendChild(overlay);
-        
-        textEl = overlay.querySelector('.spinner-text');
-        dotContainer = overlay.querySelector('.dots-container');
-        
-        return overlay;
+        document.body.appendChild(state.overlay);
+        state.textEl = state.overlay.querySelector('#loaderText');
+        state.dotsEl = state.overlay.querySelector('#loaderDots');
     }
     
     // ============================================
-    // Animate Dots - Only 3 dots
+    // Animate Dots - Bouncing effect
     // ============================================
     function animateDots() {
-        if (!dotContainer) return;
+        if (!state.dotsEl) return;
         
-        var dots = dotContainer.querySelectorAll('.dot');
+        var dots = state.dotsEl.querySelectorAll('.dot');
         if (dots.length !== 3) return;
         
-        var dotIndex = 0;
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
+        }
+        
+        var index = 0;
         
         dots.forEach(function(dot) {
             dot.style.opacity = '0.3';
             dot.style.transform = 'translateY(0)';
         });
         
-        if (dotInterval) {
-            clearInterval(dotInterval);
-        }
-        
-        dotInterval = setInterval(function() {
+        state.dotInterval = setInterval(function() {
             dots.forEach(function(dot) {
                 dot.style.opacity = '0.3';
                 dot.style.transform = 'translateY(0)';
             });
             
-            if (dots[dotIndex]) {
-                dots[dotIndex].style.opacity = '1';
-                dots[dotIndex].style.transform = 'translateY(-4px)';
+            if (dots[index]) {
+                dots[index].style.opacity = '1';
+                dots[index].style.transform = 'translateY(-4px)';
             }
             
-            dotIndex = (dotIndex + 1) % dots.length;
-        }, 400);
+            index = (index + 1) % dots.length;
+        }, CONFIG.DOT_INTERVAL);
     }
     
     // ============================================
     // Show Loader
     // ============================================
-    function showLoader(message) {
-        message = message || DEFAULT_MESSAGE;
-        
-        if (!overlay || !document.body.contains(overlay)) {
-            createOverlay();
+    function show(message) {
+        // Skip if on auth page
+        if (isAuthPage()) {
+            console.log('Auth page - skipping loader show');
+            return;
         }
         
-        if (textEl) {
-            textEl.textContent = message;
+        // If already active, just update message
+        if (state.isActive) {
+            if (message && state.textEl) {
+                state.textEl.textContent = message;
+            }
+            return;
         }
         
-        if (dotInterval) {
-            clearInterval(dotInterval);
-            dotInterval = null;
+        // Create elements if needed
+        createLoaderElements();
+        
+        // Set message
+        var msg = message || CONFIG.DEFAULT_MESSAGE;
+        if (state.textEl) {
+            state.textEl.textContent = msg;
+        }
+        state.message = msg;
+        
+        // Clear any existing timeouts
+        if (state.timeoutId) {
+            clearTimeout(state.timeoutId);
+            state.timeoutId = null;
         }
         
-        void overlay.offsetWidth;
+        // Show overlay with animation
+        requestAnimationFrame(function() {
+            state.overlay.classList.add('active');
+            state.isActive = true;
+            setTimeout(animateDots, 100);
+        });
         
-        overlay.classList.add('active');
+        // Safety timeout
+        state.timeoutId = setTimeout(function() {
+            hide();
+        }, CONFIG.TIMEOUT);
         
-        setTimeout(function() {
-            animateDots();
-        }, 100);
-        
-        clearTimeout(overlay._timeout);
-        overlay._timeout = setTimeout(function() {
-            hideLoader();
-        }, DEFAULT_TIMEOUT);
+        console.log('Loader shown:', msg);
     }
     
     // ============================================
     // Hide Loader
     // ============================================
-    function hideLoader() {
-        if (dotInterval) {
-            clearInterval(dotInterval);
-            dotInterval = null;
+    function hide() {
+        if (!state.isActive || !state.overlay) return;
+        
+        // Clear intervals and timeouts
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
+            state.dotInterval = null;
+        }
+        if (state.timeoutId) {
+            clearTimeout(state.timeoutId);
+            state.timeoutId = null;
         }
         
-        if (overlay) {
-            overlay.classList.remove('active');
-            clearTimeout(overlay._timeout);
-            
-            setTimeout(function() {
-                if (overlay && overlay.parentNode) {
-                    overlay.remove();
-                    overlay = null;
-                    textEl = null;
-                    dotContainer = null;
-                }
-            }, 400);
+        state.overlay.classList.remove('active');
+        state.isActive = false;
+        
+        // Remove from DOM after transition
+        setTimeout(function() {
+            if (state.overlay && state.overlay.parentNode) {
+                state.overlay.remove();
+                state.overlay = null;
+                state.textEl = null;
+                state.dotsEl = null;
+            }
+        }, CONFIG.FADE_DURATION);
+        
+        console.log('Loader hidden');
+    }
+    
+    // ============================================
+    // Update Message
+    // ============================================
+    function updateMessage(message) {
+        if (state.textEl && message) {
+            state.textEl.textContent = message;
+            state.message = message;
         }
     }
     
     // ============================================
-    // Update Loader Message
+    // Check if Active
     // ============================================
-    function updateLoaderMessage(message) {
-        if (textEl) {
-            textEl.textContent = message || DEFAULT_MESSAGE;
-        }
+    function isActive() {
+        return state.isActive;
     }
     
     // ============================================
-    // Create Inline Spinner
+    // Show Loader on Navigation Links
     // ============================================
-    function createInlineSpinner(size) {
-        size = size || 'sm';
-        var spinnerEl = document.createElement('span');
-        spinnerEl.className = 'spinner-inline';
-        if (size === 'sm') {
-            spinnerEl.style.width = '16px';
-            spinnerEl.style.height = '16px';
-        } else if (size === 'lg') {
-            spinnerEl.style.width = '24px';
-            spinnerEl.style.height = '24px';
-        }
-        return spinnerEl;
-    }
-    
-    // ============================================
-    // Show Loader on Form Submit
-    // ============================================
-    function showLoaderOnSubmit(formSelector) {
-        var forms = document.querySelectorAll(formSelector || 'form[data-loader="true"]');
-        forms.forEach(function(form) {
-            form.addEventListener('submit', function() {
-                var message = this.dataset.loaderMessage || 'Saving';
-                showLoader(message);
-            });
-        });
-    }
-    
-    // ============================================
-    // Show Loader on Navigation
-    // ============================================
-    function showLoaderOnNavigation(linksSelector) {
-        if (navigationIntercepted) {
+    function showOnNavigation(selector) {
+        if (isAuthPage()) {
             return;
         }
-        navigationIntercepted = true;
         
-        var links = document.querySelectorAll(linksSelector || 'a[data-loader="true"]');
+        var links = document.querySelectorAll(selector || 'a[data-loader="true"]');
+        
         links.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 var href = this.getAttribute('href');
-                if (!href || href === '#' || href.startsWith('javascript:')) {
-                    return;
-                }
-                
-                var message = this.dataset.loaderMessage || 'Loading';
-                showLoader(message);
+                if (!href || href === '#') return;
+                show(CONFIG.DEFAULT_MESSAGE);
             });
         });
+    }
+    
+    // ============================================
+    // Show Loader on Form Submissions
+    // ============================================
+    function showOnSubmit(selector) {
+        if (isAuthPage()) {
+            return;
+        }
         
-        var sidebarLinks = document.querySelectorAll('.sidebar-link');
-        sidebarLinks.forEach(function(link) {
-            if (link.hasAttribute('data-loader')) {
-                return;
-            }
-            
-            link.addEventListener('click', function(e) {
-                var href = this.getAttribute('href');
-                if (!href || href === '#' || href.startsWith('javascript:')) {
-                    return;
-                }
-                showLoader('Loading');
+        var forms = document.querySelectorAll(selector || 'form[data-loader="true"]');
+        
+        forms.forEach(function(form) {
+            form.addEventListener('submit', function() {
+                show(CONFIG.DEFAULT_MESSAGE);
             });
         });
     }
@@ -236,11 +251,10 @@
     // ============================================
     // Show Loader on AJAX Requests
     // ============================================
-    function showLoaderOnAjax() {
-        if (ajaxIntercepted) {
+    function showOnAjax() {
+        if (isAuthPage()) {
             return;
         }
-        ajaxIntercepted = true;
         
         if (typeof window.fetch === 'function') {
             var originalFetch = window.fetch;
@@ -250,81 +264,38 @@
                 var isApiCall = false;
                 
                 if (typeof url === 'string') {
-                    isApiCall = url.includes('/api/') || 
-                               (url.includes('?') && !url.includes('/static/') && 
-                                !url.includes('.css') && !url.includes('.js') &&
-                                !url.includes('favicon') && !url.includes('manifest'));
+                    isApiCall = url.includes('/api/') && 
+                               !url.includes('/static/') && 
+                               !url.includes('.css') && 
+                               !url.includes('.js');
                 }
                 
                 if (isApiCall) {
-                    showLoader('Loading data');
+                    show(CONFIG.DEFAULT_MESSAGE);
                 }
                 
                 return originalFetch.apply(this, args).finally(function() {
                     if (isApiCall) {
-                        hideLoader();
+                        hide();
                     }
                 });
             };
         }
-        
-        var originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function() {
-            var args = arguments;
-            var url = args[1];
-            var isApiCall = false;
-            
-            if (typeof url === 'string') {
-                isApiCall = url.includes('/api/') || 
-                           (url.includes('?') && !url.includes('/static/') && 
-                            !url.includes('.css') && !url.includes('.js') &&
-                            !url.includes('favicon') && !url.includes('manifest'));
-            }
-            
-            if (isApiCall) {
-                showLoader('Loading data');
-            }
-            
-            var xhr = this;
-            var originalOnReadyStateChange = xhr.onreadystatechange;
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && isApiCall) {
-                    hideLoader();
-                }
-                if (originalOnReadyStateChange) {
-                    originalOnReadyStateChange.apply(this, arguments);
-                }
-            };
-            xhr.addEventListener('loadend', function() {
-                if (isApiCall) {
-                    hideLoader();
-                }
-            });
-            return originalXHROpen.apply(this, args);
-        };
-    }
-    
-    // ============================================
-    // Check if Loader is Active
-    // ============================================
-    function isActive() {
-        return overlay ? overlay.classList.contains('active') : false;
     }
     
     // ============================================
     // Export
     // ============================================
     window.Loader = {
-        show: showLoader,
-        hide: hideLoader,
-        updateMessage: updateLoaderMessage,
-        createInline: createInlineSpinner,
-        showOnSubmit: showLoaderOnSubmit,
-        showOnNavigation: showLoaderOnNavigation,
-        showOnAjax: showLoaderOnAjax,
-        isActive: isActive
+        show: show,
+        hide: hide,
+        updateMessage: updateMessage,
+        isActive: isActive,
+        showOnNavigation: showOnNavigation,
+        showOnSubmit: showOnSubmit,
+        showOnAjax: showOnAjax
     };
     
-    console.log('Loader module loaded.');
+    console.log('loader.js loaded - Logo + Text with Animated Dots');
     
 })();
