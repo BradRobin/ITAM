@@ -47,19 +47,7 @@
                      width="32"
                      height="32">
                 <span class="profile-name">{{ user.username }}</span>
-                <i class="fas fa-chevron-down dropdown-arrow"></i>
             </button>
-            <div class="dropdown-menu" id="profileDropdown">
-                <div class="dropdown-header">
-                    <div class="dropdown-user-info">
-                        <div class="dropdown-user-details">
-                            <span class="dropdown-user">{{ user.get_full_name|default:user.username }}</span>
-                            <span class="dropdown-email">{{ user.email|default:"No email" }}</span>
-                            <span class="dropdown-role">Team Member</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </header>

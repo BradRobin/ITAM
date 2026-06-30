@@ -84,7 +84,7 @@
 }
 
 .topbar-employee {
-    min-height: 70px;
+    height: 64px;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
@@ -92,6 +92,10 @@
     justify-content: space-between;
     padding: 0 1.5rem;
     flex-shrink: 0;
+    gap: 1rem;
+    overflow: visible;
+    position: relative;
+    z-index: 100;
 }
 
 [data-theme="dark"] .topbar-employee {
@@ -104,9 +108,95 @@
 }
 
 .topbar-employee .notification-bell {
-    border: 0;
-    background: transparent;
+    border: none;
     cursor: pointer;
+}
+
+.topbar-employee .topbar-actions {
+    align-items: center;
+    display: flex;
+    gap: 0.9rem;
+    margin-left: auto;
+}
+
+.topbar-employee .profile-dropdown {
+    position: relative;
+}
+
+.topbar-employee .profile-btn {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: #0f172a;
+    cursor: pointer;
+    display: flex;
+    gap: 0.45rem;
+    height: 40px;
+    padding: 0.25rem 0.4rem;
+}
+
+.topbar-employee .profile-avatar {
+    border-radius: 50%;
+    display: block;
+    flex-shrink: 0;
+    height: 32px;
+    width: 32px;
+}
+
+.topbar-employee .profile-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar-employee .dropdown-arrow {
+    color: #0f172a;
+    font-size: 0.8rem;
+}
+
+.topbar-employee .dropdown-menu {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+    display: none;
+    min-width: 260px;
+    padding: 0;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.75rem);
+    z-index: 1200;
+}
+
+.topbar-employee .dropdown-menu.open {
+    display: block;
+}
+
+.topbar-employee .dropdown-header {
+    padding: 1rem;
+}
+
+.topbar-employee .dropdown-user-info,
+.topbar-employee .dropdown-user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.topbar-employee .dropdown-user {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.topbar-employee .dropdown-email,
+.topbar-employee .dropdown-role {
+    color: #64748b;
+    font-size: 0.85rem;
 }
 
 .employee-notification-dropdown {
@@ -167,5 +257,14 @@
     .employee-notification-dropdown {
         right: -4rem;
         width: min(320px, calc(100vw - 2rem));
+    }
+
+    .topbar-employee {
+        height: 56px;
+        padding: 0 1rem;
+    }
+
+    .topbar-employee .profile-name {
+        display: none;
     }
 }
