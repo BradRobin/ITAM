@@ -1123,6 +1123,13 @@ class EmployeeDashboardView(EmployeePortalAccessMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         employee = self.employee
+        current_hour = timezone.localtime().hour
+        if current_hour < 12:
+            greeting = "Good Morning"
+        elif current_hour < 17:
+            greeting = "Good Afternoon"
+        else:
+            greeting = "Good Evening"
         
         # Get active assignments
         active_assignments = Assignment.objects.filter(
@@ -1149,6 +1156,7 @@ class EmployeeDashboardView(EmployeePortalAccessMixin, TemplateView):
         ).select_related("asset").order_by("-date_assigned")
         
         context.update({
+            'greeting': greeting,
             'active_assets': active_assignments.count(),
             'active_assignments': active_assignments,
             'returnable_assignments': active_assignments,

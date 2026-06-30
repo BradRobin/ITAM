@@ -12,11 +12,7 @@
     <!-- Header -->
     <div class="dashboard-header">
         <div class="header-left">
-            <h1>My Dashboard</h1>
-            <p class="subtitle">Welcome back, {{ user.get_full_name|default:user.username }}</p>
-        </div>
-        <div class="header-right">
-            <span class="last-active">Last active: {{ user.last_login|timesince }} ago</span>
+            <h1>{{ greeting }} {{ user.get_full_name|default:user.username }}</h1>
         </div>
     </div>
 
