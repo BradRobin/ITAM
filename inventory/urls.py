@@ -23,8 +23,9 @@ urlpatterns = [
     path("api/notifications/", views.NotificationAPIView.as_view(), name="api_notifications"),
     path("api/notifications/<int:pk>/read/", views.NotificationMarkReadView.as_view(), name="api_notification_read"),
     path("api/notifications/mark-all-read/", views.NotificationMarkAllReadView.as_view(), name="api_notification_mark_all_read"),
+    
     # Reports
-path("reports/", views.ReportsView.as_view(), name="reports"),
+    path("reports/", views.ReportsView.as_view(), name="reports"),
     
     # API URLs
     path("api/assets", views.AssetAPIListView.as_view(), name="api_asset_list"),
@@ -108,4 +109,23 @@ path("reports/", views.ReportsView.as_view(), name="reports"),
         views.EmployeeDeleteView.as_view(),
         name="employee_delete",
     ),
+    
+    # ==========================================
+    # EMPLOYEE PORTAL URLs
+    # ==========================================
+    # Dashboard
+    path('employee/dashboard/', views.EmployeeDashboardView.as_view(), name='employee_dashboard'),
+    path('employee/assets/', views.EmployeeAssetsView.as_view(), name='employee_assets'),
+    path('employee/assets/<int:pk>/', views.EmployeeAssetDetailView.as_view(), name='employee_asset_detail'),
+    path('employee/asset/<int:pk>/confirm/', views.EmployeeConfirmAssetView.as_view(), name='employee_confirm_asset'),
+    path('employee/asset/<int:pk>/report-issue/', views.EmployeeReportIssueView.as_view(), name='employee_report_issue'),
+    path('employee/asset/<int:pk>/maintenance/', views.EmployeeMaintenanceRequestView.as_view(), name='employee_maintenance_request'),
+    path('employee/asset/<int:pk>/return/', views.EmployeeReturnRequestView.as_view(), name='employee_return_request'),
+    path('employee/notifications/', views.EmployeeNotificationsView.as_view(), name='employee_notifications'),
+    path('employee/notifications/mark-read/<int:pk>/', views.EmployeeMarkNotificationReadView.as_view(), name='employee_mark_notification_read'),
+    path('employee/notifications/mark-all-read/', views.EmployeeMarkAllNotificationsReadView.as_view(), name='employee_mark_all_notifications_read'),
+    path('employee/profile/', views.EmployeeProfileView.as_view(), name='employee_profile'),
+    path('employee/settings/', views.EmployeeSettingsView.as_view(), name='employee_settings'),
+    path('employee/history/', views.EmployeeHistoryView.as_view(), name='employee_history'),
+    path('employee/returns/', views.EmployeeReturnsView.as_view(), name='employee_returns'),
 ]

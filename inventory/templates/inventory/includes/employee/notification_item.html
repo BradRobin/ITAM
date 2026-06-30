@@ -1,0 +1,23 @@
+{% load static %}
+<div class="notification-item {% if not notification.read %}unread{% endif %}" data-id="{{ notification.id }}">
+    <div class="notification-icon notification-{{ notification.type }}">
+        <i class="fas {% if notification.type == 'success' %}fa-check-circle{% elif notification.type == 'warning' %}fa-exclamation-triangle{% elif notification.type == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+    </div>
+    <div class="notification-content">
+        <div class="notification-title">{{ notification.title }}</div>
+        <div class="notification-message">{{ notification.message }}</div>
+        <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+    </div>
+    <div class="notification-actions">
+        {% if not notification.read %}
+        <button class="btn btn-sm btn-primary" onclick="markAsRead('{{ notification.id }}')">
+            <i class="fas fa-check"></i>
+        </button>
+        {% endif %}
+        {% if notification.link %}
+        <a href="{{ notification.link }}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>

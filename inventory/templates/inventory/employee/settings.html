@@ -1,0 +1,121 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Settings - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="employee-settings">
+    <div class="settings-header">
+        <h1>Settings</h1>
+        <p class="subtitle">Manage your preferences and notifications</p>
+    </div>
+
+    <div class="settings-grid">
+        <!-- Theme Settings -->
+        <div class="settings-card">
+            <div class="card-header">
+                <h3>Appearance</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-group">
+                    <label class="setting-label">Theme Mode</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" onclick="setTheme('light')">Light</button>
+                        <button class="toggle-btn" onclick="setTheme('dark')">Dark</button>
+                        <button class="toggle-btn" onclick="setTheme('system')">System</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="settings-card">
+            <div class="card-header">
+                <h3>Notifications</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-group">
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="assetAssignments" checked>
+                        <label for="assetAssignments">Asset Assignments</label>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="maintenanceUpdates" checked>
+                        <label for="maintenanceUpdates">Maintenance Updates</label>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="systemAlerts">
+                        <label for="systemAlerts">System Alerts</label>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="emailDigest">
+                        <label for="emailDigest">Daily Email Digest</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="settings-card">
+            <div class="card-header">
+                <h3>Security</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-group">
+                    <button class="btn btn-primary" onclick="changePassword()">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                    <button class="btn btn-secondary" onclick="enable2FA()">
+                        <i class="fas fa-shield-alt"></i> Enable 2FA
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Language Settings -->
+        <div class="settings-card">
+            <div class="card-header">
+                <h3>Language & Region</h3>
+            </div>
+            <div class="card-body">
+                <div class="setting-group">
+                    <label class="setting-label">Language</label>
+                    <select class="form-control">
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Time Zone</label>
+                    <select class="form-control">
+                        <option value="UTC">UTC</option>
+                        <option value="EST">Eastern Time</option>
+                        <option value="CST">Central Time</option>
+                        <option value="PST">Pacific Time</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Actions -->
+    <div class="settings-actions">
+        <button class="btn btn-primary btn-lg" onclick="saveSettings()">
+            <i class="fas fa-save"></i> Save Settings
+        </button>
+        <button class="btn btn-secondary btn-lg" onclick="resetSettings()">
+            <i class="fas fa-undo"></i> Reset to Defaults
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'inventory/js/employee/settings.js' %}"></script>
+{% endblock %}

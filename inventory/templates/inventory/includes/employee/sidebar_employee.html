@@ -1,0 +1,105 @@
+{% load static %}
+<aside class="sidebar-employee" id="sidebarEmployee" role="navigation">
+    <div class="sidebar-brand">
+        <i class="fas fa-user-tie brand-icon"></i>
+        <span class="brand-text">Employee Portal</span>
+    </div>
+
+    <!-- Employee Info -->
+    <div class="sidebar-employee-info">
+        <img class="employee-avatar-small" 
+             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=48&rounded=true&bold=true&font-size=0.33" 
+             alt="{{ user.username }}">
+        <div class="employee-info-details">
+            <span class="employee-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="employee-role-badge">Employee</span>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if request.path == '/employee/dashboard/' %}active{% endif %}" 
+               href="{% url 'employee_dashboard' %}" 
+               data-loader="true"
+               data-loader-message="Loading Dashboard...">
+                <i class="fas fa-th-large sidebar-icon"></i>
+                <span class="sidebar-label">Dashboard</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'employee/assets' in request.path %}active{% endif %}" 
+               href="{% url 'employee_assets' %}" 
+               data-loader="true"
+               data-loader-message="Loading Assets...">
+                <i class="fas fa-laptop sidebar-icon"></i>
+                <span class="sidebar-label">My Assets</span>
+                {% if pending_assets > 0 %}
+                <span class="badge badge-pending">{{ pending_assets }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'employee/notifications' in request.path %}active{% endif %}" 
+               href="{% url 'employee_notifications' %}" 
+               data-loader="true"
+               data-loader-message="Loading Notifications...">
+                <i class="fas fa-bell sidebar-icon"></i>
+                <span class="sidebar-label">Notifications</span>
+                {% if unread_notifications > 0 %}
+                <span class="badge badge-notification">{{ unread_notifications }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'employee/history' in request.path %}active{% endif %}" 
+               href="{% url 'employee_history' %}" 
+               data-loader="true"
+               data-loader-message="Loading History...">
+                <i class="fas fa-history sidebar-icon"></i>
+                <span class="sidebar-label">History</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'employee/returns' in request.path %}active{% endif %}" 
+               href="{% url 'employee_returns' %}" 
+               data-loader="true"
+               data-loader-message="Loading Returns...">
+                <i class="fas fa-undo-alt sidebar-icon"></i>
+                <span class="sidebar-label">Returns</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Bottom Navigation -->
+    <div class="sidebar-bottom">
+        <div class="sidebar-divider"></div>
+        <ul class="sidebar-nav-bottom">
+            <li class="sidebar-item">
+                <a class="sidebar-link {% if 'employee/profile' in request.path %}active{% endif %}" 
+                   href="{% url 'employee_profile' %}" 
+                   data-loader="true"
+                   data-loader-message="Loading Profile...">
+                    <i class="fas fa-user-circle sidebar-icon"></i>
+                    <span class="sidebar-label">My Profile</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link {% if 'employee/settings' in request.path %}active{% endif %}" 
+                   href="{% url 'employee_settings' %}" 
+                   data-loader="true"
+                   data-loader-message="Loading Settings...">
+                    <i class="fas fa-cog sidebar-icon"></i>
+                    <span class="sidebar-label">Settings</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link sidebar-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">
+                    <i class="fas fa-sign-out-alt sidebar-icon"></i>
+                    <span class="sidebar-label">Logout</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-version">v1.0.0</div>
+    </div>
+</aside>

@@ -1,0 +1,66 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}My Notifications - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/notifications.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="employee-notifications">
+    <div class="page-header">
+        <div>
+            <h1>Notifications</h1>
+            <p class="subtitle">Stay updated with your asset activities</p>
+        </div>
+        <div class="notification-actions">
+            <button class="btn btn-secondary" onclick="markAllRead()">
+                <i class="fas fa-check-double"></i> Mark All Read
+            </button>
+            <button class="btn btn-secondary" onclick="clearAll()">
+                <i class="fas fa-trash"></i> Clear All
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Filters -->
+    <div class="notification-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="unread">Unread</button>
+        <button class="filter-btn" data-filter="read">Read</button>
+        <button class="filter-btn" data-filter="asset">Asset</button>
+        <button class="filter-btn" data-filter="system">System</button>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-list">
+        {% for notification in notifications %}
+            {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+        {% empty %}
+            <div class="empty-state">
+                <div class="empty-icon">🔔</div>
+                <h3>No Notifications</h3>
+                <p>You're all caught up!</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">&larr; Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Next &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'inventory/js/employee/notifications.js' %}"></script>
+{% endblock %}

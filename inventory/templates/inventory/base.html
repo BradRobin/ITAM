@@ -18,13 +18,34 @@
 </head>
 <body class="{% if request.path|slice:":6" == '/login' or request.path|slice:":6" == '/signup' or request.path|slice:":6" == '/logout' or '/auth/' in request.path %}auth-page{% endif %}">
     
-    {% include 'inventory/includes/sidebar.html' %}
+    <!-- ===== CONDITIONAL SIDEBAR ===== -->
+    {% if user.is_authenticated %}
+        {% if user.is_staff or user.is_superuser %}
+            {% include 'inventory/includes/sidebar.html' %}
+        {% elif user.employee %}
+            {% include 'inventory/includes/employee/sidebar_employee.html' %}
+        {% else %}
+            {% include 'inventory/includes/sidebar.html' %}
+        {% endif %}
+    {% else %}
+        {% include 'inventory/includes/sidebar.html' %}
+    {% endif %}
     
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
     <div class="main-wrapper">
-        <!-- ===== TOPBAR ===== -->
-        {% include 'inventory/includes/topbar.html' %}
+        <!-- ===== CONDITIONAL TOPBAR ===== -->
+        {% if user.is_authenticated %}
+            {% if user.is_staff or user.is_superuser %}
+                {% include 'inventory/includes/topbar.html' %}
+            {% elif user.employee %}
+                {% include 'inventory/includes/employee/topbar_employee.html' %}
+            {% else %}
+                {% include 'inventory/includes/topbar.html' %}
+            {% endif %}
+        {% else %}
+            {% include 'inventory/includes/topbar.html' %}
+        {% endif %}
         
         {% include 'inventory/includes/messages.html' %}
         
@@ -46,6 +67,19 @@
     <script src="{% static 'inventory/js/modules/profile.js' %}?v=13"></script>
     <script src="{% static 'inventory/js/modules/notifications.js' %}?v=13"></script>
     <script src="{% static 'inventory/js/modules/reports.js' %}?v=13"></script>
+    
+    <!-- ===== EMPLOYEE MODULES ===== -->
+    {% if user.is_authenticated and user.employee %}
+    <script src="{% static 'inventory/js/employee/employee-common.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/dashboard.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/assets.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/confirm.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/report.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/notifications.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/profile.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/settings.js' %}?v=13"></script>
+    {% endif %}
+    
     <script src="{% static 'inventory/js/main.js' %}?v=13"></script>
     
     {% block extra_js %}{% endblock %}

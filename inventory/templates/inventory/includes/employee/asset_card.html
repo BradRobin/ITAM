@@ -1,0 +1,20 @@
+{% load static %}
+<div class="asset-card" data-assignment-id="{{ assignment.id }}">
+    <div class="asset-card-header">
+        <span class="asset-type-icon">{{ assignment.asset.type_icon }}</span>
+        <h4>{{ assignment.asset.name }}</h4>
+        <span class="badge badge-{{ assignment.status_class }}">{{ assignment.status_display }}</span>
+    </div>
+    <div class="asset-card-body">
+        <p class="asset-serial">Serial: {{ assignment.asset.serial_number }}</p>
+        <p class="asset-assigned">Assigned: {{ assignment.date_assigned|date:"M d, Y" }}</p>
+    </div>
+    <div class="asset-card-footer">
+        <a href="{% url 'employee_asset_detail' assignment.id %}" class="btn btn-sm btn-primary">View Details</a>
+        {% if not assignment.confirmed_by_employee %}
+        <button class="btn btn-sm btn-success" onclick="confirmAsset('{{ assignment.id }}')">
+            <i class="fas fa-check"></i> Confirm
+        </button>
+        {% endif %}
+    </div>
+</div>
