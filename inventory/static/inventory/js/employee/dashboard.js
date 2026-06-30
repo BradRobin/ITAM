@@ -24,6 +24,10 @@
         if (initialized) {
             return;
         }
+
+        if (!document.querySelector('.employee-dashboard')) {
+            return;
+        }
         
         console.log('Employee dashboard module initializing...');
         
@@ -32,9 +36,6 @@
         
         // Setup refresh button
         setupRefreshButton();
-        
-        // Start auto-refresh
-        startAutoRefresh();
         
         // Setup notification handlers
         setupNotificationHandlers();
