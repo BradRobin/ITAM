@@ -6,7 +6,13 @@
     <div class="notification-content">
         <div class="notification-title">{{ notification.title }}</div>
         <div class="notification-message">{{ notification.message }}</div>
-        <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+        <div class="notification-time">
+            {% if notification.created_label %}
+                {{ notification.created_label }}
+            {% else %}
+                {{ notification.created_at|timesince }} ago
+            {% endif %}
+        </div>
     </div>
     <div class="notification-actions">
         {% if not notification.read %}

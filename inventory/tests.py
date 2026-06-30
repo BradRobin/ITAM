@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -981,6 +982,58 @@ class EmployeePortalTests(TestCase):
             with self.subTest(route_name=route_name):
                 response = self.client.get(reverse(route_name))
                 self.assertRedirects(response, destination)
+
+    def test_employee_can_change_password_from_settings(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_password_change"),
+            data=json.dumps(
+                {
+                    "new_password": "VeryStrongNewPass987!",
+                    "confirm_password": "VeryStrongNewPass987!",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.check_password("VeryStrongNewPass987!"))
+        notifications = self.client.session.get("employee_notifications", [])
+        self.assertEqual(notifications[0]["title"], "Password Changed")
+        self.assertEqual(response.json()["unread_count"], 1)
+
+        self.client.logout()
+        self.assertFalse(
+            self.client.login(username="portal-user", password="test-pass-12345")
+        )
+        self.assertTrue(
+            self.client.login(
+                username="portal-user",
+                password="VeryStrongNewPass987!",
+            )
+        )
+
+    def test_employee_password_change_requires_matching_passwords(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_password_change"),
+            data=json.dumps(
+                {
+                    "new_password": "VeryStrongNewPass987!",
+                    "confirm_password": "DifferentStrongPass987!",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["success"], False)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.check_password("test-pass-12345"))
 
     def test_unlinked_user_is_redirected_from_employee_portal(self):
         unlinked_user = get_user_model().objects.create_user(

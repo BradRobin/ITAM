@@ -3,9 +3,10 @@ import datetime
 import json
 
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.views import LoginView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -1065,6 +1066,25 @@ def get_employee_for_user(user):
         return None
 
 
+def add_employee_session_notification(request, *, notification_type, title, message):
+    notifications = request.session.get("employee_notifications", [])
+    next_id = max(
+        [notification.get("id", 0) for notification in notifications],
+        default=0,
+    ) + 1
+    notification = {
+        "id": next_id,
+        "type": notification_type,
+        "title": title,
+        "message": message,
+        "created_label": "Just now",
+        "read": False,
+    }
+    request.session["employee_notifications"] = [notification, *notifications[:49]]
+    request.session.modified = True
+    return notification
+
+
 class EmployeePortalAccessMixin(LoginRequiredMixin):
     employee_access_denied_message = "You do not have employee access."
 
@@ -1398,6 +1418,67 @@ class EmployeeProfileView(EmployeePortalAccessMixin, TemplateView):
 class EmployeeSettingsView(EmployeePortalAccessMixin, TemplateView):
     """Employee settings page"""
     template_name = 'inventory/employee/settings.html'
+
+
+class EmployeePasswordChangeView(EmployeePortalJSONAccessMixin, View):
+    """Allow a linked employee to update their own account password."""
+
+    def post(self, request):
+        try:
+            payload = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "message": "Invalid request data."},
+                status=400,
+            )
+
+        new_password = payload.get("new_password", "")
+        confirm_password = payload.get("confirm_password", "")
+
+        if not new_password or not confirm_password:
+            return JsonResponse(
+                {"success": False, "message": "Enter and confirm your new password."},
+                status=400,
+            )
+
+        if new_password != confirm_password:
+            return JsonResponse(
+                {"success": False, "message": "Passwords do not match."},
+                status=400,
+            )
+
+        try:
+            validate_password(new_password, user=request.user)
+        except Exception as error:
+            messages_list = getattr(error, "messages", [str(error)])
+            return JsonResponse(
+                {"success": False, "message": " ".join(messages_list)},
+                status=400,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+        update_session_auth_hash(request, request.user)
+        notification = add_employee_session_notification(
+            request,
+            notification_type="success",
+            title="Password Changed",
+            message="Your password was changed successfully.",
+        )
+        unread_count = sum(
+            1
+            for item in request.session.get("employee_notifications", [])
+            if not item.get("read", False)
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Password changed successfully.",
+                "notification": notification,
+                "unread_count": unread_count,
+            }
+        )
 
 
 class EmployeeHistoryView(EmployeePortalAccessMixin, ListView):

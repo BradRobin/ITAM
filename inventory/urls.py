@@ -154,6 +154,7 @@ urlpatterns = [
     path('employee/notifications/mark-all-read/', views.EmployeeMarkAllNotificationsReadView.as_view(), name='employee_mark_all_notifications_read'),
     path('employee/profile/', RedirectView.as_view(pattern_name='employee_settings', permanent=False), name='employee_profile'),
     path('employee/settings/', views.EmployeeSettingsView.as_view(), name='employee_settings'),
+    path('employee/settings/password/', views.EmployeePasswordChangeView.as_view(), name='employee_password_change'),
     path('employee/history/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_history'),
     path('employee/returns/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_returns'),
 ]
