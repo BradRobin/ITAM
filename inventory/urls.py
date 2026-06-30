@@ -6,36 +6,33 @@ from . import views
 urlpatterns = [
     # Authentication URLs
     path("login/", views.AuthLoginView.as_view(), name="login"),
-    # path("signup/", views.SignUpView.as_view(), name="signup"),  # REMOVED - No signup page
     path("logout/", views.AuthLogoutView.as_view(), name="logout"),
     
     # ==========================================
-    # PASSWORD RESET URLs
+    # PASSWORD RESET URLs - All using auth.html
     # ==========================================
     path('password-reset/', 
          auth_views.PasswordResetView.as_view(
-             template_name='inventory/auth.html'
+             template_name='inventory/auth.html',
+             email_template_name='inventory/password_reset_email.html',
+             subject_template_name='inventory/password_reset_subject.txt'
          ), 
-         name='password_reset',
-         kwargs={'page': 'password_reset'}),
+         name='password_reset'),
     path('password-reset/done/', 
          auth_views.PasswordResetDoneView.as_view(
              template_name='inventory/auth.html'
          ), 
-         name='password_reset_done',
-         kwargs={'page': 'password_reset_done'}),
+         name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', 
          auth_views.PasswordResetConfirmView.as_view(
              template_name='inventory/auth.html'
          ), 
-         name='password_reset_confirm',
-         kwargs={'page': 'password_reset_confirm'}),
+         name='password_reset_confirm'),
     path('password-reset-complete/', 
          auth_views.PasswordResetCompleteView.as_view(
              template_name='inventory/auth.html'
          ), 
-         name='password_reset_complete',
-         kwargs={'page': 'password_reset_complete'}),
+         name='password_reset_complete'),
     
     # Dashboard
     path("", views.DashboardView.as_view(), name="dashboard"),
