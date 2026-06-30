@@ -26,7 +26,7 @@ class AssetForm(forms.ModelForm):
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
-        fields = ["name", "department", "email"]
+        fields = ["name", "user", "department", "email"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

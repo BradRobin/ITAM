@@ -12,9 +12,9 @@ class AssetAdmin(admin.ModelAdmin):
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ("name", "department", "email")
+    list_display = ("name", "user", "department", "email")
     list_filter = ("department",)
-    search_fields = ("name", "department", "email")
+    search_fields = ("name", "user__username", "user__email", "department", "email")
 
 
 @admin.register(Assignment)
@@ -22,10 +22,11 @@ class AssignmentAdmin(admin.ModelAdmin):
     list_display = (
         "asset",
         "employee",
+        "confirmed_by_employee",
         "date_assigned",
         "date_returned",
     )
-    list_filter = ("date_assigned", "date_returned")
+    list_filter = ("confirmed_by_employee", "date_assigned", "date_returned")
     search_fields = (
         "asset__name",
         "asset__serial_number",

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -39,6 +40,16 @@ class Asset(models.Model):
     def __str__(self) -> str:
         return f"{self.name} ({self.serial_number})"
 
+    @property
+    def type_icon(self) -> str:
+        icons = {
+            self.AssetType.LAPTOP: "L",
+            self.AssetType.PRINTER: "P",
+            self.AssetType.ROUTER: "R",
+            self.AssetType.MONITOR: "M",
+        }
+        return icons.get(self.type, "A")
+
 
 class Employee(models.Model):
     class Department(models.TextChoices):
@@ -56,6 +67,14 @@ class Employee(models.Model):
         )
 
     name = models.CharField(max_length=255)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee",
+        help_text="User account that can access the employee portal.",
+    )
     department = models.CharField(max_length=255, choices=Department.choices)
     email = models.EmailField() 
 
@@ -97,6 +116,8 @@ class Assignment(models.Model):
     )
     date_assigned = models.DateTimeField(auto_now_add=True)
     date_returned = models.DateTimeField(null=True, blank=True)
+    confirmed_by_employee = models.BooleanField(default=False)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-date_assigned", "-id"]
@@ -117,10 +138,30 @@ class Assignment(models.Model):
                 fields=["employee", "-date_assigned"],
                 name="assignment_emp_date_idx",
             ),
+            models.Index(
+                fields=["employee", "confirmed_by_employee"],
+                name="assignment_emp_confirm_idx",
+            ),
         ]
 
     def __str__(self) -> str:
         return f"{self.asset} assigned to {self.employee}"
+
+    @property
+    def status_display(self) -> str:
+        if self.date_returned:
+            return "Returned"
+        if self.confirmed_by_employee:
+            return "Confirmed"
+        return "Pending Confirmation"
+
+    @property
+    def status_class(self) -> str:
+        if self.date_returned:
+            return "secondary"
+        if self.confirmed_by_employee:
+            return "success"
+        return "warning"
 
 
 class MaintenanceLog(models.Model):

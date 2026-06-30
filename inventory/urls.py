@@ -143,6 +143,7 @@ urlpatterns = [
     # EMPLOYEE PORTAL URLs
     # ==========================================
     # Dashboard
+    path('employee/', views.EmployeeDashboardView.as_view(), name='employee_portal'),
     path('employee/dashboard/', views.EmployeeDashboardView.as_view(), name='employee_dashboard'),
     path('employee/assets/', views.EmployeeAssetsView.as_view(), name='employee_assets'),
     path('employee/assets/<int:pk>/', views.EmployeeAssetDetailView.as_view(), name='employee_asset_detail'),

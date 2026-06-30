@@ -346,18 +346,30 @@ class InventoryAdminConfigurationTests(TestCase):
     def test_employee_admin_configuration(self):
         model_admin = admin.site._registry[Employee]
 
-        self.assertEqual(model_admin.list_display, ("name", "department", "email"))
+        self.assertEqual(model_admin.list_display, ("name", "user", "department", "email"))
         self.assertEqual(model_admin.list_filter, ("department",))
-        self.assertEqual(model_admin.search_fields, ("name", "department", "email"))
+        self.assertEqual(
+            model_admin.search_fields,
+            ("name", "user__username", "user__email", "department", "email"),
+        )
 
     def test_assignment_admin_configuration(self):
         model_admin = admin.site._registry[Assignment]
 
         self.assertEqual(
             model_admin.list_display,
-            ("asset", "employee", "date_assigned", "date_returned"),
+            (
+                "asset",
+                "employee",
+                "confirmed_by_employee",
+                "date_assigned",
+                "date_returned",
+            ),
         )
-        self.assertEqual(model_admin.list_filter, ("date_assigned", "date_returned"))
+        self.assertEqual(
+            model_admin.list_filter,
+            ("confirmed_by_employee", "date_assigned", "date_returned"),
+        )
         self.assertIn("asset__name", model_admin.search_fields)
         self.assertIn("asset__serial_number", model_admin.search_fields)
         self.assertIn("employee__name", model_admin.search_fields)
@@ -823,3 +835,96 @@ class MaintenanceLogCRUDTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(MaintenanceLog.objects.filter(asset=self.asset).exists())
+
+
+class EmployeePortalTests(TestCase):
+    def setUp(self):
+        self.employee_user = get_user_model().objects.create_user(
+            username="portal-user",
+            email="portal-user@example.com",
+            password="test-pass-12345",
+        )
+        self.other_user = get_user_model().objects.create_user(
+            username="other-portal-user",
+            email="other-portal-user@example.com",
+            password="test-pass-12345",
+        )
+        self.employee = Employee.objects.create(
+            user=self.employee_user,
+            name="Portal Employee",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="portal.employee@example.com",
+        )
+        self.other_employee = Employee.objects.create(
+            user=self.other_user,
+            name="Other Portal Employee",
+            department=Employee.Department.CAPACITY_BUILDING_INNOVATION,
+            email="other.portal.employee@example.com",
+        )
+        self.asset = Asset.objects.create(
+            name="Portal Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="PORTAL-001",
+            status=Asset.AssetStatus.ASSIGNED,
+        )
+        self.assignment = Assignment.objects.create(
+            asset=self.asset,
+            employee=self.employee,
+        )
+
+    def test_employee_login_redirects_to_employee_dashboard(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "username": "portal-user",
+                "password": "test-pass-12345",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_dashboard"))
+
+    def test_linked_employee_can_open_portal_dashboard(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.get(reverse("employee_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/employee/dashboard.html")
+        self.assertEqual(response.context["active_assets"], 1)
+        self.assertEqual(response.context["pending_assets"], 1)
+
+    def test_unlinked_user_is_redirected_from_employee_portal(self):
+        unlinked_user = get_user_model().objects.create_user(
+            username="unlinked-portal-user",
+            email="unlinked@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(unlinked_user)
+
+        response = self.client.get(reverse("employee_dashboard"))
+
+        self.assertRedirects(response, reverse("dashboard"))
+
+    def test_employee_can_confirm_own_assigned_asset(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_confirm_asset", kwargs={"pk": self.assignment.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assignment.refresh_from_db()
+        self.assertTrue(self.assignment.confirmed_by_employee)
+        self.assertIsNotNone(self.assignment.confirmed_at)
+
+    def test_employee_cannot_confirm_another_employee_assignment(self):
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(
+            reverse("employee_confirm_asset", kwargs={"pk": self.assignment.pk})
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assignment.refresh_from_db()
+        self.assertFalse(self.assignment.confirmed_by_employee)
