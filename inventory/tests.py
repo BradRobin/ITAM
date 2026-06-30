@@ -6,7 +6,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import AssetForm, AssignmentForm, EmployeeForm
+from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
 from .models import Asset, Assignment, Employee, MaintenanceLog
 
 
@@ -119,6 +119,38 @@ class AssignmentStateMachineViewTests(TestCase):
                 ),
             ],
         )
+
+    def test_employee_create_form_creates_linked_user_with_hashed_password(self):
+        form = EmployeeCreateForm(
+            data={
+                "username": "new.employee",
+                "email": "new.employee@example.com",
+                "department": Employee.Department.TECHNICAL_CORE_PROGRAMME,
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        employee = form.save()
+        self.assertEqual(employee.name, "new.employee")
+        self.assertEqual(employee.email, "new.employee@example.com")
+        self.assertEqual(employee.user.username, "new.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+
+    def test_employee_create_form_requires_matching_passwords(self):
+        form = EmployeeCreateForm(
+            data={
+                "username": "mismatch.employee",
+                "email": "mismatch.employee@example.com",
+                "department": Employee.Department.TECHNICAL_CORE_PROGRAMME,
+                "password": "StrongPass123!",
+                "confirm_password": "DifferentPass123!",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("confirm_password", form.errors)
 
     def test_employee_department_abbreviation_supports_legacy_departments(self):
         employee = Employee(name="Legacy Employee", department="IT Operations")
@@ -691,18 +723,20 @@ class FrontendAPIBridgeTests(TestCase):
         response = self.client.post(
             reverse("api_employee_list"),
             data={
-                "name": "Created Employee",
+                "username": "created.employee",
                 "department": Employee.Department.CAPACITY_BUILDING_INNOVATION,
                 "email": "created.employee@example.com",
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
             },
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(
-            Employee.objects.filter(email="created.employee@example.com").exists()
-        )
-        self.assertEqual(response.json()["name"], "Created Employee")
+        employee = Employee.objects.get(email="created.employee@example.com")
+        self.assertEqual(employee.user.username, "created.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+        self.assertEqual(response.json()["name"], "created.employee")
 
     def test_employee_api_rejects_unknown_department(self):
         self.client.force_login(self.admin)
@@ -882,6 +916,45 @@ class EmployeePortalTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("employee_dashboard"))
+
+    def test_employee_can_login_with_email_to_employee_dashboard(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "username": "portal-user@example.com",
+                "password": "test-pass-12345",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_dashboard"))
+
+    def test_admin_create_employee_creates_linked_user_and_notification(self):
+        admin_user = get_user_model().objects.create_user(
+            username="employee-admin",
+            email="employee-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.post(
+            reverse("employee_add"),
+            data={
+                "username": "created.employee",
+                "email": "created.employee@example.com",
+                "department": Employee.Department.INSTITUTIONAL_SUPPORT_ADVISORY,
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_list"))
+        employee = Employee.objects.get(email="created.employee@example.com")
+        self.assertEqual(employee.name, "created.employee")
+        self.assertEqual(employee.user.username, "created.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+        notifications = self.client.session.get("notifications", [])
+        self.assertEqual(notifications[0]["title"], "New Employee Added")
 
     def test_linked_employee_can_open_portal_dashboard(self):
         self.client.force_login(self.employee_user)

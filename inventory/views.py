@@ -28,7 +28,14 @@ from django.views.generic import (
 )
 from django.utils.decorators import method_decorator
 
-from .forms import AssetForm, AssignmentForm, EmployeeForm, MaintenanceLogForm
+from .forms import (
+    AssetForm,
+    AssignmentForm,
+    EmailOrUsernameAuthenticationForm,
+    EmployeeCreateForm,
+    EmployeeForm,
+    MaintenanceLogForm,
+)
 from .models import Asset, Assignment, Employee, MaintenanceLog
 from .services.metrics import (
     get_dashboard_context,
@@ -204,6 +211,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 class AuthLoginView(LoginView):
     template_name = "inventory/auth.html"
+    authentication_form = EmailOrUsernameAuthenticationForm
     redirect_authenticated_user = True
 
     def get_success_url(self):
@@ -481,7 +489,7 @@ class EmployeeDetailView(LoginRequiredMixin, DetailView):
 
 class EmployeeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Employee
-    form_class = EmployeeForm
+    form_class = EmployeeCreateForm
     template_name = "inventory/employee_form.html"
     success_url = reverse_lazy("employee_list")
 
@@ -492,9 +500,14 @@ class EmployeeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if self.request.user.is_authenticated:
             raise PermissionDenied
         return super().handle_no_permission()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.pop("instance", None)
+        return kwargs
     
     def form_valid(self, form):
-        response = super().form_valid(form)
+        self.object = form.save()
         add_session_notification(
             self.request,
             notification_type="success",
@@ -505,7 +518,7 @@ class EmployeeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         )
         
         messages.success(self.request, "Employee created successfully.")
-        return response
+        return redirect(self.get_success_url())
 
 
 class EmployeeUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -972,11 +985,19 @@ class EmployeeAPIListView(LoginRequiredMixin, View):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
 
-        form = EmployeeForm(data=parse_request_data(request))
+        form = EmployeeCreateForm(data=parse_request_data(request))
         if not form.is_valid():
             return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
         employee = form.save()
+        add_session_notification(
+            request,
+            notification_type="success",
+            title="New Employee Added",
+            message=f'Employee "{employee.name}" has been added to the system.',
+            link=reverse("employee_list"),
+            source="employee_creation",
+        )
         return JsonResponse(serialize_employee(employee), status=201)
 
 
