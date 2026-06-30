@@ -284,9 +284,11 @@
                     var unreadCount = Number.isInteger(data.unread_count)
                         ? data.unread_count
                         : Math.max((parseInt(badge.textContent) || 0) - 1, 0);
-                    badge.textContent = unreadCount > 0 ? unreadCount : '';
+                    badge.textContent = '';
                     if (unreadCount <= 0) {
                         badge.classList.add('hidden');
+                    } else {
+                        badge.classList.remove('hidden');
                     }
                 }
             } else {
@@ -321,7 +323,7 @@
                 });
                 var badge = document.querySelector('.notification-badge');
                 if (badge) {
-                    badge.textContent = '0';
+                    badge.textContent = '';
                     badge.classList.add('hidden');
                 }
             } else {
@@ -354,7 +356,7 @@
             });
             var badge = document.querySelector('.notification-badge');
             if (badge) {
-                badge.textContent = '0';
+                badge.textContent = '';
                 badge.classList.add('hidden');
             }
             showToast('All notifications cleared', 'info');
