@@ -1,0 +1,93 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Employee Dashboard - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="employee-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1>My Dashboard</h1>
+            <p class="subtitle">Welcome back, {{ user.get_full_name|default:user.username }}</p>
+        </div>
+        <div class="header-right">
+            <span class="last-active">Last active: {{ user.last_login|timesince }} ago</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <span class="stat-value">{{ active_assets|default:"0" }}</span>
+                <span class="stat-label">My Assets</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <span class="stat-value">{{ pending_confirmations|default:"0" }}</span>
+                <span class="stat-label">Pending Confirmation</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔔</div>
+            <div class="stat-info">
+                <span class="stat-value">{{ unread_notifications|default:"0" }}</span>
+                <span class="stat-label">Notifications</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info">
+                <span class="stat-value">{{ due_assets|default:"0" }}</span>
+                <span class="stat-label">Due for Return</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Assets Section -->
+    <div class="assets-section">
+        <div class="section-header">
+            <h2>My Assigned Assets</h2>
+            <a href="{% url 'employee_assets' %}" class="btn btn-secondary">View All</a>
+        </div>
+        <div class="assets-grid">
+            {% for assignment in active_assignments|slice:":4" %}
+                {% include 'inventory/includes/employee/asset_card.html' with assignment=assignment %}
+            {% empty %}
+                <div class="empty-state">
+                    <p>No assets assigned to you yet.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="notifications-section">
+        <div class="section-header">
+            <h2>Recent Notifications</h2>
+            <a href="{% url 'employee_notifications' %}" class="btn btn-secondary">View All</a>
+        </div>
+        <div class="notifications-list">
+            {% for notification in recent_notifications|slice:":5" %}
+                {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+            {% empty %}
+                <div class="empty-state">
+                    <p>No notifications.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'inventory/js/employee/dashboard.js' %}"></script>
+{% endblock %}

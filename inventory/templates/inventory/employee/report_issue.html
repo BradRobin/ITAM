@@ -1,0 +1,74 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Report Issue - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/employee-common.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="report-issue-page">
+    <div class="report-container">
+        <div class="report-header">
+            <h1>Report Issue</h1>
+            <p class="report-subtitle">Report a problem with your assigned asset</p>
+        </div>
+
+        <div class="asset-summary-card">
+            <div class="asset-summary-header">
+                <span class="asset-icon">{{ asset.type_icon }}</span>
+                <div>
+                    <h3>{{ asset.name }}</h3>
+                    <p class="asset-meta">Serial: {{ asset.serial_number }}</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'employee_report_issue' assignment.id %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="issue_type" class="form-label">Issue Type</label>
+                <select name="issue_type" id="issue_type" class="form-control" required>
+                    <option value="">Select issue type...</option>
+                    <option value="hardware">Hardware Problem</option>
+                    <option value="software">Software Issue</option>
+                    <option value="damage">Physical Damage</option>
+                    <option value="performance">Performance Issue</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="issue_description" class="form-label">Description</label>
+                <textarea name="issue_description" id="issue_description" class="form-control" rows="5" 
+                          placeholder="Please describe the issue in detail..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="urgency" class="form-label">Urgency</label>
+                <select name="urgency" id="urgency" class="form-control" required>
+                    <option value="low">Low - Can continue working</option>
+                    <option value="medium">Medium - Affects productivity</option>
+                    <option value="high">High - Cannot work</option>
+                    <option value="critical">Critical - Immediate attention needed</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Submit Report
+                </button>
+                <a href="{% url 'employee_asset_detail' assignment.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'inventory/js/employee/report.js' %}"></script>
+{% endblock %}

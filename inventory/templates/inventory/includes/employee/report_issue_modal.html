@@ -1,0 +1,73 @@
+{% load static %}
+<div class="modal fade" id="reportIssueModal" tabindex="-1" role="dialog" aria-labelledby="reportIssueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportIssueModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Report Issue
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'employee_report_issue' assignment.id %}" id="reportIssueForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Asset Summary -->
+                    <div class="asset-summary-mini">
+                        <div class="asset-icon-mini">{{ assignment.asset.type_icon }}</div>
+                        <div class="asset-info-mini">
+                            <strong>{{ assignment.asset.name }}</strong>
+                            <span class="text-muted">Serial: {{ assignment.asset.serial_number }}</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issue_type_modal" class="form-label required">Issue Type</label>
+                        <select name="issue_type" id="issue_type_modal" class="form-control" required>
+                            <option value="">Select issue type...</option>
+                            <option value="hardware">Hardware Problem</option>
+                            <option value="software">Software Issue</option>
+                            <option value="damage">Physical Damage</option>
+                            <option value="performance">Performance Issue</option>
+                            <option value="accessory">Accessory Missing</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <small class="help-text">Select the category that best describes the issue.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issue_description_modal" class="form-label required">Description</label>
+                        <textarea name="issue_description" id="issue_description_modal" class="form-control" rows="4" 
+                                  placeholder="Please describe the issue in detail..." required></textarea>
+                        <small class="help-text">Be as specific as possible to help us resolve the issue quickly.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="urgency_modal" class="form-label">Urgency Level</label>
+                        <select name="urgency" id="urgency_modal" class="form-control">
+                            <option value="low">Low - Can continue working</option>
+                            <option value="medium" selected>Medium - Affects productivity</option>
+                            <option value="high">High - Cannot work effectively</option>
+                            <option value="critical">Critical - Immediate attention needed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issue_photo" class="form-label">Attach Photo (Optional)</label>
+                        <input type="file" name="issue_photo" id="issue_photo" class="form-control-file" accept="image/*">
+                        <small class="help-text">Upload a photo to help describe the issue.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitIssueBtn">
+                        <i class="fas fa-paper-plane"></i> Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

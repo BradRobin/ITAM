@@ -1,0 +1,31 @@
+{% load static %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_assets|default:"0" }}</span>
+            <span class="stat-label">Total Assets</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ confirmed_assets|default:"0" }}</span>
+            <span class="stat-label">Confirmed</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ pending_assets|default:"0" }}</span>
+            <span class="stat-label">Pending</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-info">
+            <span class="stat-value">{{ returned_assets|default:"0" }}</span>
+            <span class="stat-label">Returned</span>
+        </div>
+    </div>
+</div>

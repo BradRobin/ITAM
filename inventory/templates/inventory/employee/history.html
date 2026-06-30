@@ -1,0 +1,101 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}My History - ITAM System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/history.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="employee-history">
+    <div class="page-header">
+        <div>
+            <h1>My History</h1>
+            <p class="subtitle">Complete history of your asset assignments</p>
+        </div>
+        <button class="btn btn-secondary" onclick="exportHistory()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="history-filters">
+        <input type="text" class="search-input" placeholder="Search assets..." id="historySearch">
+        <select class="filter-select" id="typeFilter">
+            <option value="all">All Types</option>
+            <option value="assigned">Assigned</option>
+            <option value="returned">Returned</option>
+            <option value="confirmed">Confirmed</option>
+        </select>
+        <input type="date" class="date-input" id="dateFrom">
+        <input type="date" class="date-input" id="dateTo">
+    </div>
+
+    <!-- History Table -->
+    <div class="history-table-wrapper">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Serial Number</th>
+                    <th>Type</th>
+                    <th>Assigned On</th>
+                    <th>Returned On</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in history %}
+                <tr>
+                    <td>
+                        <div class="asset-name">
+                            <span class="asset-icon-small">{{ assignment.asset.type_icon }}</span>
+                            {{ assignment.asset.name }}
+                        </div>
+                    </td>
+                    <td>{{ assignment.asset.serial_number }}</td>
+                    <td>{{ assignment.asset.type }}</td>
+                    <td>{{ assignment.date_assigned|date:"Y-m-d" }}</td>
+                    <td>{{ assignment.date_returned|date:"Y-m-d"|default:"-" }}</td>
+                    <td>
+                        <span class="badge badge-{{ assignment.status_class }}">
+                            {{ assignment.status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'employee_asset_detail' assignment.id %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-row">
+                        <p>No history found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">&larr; Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Next &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'inventory/js/employee/employee-common.js' %}"></script>
+{% endblock %}
