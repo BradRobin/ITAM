@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, OuterRef, Q, Subquery
@@ -248,6 +248,48 @@ class AuthLogoutView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page"] = "logout"
+        return context
+
+
+# ============================================
+# PASSWORD RESET VIEWS
+# ============================================
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = "inventory/auth.html"
+    success_url = reverse_lazy("password_reset_done")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page"] = "password_reset"
+        return context
+
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "inventory/auth.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page"] = "password_reset_done"
+        return context
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "inventory/auth.html"
+    success_url = reverse_lazy("password_reset_complete")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page"] = "password_reset_confirm"
+        return context
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = "inventory/auth.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page"] = "password_reset_complete"
         return context
 
 
