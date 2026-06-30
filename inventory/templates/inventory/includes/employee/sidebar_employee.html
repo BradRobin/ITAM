@@ -4,18 +4,6 @@
         <i class="fas fa-user-tie brand-icon"></i>
         <span class="brand-text">Employee Portal</span>
     </div>
-
-    <!-- Employee Info -->
-    <div class="sidebar-employee-info">
-        <img class="employee-avatar-small" 
-             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=48&rounded=true&bold=true&font-size=0.33" 
-             alt="{{ user.username }}">
-        <div class="employee-info-details">
-            <span class="employee-name">{{ user.get_full_name|default:user.username }}</span>
-            <span class="employee-role-badge">Employee</span>
-        </div>
-    </div>
-
     <!-- Main Navigation -->
     <ul class="sidebar-nav">
         <li class="sidebar-item">
