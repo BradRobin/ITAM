@@ -1075,6 +1075,35 @@ class EmployeePortalAccessMixin(LoginRequiredMixin):
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        notifications = self.request.session.get("employee_notifications", [])
+        unread_notifications = [
+            notification for notification in notifications if not notification.get("read", False)
+        ]
+        assignments = Assignment.objects.filter(employee=self.employee).select_related("asset")
+
+        context.update(
+            {
+                "employee": self.employee,
+                "employee_notifications": notifications,
+                "recent_notifications": notifications[:5],
+                "unread_notifications": len(unread_notifications),
+                "employee_total_assets": assignments.count(),
+                "employee_confirmed_assets": assignments.filter(
+                    confirmed_by_employee=True
+                ).count(),
+                "employee_pending_assets": assignments.filter(
+                    date_returned__isnull=True,
+                    confirmed_by_employee=False,
+                ).count(),
+                "employee_returned_assets": assignments.filter(
+                    date_returned__isnull=False
+                ).count(),
+            }
+        )
+        return context
+
 
 class EmployeePortalJSONAccessMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
@@ -1114,10 +1143,16 @@ class EmployeeDashboardView(EmployeePortalAccessMixin, TemplateView):
         due_assets = active_assignments.filter(
             date_assigned__lte=timezone.now() - datetime.timedelta(days=30)
         )
+
+        assignment_history = Assignment.objects.filter(
+            employee=employee
+        ).select_related("asset").order_by("-date_assigned")
         
         context.update({
             'active_assets': active_assignments.count(),
             'active_assignments': active_assignments,
+            'returnable_assignments': active_assignments,
+            'assignment_history': assignment_history,
             'pending_confirmations': pending_confirmations,
             'pending_assets': pending_confirmations.count(),
             'unread_notifications': len(unread_notifications),

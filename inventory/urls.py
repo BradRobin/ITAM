@@ -1,5 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.views.generic import RedirectView
 from . import views
 
 
@@ -148,11 +149,11 @@ urlpatterns = [
     path('employee/asset/<int:pk>/report-issue/', views.EmployeeReportIssueView.as_view(), name='employee_report_issue'),
     path('employee/asset/<int:pk>/maintenance/', views.EmployeeMaintenanceRequestView.as_view(), name='employee_maintenance_request'),
     path('employee/asset/<int:pk>/return/', views.EmployeeReturnRequestView.as_view(), name='employee_return_request'),
-    path('employee/notifications/', views.EmployeeNotificationsView.as_view(), name='employee_notifications'),
+    path('employee/notifications/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_notifications'),
     path('employee/notifications/mark-read/<int:pk>/', views.EmployeeMarkNotificationReadView.as_view(), name='employee_mark_notification_read'),
     path('employee/notifications/mark-all-read/', views.EmployeeMarkAllNotificationsReadView.as_view(), name='employee_mark_all_notifications_read'),
-    path('employee/profile/', views.EmployeeProfileView.as_view(), name='employee_profile'),
+    path('employee/profile/', RedirectView.as_view(pattern_name='employee_settings', permanent=False), name='employee_profile'),
     path('employee/settings/', views.EmployeeSettingsView.as_view(), name='employee_settings'),
-    path('employee/history/', views.EmployeeHistoryView.as_view(), name='employee_history'),
-    path('employee/returns/', views.EmployeeReturnsView.as_view(), name='employee_returns'),
+    path('employee/history/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_history'),
+    path('employee/returns/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_returns'),
 ]

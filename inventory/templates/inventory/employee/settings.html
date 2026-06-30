@@ -10,11 +10,44 @@
 {% block content %}
 <div class="employee-settings">
     <div class="settings-header">
-        <h1>Settings</h1>
-        <p class="subtitle">Manage your preferences and notifications</p>
+        <h1>Settings & Profile</h1>
+        <p class="subtitle">Manage your profile details, preferences, and notifications.</p>
     </div>
 
     <div class="settings-grid">
+        <!-- Profile Summary -->
+        <div class="settings-card profile-settings-card">
+            <div class="card-header">
+                <h3>Profile</h3>
+            </div>
+            <div class="card-body">
+                <div class="profile-summary">
+                    <img class="settings-avatar"
+                         src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=1a2332&color=fff&size=72&rounded=true&bold=true&font-size=0.33"
+                         alt="{{ user.username }}">
+                    <div>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p>{{ employee.department_abbreviation }} · {{ employee.get_department_display }}</p>
+                        <p>{{ user.email|default:employee.email }}</p>
+                    </div>
+                </div>
+                <div class="profile-stats">
+                    <div>
+                        <strong>{{ employee_total_assets }}</strong>
+                        <span>Total Assets</span>
+                    </div>
+                    <div>
+                        <strong>{{ employee_confirmed_assets }}</strong>
+                        <span>Confirmed</span>
+                    </div>
+                    <div>
+                        <strong>{{ employee_returned_assets }}</strong>
+                        <span>Returned</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Theme Settings -->
         <div class="settings-card">
             <div class="card-header">

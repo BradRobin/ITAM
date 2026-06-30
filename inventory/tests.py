@@ -965,6 +965,22 @@ class EmployeePortalTests(TestCase):
         self.assertTemplateUsed(response, "inventory/employee/dashboard.html")
         self.assertEqual(response.context["active_assets"], 1)
         self.assertEqual(response.context["pending_assets"], 1)
+        self.assertEqual(list(response.context["assignment_history"]), [self.assignment])
+
+    def test_removed_employee_pages_redirect_to_consolidated_destinations(self):
+        self.client.force_login(self.employee_user)
+
+        redirects = {
+            "employee_notifications": reverse("employee_dashboard"),
+            "employee_history": reverse("employee_dashboard"),
+            "employee_returns": reverse("employee_dashboard"),
+            "employee_profile": reverse("employee_settings"),
+        }
+
+        for route_name, destination in redirects.items():
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertRedirects(response, destination)
 
     def test_unlinked_user_is_redirected_from_employee_portal(self):
         unlinked_user = get_user_model().objects.create_user(

@@ -19,12 +19,27 @@
 
         <!-- Notifications Bell -->
         <div class="notification-container" id="notificationContainer">
-            <a href="{% url 'employee_notifications' %}" class="notification-bell" id="notificationBell" aria-label="Notifications">
+            <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
                 <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
                     {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
                 </span>
-            </a>
+            </button>
+            <div class="employee-notification-dropdown" id="employeeNotificationDropdown">
+                <div class="notification-dropdown-header">
+                    <strong>Notifications</strong>
+                    {% if unread_notifications > 0 %}
+                        <button type="button" class="mark-all-link" onclick="markAllRead()">Mark all read</button>
+                    {% endif %}
+                </div>
+                <div class="notification-dropdown-list">
+                    {% for notification in recent_notifications %}
+                        {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+                    {% empty %}
+                        <div class="notification-empty">No notifications yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
         <!-- Profile Dropdown -->
@@ -54,13 +69,9 @@
                     </div>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="{% url 'employee_profile' %}">
-                    <i class="fas fa-user-circle dropdown-icon"></i>
-                    <span>My Profile</span>
-                </a>
                 <a class="dropdown-item" href="{% url 'employee_settings' %}">
                     <i class="fas fa-cog dropdown-icon"></i>
-                    <span>Settings</span>
+                    <span>Settings & Profile</span>
                 </a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item dropdown-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">

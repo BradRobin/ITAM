@@ -16,5 +16,10 @@
             <i class="fas fa-check"></i> Confirm
         </button>
         {% endif %}
+        {% if not assignment.date_returned %}
+        <button class="btn btn-sm btn-secondary return-btn" data-id="{{ assignment.id }}" onclick="requestReturn('{{ assignment.id }}')">
+            <i class="fas fa-undo"></i> Return
+        </button>
+        {% endif %}
     </div>
 </div>

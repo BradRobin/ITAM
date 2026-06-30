@@ -39,51 +39,12 @@
                 {% endif %}
             </a>
         </li>
-        <li class="sidebar-item">
-            <a class="sidebar-link {% if 'employee/notifications' in request.path %}active{% endif %}" 
-               href="{% url 'employee_notifications' %}" 
-               data-loader="true"
-               data-loader-message="Loading Notifications...">
-                <i class="fas fa-bell sidebar-icon"></i>
-                <span class="sidebar-label">Notifications</span>
-                {% if unread_notifications > 0 %}
-                <span class="badge badge-notification">{{ unread_notifications }}</span>
-                {% endif %}
-            </a>
-        </li>
-        <li class="sidebar-item">
-            <a class="sidebar-link {% if 'employee/history' in request.path %}active{% endif %}" 
-               href="{% url 'employee_history' %}" 
-               data-loader="true"
-               data-loader-message="Loading History...">
-                <i class="fas fa-history sidebar-icon"></i>
-                <span class="sidebar-label">History</span>
-            </a>
-        </li>
-        <li class="sidebar-item">
-            <a class="sidebar-link {% if 'employee/returns' in request.path %}active{% endif %}" 
-               href="{% url 'employee_returns' %}" 
-               data-loader="true"
-               data-loader-message="Loading Returns...">
-                <i class="fas fa-undo-alt sidebar-icon"></i>
-                <span class="sidebar-label">Returns</span>
-            </a>
-        </li>
     </ul>
 
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
         <div class="sidebar-divider"></div>
         <ul class="sidebar-nav-bottom">
-            <li class="sidebar-item">
-                <a class="sidebar-link {% if 'employee/profile' in request.path %}active{% endif %}" 
-                   href="{% url 'employee_profile' %}" 
-                   data-loader="true"
-                   data-loader-message="Loading Profile...">
-                    <i class="fas fa-user-circle sidebar-icon"></i>
-                    <span class="sidebar-label">My Profile</span>
-                </a>
-            </li>
             <li class="sidebar-item">
                 <a class="sidebar-link {% if 'employee/settings' in request.path %}active{% endif %}" 
                    href="{% url 'employee_settings' %}" 
