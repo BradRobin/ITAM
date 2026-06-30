@@ -27,21 +27,21 @@
                 {% endif %}
             </a>
         </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'employee/settings' in request.path %}active{% endif %}" 
+               href="{% url 'employee_settings' %}" 
+               data-loader="true"
+               data-loader-message="Loading Settings...">
+                <i class="fas fa-cog sidebar-icon"></i>
+                <span class="sidebar-label">Settings</span>
+            </a>
+        </li>
     </ul>
 
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
         <div class="sidebar-divider"></div>
         <ul class="sidebar-nav-bottom">
-            <li class="sidebar-item">
-                <a class="sidebar-link {% if 'employee/settings' in request.path %}active{% endif %}" 
-                   href="{% url 'employee_settings' %}" 
-                   data-loader="true"
-                   data-loader-message="Loading Settings...">
-                    <i class="fas fa-cog sidebar-icon"></i>
-                    <span class="sidebar-label">Settings</span>
-                </a>
-            </li>
             <li class="sidebar-item">
                 <a class="sidebar-link sidebar-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">
                     <i class="fas fa-sign-out-alt sidebar-icon"></i>
