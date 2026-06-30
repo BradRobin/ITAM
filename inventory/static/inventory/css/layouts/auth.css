@@ -217,6 +217,65 @@
 }
 
 /* ==========================================
+   FORM OPTIONS (Remember Me + Forgot Password)
+   ========================================== */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 1rem 0;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-500, #3b82f6);
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 4px;
+    background: var(--bg-input, #0f172a);
+}
+
+.remember-me label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+    cursor: pointer;
+    user-select: none;
+}
+
+[data-theme="light"] .remember-me label {
+    color: var(--text-secondary, #64748b);
+}
+
+.forgot-password {
+    font-size: 0.8rem;
+    color: var(--primary-400, #60a5fa);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+    color: var(--primary-300, #93bbfc);
+    text-decoration: underline;
+}
+
+[data-theme="light"] .forgot-password {
+    color: var(--primary-600, #2563eb);
+}
+
+[data-theme="light"] .forgot-password:hover {
+    color: var(--primary-700, #1d4ed8);
+}
+
+/* ==========================================
    AUTH LOGO
    ========================================== */
 .auth-logo {
@@ -658,6 +717,17 @@
     .auth-page .theme-toggle-btn .theme-icon {
         font-size: 1rem;
     }
+
+    /* Form options responsive */
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .forgot-password {
+        align-self: flex-end;
+    }
 }
 
 @media (max-width: 768px) {
@@ -775,76 +845,4 @@
         height: 32px;
         font-size: 0.9rem;
     }
-}
-
-/* ==========================================
-   DARK THEME - Auth pages
-   ========================================== */
-
-[data-theme="dark"] .auth-page {
-    background: var(--bg-primary, #0f172a);
-}
-
-[data-theme="dark"] .auth-page .theme-toggle-btn {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.6);
-}
-
-[data-theme="dark"] .auth-page .theme-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-[data-theme="dark"] .auth-page .theme-toggle-btn .theme-icon {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-[data-theme="dark"] .auth-page .theme-toggle-btn:hover .theme-icon {
-    color: #ffffff;
-}
-
-/* ==========================================
-   LIGHT THEME - Auth pages
-   ========================================== */
-
-[data-theme="light"] .auth-page {
-    background: var(--bg-primary, #f1f5f9);
-}
-
-[data-theme="light"] .auth-page .theme-toggle-btn {
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="light"] .auth-page .theme-toggle-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-    color: #000000;
-}
-
-[data-theme="light"] .auth-page .theme-toggle-btn .theme-icon {
-    color: rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="light"] .auth-page .theme-toggle-btn:hover .theme-icon {
-    color: #000000;
-}
-
-/* ==========================================
-   THEME TRANSITIONS
-   ========================================== */
-.auth-card,
-.auth-form input,
-.auth-logo span,
-.auth-logo svg,
-.auth-header h1,
-.auth-header p,
-.auth-divider,
-.auth-divider::before,
-.auth-divider::after,
-.auth-footer,
-.auth-footer a,
-.auth-error,
-.password-toggle,
-.btn {
-    transition: all 0.3s ease;
 }
