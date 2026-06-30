@@ -281,12 +281,12 @@
                 // Update badge count
                 var badge = document.querySelector('.notification-badge');
                 if (badge) {
-                    var currentCount = parseInt(badge.textContent) || 0;
-                    if (currentCount > 0) {
-                        badge.textContent = currentCount - 1;
-                        if (badge.textContent === '0') {
-                            badge.classList.add('hidden');
-                        }
+                    var unreadCount = Number.isInteger(data.unread_count)
+                        ? data.unread_count
+                        : Math.max((parseInt(badge.textContent) || 0) - 1, 0);
+                    badge.textContent = unreadCount > 0 ? unreadCount : '';
+                    if (unreadCount <= 0) {
+                        badge.classList.add('hidden');
                     }
                 }
             } else {
@@ -402,12 +402,39 @@
             }
         });
     }
+
+    // ============================================
+    // Notification Dropdown
+    // ============================================
+    function setupNotificationDropdown() {
+        var bell = document.getElementById('notificationBell');
+        var dropdown = document.getElementById('employeeNotificationDropdown');
+
+        if (!bell || !dropdown) {
+            return;
+        }
+
+        bell.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+
+        dropdown.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', function() {
+            dropdown.classList.remove('active');
+        });
+    }
     
     // ============================================
     // Initialize Employee Common
     // ============================================
     function init() {
         console.log('Employee common module initialized.');
+        setupNotificationDropdown();
         
         // Setup search input handler
         var searchInput = document.getElementById('assetSearch');

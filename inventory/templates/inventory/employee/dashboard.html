@@ -12,11 +12,7 @@
     <!-- Header -->
     <div class="dashboard-header">
         <div class="header-left">
-            <h1>My Dashboard</h1>
-            <p class="subtitle">Welcome back, {{ user.get_full_name|default:user.username }}</p>
-        </div>
-        <div class="header-right">
-            <span class="last-active">Last active: {{ user.last_login|timesince }} ago</span>
+            <h1>{{ greeting }} {{ user.get_full_name|default:user.username }}</h1>
         </div>
     </div>
 
@@ -32,15 +28,8 @@
         <div class="stat-card">
             <div class="stat-icon">⏳</div>
             <div class="stat-info">
-                <span class="stat-value">{{ pending_confirmations|default:"0" }}</span>
+                <span class="stat-value">{{ pending_assets|default:"0" }}</span>
                 <span class="stat-label">Pending Confirmation</span>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔔</div>
-            <div class="stat-info">
-                <span class="stat-value">{{ unread_notifications|default:"0" }}</span>
-                <span class="stat-label">Notifications</span>
             </div>
         </div>
         <div class="stat-card">
@@ -69,18 +58,28 @@
         </div>
     </div>
 
-    <!-- Recent Notifications -->
-    <div class="notifications-section">
+    <!-- Assignment History -->
+    <div class="history-section">
         <div class="section-header">
-            <h2>Recent Notifications</h2>
-            <a href="{% url 'employee_notifications' %}" class="btn btn-secondary">View All</a>
+            <h2>Assignment History</h2>
         </div>
-        <div class="notifications-list">
-            {% for notification in recent_notifications|slice:":5" %}
-                {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+        <div class="history-list">
+            {% for assignment in assignment_history|slice:":8" %}
+                <div class="history-item">
+                    <div class="history-main">
+                        <span class="history-asset">{{ assignment.asset.name }}</span>
+                        <span class="history-meta">
+                            Assigned {{ assignment.date_assigned|date:"M d, Y H:i" }}
+                            {% if assignment.date_returned %}
+                                · Returned {{ assignment.date_returned|date:"M d, Y H:i" }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <span class="badge badge-{{ assignment.status_class }}">{{ assignment.status_display }}</span>
+                </div>
             {% empty %}
                 <div class="empty-state">
-                    <p>No notifications.</p>
+                    <p>No assignment history yet.</p>
                 </div>
             {% endfor %}
         </div>
@@ -89,5 +88,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/employee/dashboard.js' %}"></script>
+    <script src="{% static 'inventory/js/employee/dashboard.js' %}?v=15"></script>
 {% endblock %}

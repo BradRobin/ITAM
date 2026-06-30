@@ -6,68 +6,47 @@
             <span></span>
             <span></span>
         </button>
-        <div class="topbar-brand">
-            <i class="fas fa-user-tie brand-icon-small"></i>
-            <span class="brand-text-small">Employee Portal</span>
-        </div>
     </div>
     <div class="topbar-actions">
+        <!-- Notifications Bell -->
+        <div class="notification-container" id="notificationContainer">
+            <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
+                    {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
+                </span>
+            </button>
+            <div class="employee-notification-dropdown" id="employeeNotificationDropdown">
+                <div class="notification-dropdown-header">
+                    <strong>Notifications</strong>
+                    {% if unread_notifications > 0 %}
+                        <button type="button" class="mark-all-link" onclick="markAllRead()">Mark all read</button>
+                    {% endif %}
+                </div>
+                <div class="notification-dropdown-list">
+                    {% for notification in recent_notifications %}
+                        {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+                    {% empty %}
+                        <div class="notification-empty">No notifications yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <!-- Theme Toggle -->
         <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle theme">
             <i class="fas fa-moon theme-icon"></i>
         </button>
 
-        <!-- Notifications Bell -->
-        <div class="notification-container" id="notificationContainer">
-            <a href="{% url 'employee_notifications' %}" class="notification-bell" id="notificationBell" aria-label="Notifications">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
-                    {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
-                </span>
-            </a>
-        </div>
-
         <!-- Profile Dropdown -->
         <div class="profile-dropdown">
-            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <a class="profile-btn" id="profileToggle" href="{% url 'employee_settings' %}" aria-label="Open settings">
                 <img class="profile-avatar" 
                      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
                      alt="{{ user.username }}"
                      width="32"
                      height="32">
-                <span class="profile-name">{{ user.username }}</span>
-                <i class="fas fa-chevron-down dropdown-arrow"></i>
-            </button>
-            <div class="dropdown-menu" id="profileDropdown">
-                <div class="dropdown-header">
-                    <div class="dropdown-user-info">
-                        <img class="dropdown-avatar" 
-                             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=64&rounded=true&bold=true&font-size=0.33" 
-                             alt="{{ user.username }}"
-                             width="64"
-                             height="64">
-                        <div class="dropdown-user-details">
-                            <span class="dropdown-user">{{ user.get_full_name|default:user.username }}</span>
-                            <span class="dropdown-email">{{ user.email|default:"No email" }}</span>
-                            <span class="dropdown-role">Team Member</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="{% url 'employee_profile' %}">
-                    <i class="fas fa-user-circle dropdown-icon"></i>
-                    <span>My Profile</span>
-                </a>
-                <a class="dropdown-item" href="{% url 'employee_settings' %}">
-                    <i class="fas fa-cog dropdown-icon"></i>
-                    <span>Settings</span>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item dropdown-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">
-                    <i class="fas fa-sign-out-alt dropdown-icon"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
+            </a>
         </div>
     </div>
 </header>

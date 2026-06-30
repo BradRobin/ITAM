@@ -217,6 +217,65 @@
 }
 
 /* ==========================================
+   FORM OPTIONS (Remember Me + Forgot Password)
+   ========================================== */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 1rem 0;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-500, #3b82f6);
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 4px;
+    background: var(--bg-input, #0f172a);
+}
+
+.remember-me label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+    cursor: pointer;
+    user-select: none;
+}
+
+[data-theme="light"] .remember-me label {
+    color: var(--text-secondary, #64748b);
+}
+
+.forgot-password {
+    font-size: 0.8rem;
+    color: var(--primary-400, #60a5fa);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+    color: var(--primary-300, #93bbfc);
+    text-decoration: underline;
+}
+
+[data-theme="light"] .forgot-password {
+    color: var(--primary-600, #2563eb);
+}
+
+[data-theme="light"] .forgot-password:hover {
+    color: var(--primary-700, #1d4ed8);
+}
+
+/* ==========================================
    AUTH LOGO
    ========================================== */
 .auth-logo {
@@ -657,6 +716,17 @@
     
     .auth-page .theme-toggle-btn .theme-icon {
         font-size: 1rem;
+    }
+
+    /* Form options responsive */
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .forgot-password {
+        align-self: flex-end;
     }
 }
 

@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -6,8 +7,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import AssetForm, AssignmentForm, EmployeeForm
-from .models import Asset, Assignment, Employee, MaintenanceLog
+from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
+from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog
 
 
 class AssetFormSerialNumberValidationTests(TestCase):
@@ -69,6 +70,16 @@ class AssetFormSerialNumberValidationTests(TestCase):
         self.assertTrue(form.is_valid())
 
 
+class ErrorPageTests(TestCase):
+    @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
+    def test_missing_page_uses_graceful_error_template(self):
+        response = self.client.get("/missing-page/")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "inventory/error.html")
+        self.assertContains(response, "Page Not Found", status_code=404)
+
+
 class AssignmentStateMachineViewTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_superuser(
@@ -120,6 +131,38 @@ class AssignmentStateMachineViewTests(TestCase):
             ],
         )
 
+    def test_employee_create_form_creates_linked_user_with_hashed_password(self):
+        form = EmployeeCreateForm(
+            data={
+                "username": "new.employee",
+                "email": "new.employee@example.com",
+                "department": Employee.Department.TECHNICAL_CORE_PROGRAMME,
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        employee = form.save()
+        self.assertEqual(employee.name, "new.employee")
+        self.assertEqual(employee.email, "new.employee@example.com")
+        self.assertEqual(employee.user.username, "new.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+
+    def test_employee_create_form_requires_matching_passwords(self):
+        form = EmployeeCreateForm(
+            data={
+                "username": "mismatch.employee",
+                "email": "mismatch.employee@example.com",
+                "department": Employee.Department.TECHNICAL_CORE_PROGRAMME,
+                "password": "StrongPass123!",
+                "confirm_password": "DifferentPass123!",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("confirm_password", form.errors)
+
     def test_employee_department_abbreviation_supports_legacy_departments(self):
         employee = Employee(name="Legacy Employee", department="IT Operations")
 
@@ -141,6 +184,9 @@ class AssignmentStateMachineViewTests(TestCase):
                 date_returned__isnull=True,
             ).exists()
         )
+        notification = EmployeeNotification.objects.get(employee=self.employee)
+        self.assertEqual(notification.title, "Asset Assigned")
+        self.assertFalse(notification.read)
 
     def test_assign_asset_blocks_unavailable_asset(self):
         self.asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
@@ -346,18 +392,30 @@ class InventoryAdminConfigurationTests(TestCase):
     def test_employee_admin_configuration(self):
         model_admin = admin.site._registry[Employee]
 
-        self.assertEqual(model_admin.list_display, ("name", "department", "email"))
+        self.assertEqual(model_admin.list_display, ("name", "user", "department", "email"))
         self.assertEqual(model_admin.list_filter, ("department",))
-        self.assertEqual(model_admin.search_fields, ("name", "department", "email"))
+        self.assertEqual(
+            model_admin.search_fields,
+            ("name", "user__username", "user__email", "department", "email"),
+        )
 
     def test_assignment_admin_configuration(self):
         model_admin = admin.site._registry[Assignment]
 
         self.assertEqual(
             model_admin.list_display,
-            ("asset", "employee", "date_assigned", "date_returned"),
+            (
+                "asset",
+                "employee",
+                "confirmed_by_employee",
+                "date_assigned",
+                "date_returned",
+            ),
         )
-        self.assertEqual(model_admin.list_filter, ("date_assigned", "date_returned"))
+        self.assertEqual(
+            model_admin.list_filter,
+            ("confirmed_by_employee", "date_assigned", "date_returned"),
+        )
         self.assertIn("asset__name", model_admin.search_fields)
         self.assertIn("asset__serial_number", model_admin.search_fields)
         self.assertIn("employee__name", model_admin.search_fields)
@@ -679,18 +737,20 @@ class FrontendAPIBridgeTests(TestCase):
         response = self.client.post(
             reverse("api_employee_list"),
             data={
-                "name": "Created Employee",
+                "username": "created.employee",
                 "department": Employee.Department.CAPACITY_BUILDING_INNOVATION,
                 "email": "created.employee@example.com",
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
             },
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(
-            Employee.objects.filter(email="created.employee@example.com").exists()
-        )
-        self.assertEqual(response.json()["name"], "Created Employee")
+        employee = Employee.objects.get(email="created.employee@example.com")
+        self.assertEqual(employee.user.username, "created.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+        self.assertEqual(response.json()["name"], "created.employee")
 
     def test_employee_api_rejects_unknown_department(self):
         self.client.force_login(self.admin)
@@ -823,3 +883,205 @@ class MaintenanceLogCRUDTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(MaintenanceLog.objects.filter(asset=self.asset).exists())
+
+
+class EmployeePortalTests(TestCase):
+    def setUp(self):
+        self.employee_user = get_user_model().objects.create_user(
+            username="portal-user",
+            email="portal-user@example.com",
+            password="test-pass-12345",
+        )
+        self.other_user = get_user_model().objects.create_user(
+            username="other-portal-user",
+            email="other-portal-user@example.com",
+            password="test-pass-12345",
+        )
+        self.employee = Employee.objects.create(
+            user=self.employee_user,
+            name="Portal Employee",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="portal.employee@example.com",
+        )
+        self.other_employee = Employee.objects.create(
+            user=self.other_user,
+            name="Other Portal Employee",
+            department=Employee.Department.CAPACITY_BUILDING_INNOVATION,
+            email="other.portal.employee@example.com",
+        )
+        self.asset = Asset.objects.create(
+            name="Portal Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="PORTAL-001",
+            status=Asset.AssetStatus.ASSIGNED,
+        )
+        self.assignment = Assignment.objects.create(
+            asset=self.asset,
+            employee=self.employee,
+        )
+
+    def test_employee_login_redirects_to_employee_dashboard(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "username": "portal-user",
+                "password": "test-pass-12345",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_dashboard"))
+
+    def test_employee_can_login_with_email_to_employee_dashboard(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "username": "portal-user@example.com",
+                "password": "test-pass-12345",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_dashboard"))
+
+    def test_admin_create_employee_creates_linked_user_and_notification(self):
+        admin_user = get_user_model().objects.create_user(
+            username="employee-admin",
+            email="employee-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.post(
+            reverse("employee_add"),
+            data={
+                "username": "created.employee",
+                "email": "created.employee@example.com",
+                "department": Employee.Department.INSTITUTIONAL_SUPPORT_ADVISORY,
+                "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_list"))
+        employee = Employee.objects.get(email="created.employee@example.com")
+        self.assertEqual(employee.name, "created.employee")
+        self.assertEqual(employee.user.username, "created.employee")
+        self.assertTrue(employee.user.check_password("StrongPass123!"))
+        notifications = self.client.session.get("notifications", [])
+        self.assertEqual(notifications[0]["title"], "New Employee Added")
+
+    def test_linked_employee_can_open_portal_dashboard(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.get(reverse("employee_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/employee/dashboard.html")
+        self.assertEqual(response.context["active_assets"], 1)
+        self.assertEqual(response.context["pending_assets"], 1)
+        self.assertEqual(list(response.context["assignment_history"]), [self.assignment])
+
+    def test_removed_employee_pages_redirect_to_consolidated_destinations(self):
+        self.client.force_login(self.employee_user)
+
+        redirects = {
+            "employee_notifications": reverse("employee_dashboard"),
+            "employee_history": reverse("employee_dashboard"),
+            "employee_returns": reverse("employee_dashboard"),
+            "employee_profile": reverse("employee_settings"),
+        }
+
+        for route_name, destination in redirects.items():
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertRedirects(response, destination)
+
+    def test_employee_can_change_password_from_settings(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_password_change"),
+            data=json.dumps(
+                {
+                    "new_password": "VeryStrongNewPass987!",
+                    "confirm_password": "VeryStrongNewPass987!",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.check_password("VeryStrongNewPass987!"))
+        notification = EmployeeNotification.objects.get(employee=self.employee)
+        self.assertEqual(notification.title, "Password Changed")
+        self.assertFalse(notification.read)
+        self.assertEqual(response.json()["notification"]["title"], "Password Changed")
+        self.assertEqual(response.json()["unread_count"], 1)
+
+        self.client.logout()
+        self.assertFalse(
+            self.client.login(username="portal-user", password="test-pass-12345")
+        )
+        self.assertTrue(
+            self.client.login(
+                username="portal-user",
+                password="VeryStrongNewPass987!",
+            )
+        )
+
+    def test_employee_password_change_requires_matching_passwords(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_password_change"),
+            data=json.dumps(
+                {
+                    "new_password": "VeryStrongNewPass987!",
+                    "confirm_password": "DifferentStrongPass987!",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["success"], False)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.check_password("test-pass-12345"))
+
+    def test_unlinked_user_is_redirected_from_employee_portal(self):
+        unlinked_user = get_user_model().objects.create_user(
+            username="unlinked-portal-user",
+            email="unlinked@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(unlinked_user)
+
+        response = self.client.get(reverse("employee_dashboard"))
+
+        self.assertRedirects(response, reverse("dashboard"))
+
+    def test_employee_can_confirm_own_assigned_asset(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_confirm_asset", kwargs={"pk": self.assignment.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assignment.refresh_from_db()
+        self.assertTrue(self.assignment.confirmed_by_employee)
+        self.assertIsNotNone(self.assignment.confirmed_at)
+
+    def test_employee_cannot_confirm_another_employee_assignment(self):
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(
+            reverse("employee_confirm_asset", kwargs={"pk": self.assignment.pk})
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assignment.refresh_from_db()
+        self.assertFalse(self.assignment.confirmed_by_employee)

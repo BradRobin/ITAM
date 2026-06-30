@@ -12,7 +12,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=17">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -70,14 +70,10 @@
     
     <!-- ===== EMPLOYEE MODULES ===== -->
     {% if user.is_authenticated and user.employee %}
-    <script src="{% static 'inventory/js/employee/employee-common.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/dashboard.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/assets.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/confirm.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/report.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/notifications.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/profile.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/employee/settings.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/employee/employee-common.js' %}?v=14"></script>
+    <script src="{% static 'inventory/js/employee/assets.js' %}?v=14"></script>
+    <script src="{% static 'inventory/js/employee/confirm.js' %}?v=14"></script>
+    <script src="{% static 'inventory/js/employee/report.js' %}?v=14"></script>
     {% endif %}
     
     <script src="{% static 'inventory/js/main.js' %}?v=13"></script>

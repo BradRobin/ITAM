@@ -1,12 +1,39 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
+from django.views.generic import RedirectView
 from . import views
 
 
 urlpatterns = [
     # Authentication URLs
     path("login/", views.AuthLoginView.as_view(), name="login"),
-    path("signup/", views.SignUpView.as_view(), name="signup"),
     path("logout/", views.AuthLogoutView.as_view(), name="logout"),
+    
+    # ==========================================
+    # PASSWORD RESET URLs - All using auth.html
+    # ==========================================
+    path('password-reset/', 
+         auth_views.PasswordResetView.as_view(
+             template_name='inventory/auth.html',
+             email_template_name='inventory/password_reset_email.html',
+             subject_template_name='inventory/password_reset_subject.txt'
+         ), 
+         name='password_reset'),
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(
+             template_name='inventory/auth.html'
+         ), 
+         name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='inventory/auth.html'
+         ), 
+         name='password_reset_confirm'),
+    path('password-reset-complete/', 
+         auth_views.PasswordResetCompleteView.as_view(
+             template_name='inventory/auth.html'
+         ), 
+         name='password_reset_complete'),
     
     # Dashboard
     path("", views.DashboardView.as_view(), name="dashboard"),
@@ -114,6 +141,7 @@ urlpatterns = [
     # EMPLOYEE PORTAL URLs
     # ==========================================
     # Dashboard
+    path('employee/', views.EmployeeDashboardView.as_view(), name='employee_portal'),
     path('employee/dashboard/', views.EmployeeDashboardView.as_view(), name='employee_dashboard'),
     path('employee/assets/', views.EmployeeAssetsView.as_view(), name='employee_assets'),
     path('employee/assets/<int:pk>/', views.EmployeeAssetDetailView.as_view(), name='employee_asset_detail'),
@@ -121,11 +149,12 @@ urlpatterns = [
     path('employee/asset/<int:pk>/report-issue/', views.EmployeeReportIssueView.as_view(), name='employee_report_issue'),
     path('employee/asset/<int:pk>/maintenance/', views.EmployeeMaintenanceRequestView.as_view(), name='employee_maintenance_request'),
     path('employee/asset/<int:pk>/return/', views.EmployeeReturnRequestView.as_view(), name='employee_return_request'),
-    path('employee/notifications/', views.EmployeeNotificationsView.as_view(), name='employee_notifications'),
+    path('employee/notifications/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_notifications'),
     path('employee/notifications/mark-read/<int:pk>/', views.EmployeeMarkNotificationReadView.as_view(), name='employee_mark_notification_read'),
     path('employee/notifications/mark-all-read/', views.EmployeeMarkAllNotificationsReadView.as_view(), name='employee_mark_all_notifications_read'),
-    path('employee/profile/', views.EmployeeProfileView.as_view(), name='employee_profile'),
+    path('employee/profile/', RedirectView.as_view(pattern_name='employee_settings', permanent=False), name='employee_profile'),
     path('employee/settings/', views.EmployeeSettingsView.as_view(), name='employee_settings'),
-    path('employee/history/', views.EmployeeHistoryView.as_view(), name='employee_history'),
-    path('employee/returns/', views.EmployeeReturnsView.as_view(), name='employee_returns'),
+    path('employee/settings/password/', views.EmployeePasswordChangeView.as_view(), name='employee_password_change'),
+    path('employee/history/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_history'),
+    path('employee/returns/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_returns'),
 ]

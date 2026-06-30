@@ -11,49 +11,38 @@
 <div class="employee-settings">
     <div class="settings-header">
         <h1>Settings</h1>
-        <p class="subtitle">Manage your preferences and notifications</p>
+        <p class="subtitle">Manage your profile details, preferences, and notifications.</p>
     </div>
 
     <div class="settings-grid">
-        <!-- Theme Settings -->
-        <div class="settings-card">
+        <!-- Profile Summary -->
+        <div class="settings-card profile-settings-card">
             <div class="card-header">
-                <h3>Appearance</h3>
+                <h3>Profile</h3>
             </div>
             <div class="card-body">
-                <div class="setting-group">
-                    <label class="setting-label">Theme Mode</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" onclick="setTheme('light')">Light</button>
-                        <button class="toggle-btn" onclick="setTheme('dark')">Dark</button>
-                        <button class="toggle-btn" onclick="setTheme('system')">System</button>
+                <div class="profile-summary">
+                    <img class="settings-avatar"
+                         src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=1a2332&color=fff&size=72&rounded=true&bold=true&font-size=0.33"
+                         alt="{{ user.username }}">
+                    <div>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p>{{ employee.department_abbreviation }} · {{ employee.get_department_display }}</p>
+                        <p>{{ user.email|default:employee.email }}</p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Notification Settings -->
-        <div class="settings-card">
-            <div class="card-header">
-                <h3>Notifications</h3>
-            </div>
-            <div class="card-body">
-                <div class="setting-group">
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="assetAssignments" checked>
-                        <label for="assetAssignments">Asset Assignments</label>
+                <div class="profile-stats">
+                    <div>
+                        <strong>{{ employee_total_assets }}</strong>
+                        <span>Total Assets</span>
                     </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="maintenanceUpdates" checked>
-                        <label for="maintenanceUpdates">Maintenance Updates</label>
+                    <div>
+                        <strong>{{ employee_confirmed_assets }}</strong>
+                        <span>Confirmed</span>
                     </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="systemAlerts">
-                        <label for="systemAlerts">System Alerts</label>
-                    </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="emailDigest">
-                        <label for="emailDigest">Daily Email Digest</label>
+                    <div>
+                        <strong>{{ employee_returned_assets }}</strong>
+                        <span>Returned</span>
                     </div>
                 </div>
             </div>
@@ -66,56 +55,47 @@
             </div>
             <div class="card-body">
                 <div class="setting-group">
-                    <button class="btn btn-primary" onclick="changePassword()">
+                    <button class="btn btn-primary" id="openPasswordModal" type="button">
                         <i class="fas fa-key"></i> Change Password
                     </button>
-                    <button class="btn btn-secondary" onclick="enable2FA()">
-                        <i class="fas fa-shield-alt"></i> Enable 2FA
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Language Settings -->
-        <div class="settings-card">
-            <div class="card-header">
-                <h3>Language & Region</h3>
-            </div>
-            <div class="card-body">
-                <div class="setting-group">
-                    <label class="setting-label">Language</label>
-                    <select class="form-control">
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                    </select>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">Time Zone</label>
-                    <select class="form-control">
-                        <option value="UTC">UTC</option>
-                        <option value="EST">Eastern Time</option>
-                        <option value="CST">Central Time</option>
-                        <option value="PST">Pacific Time</option>
-                    </select>
-                </div>
-            </div>
-        </div>
     </div>
+</div>
 
-    <!-- Save Actions -->
-    <div class="settings-actions">
-        <button class="btn btn-primary btn-lg" onclick="saveSettings()">
-            <i class="fas fa-save"></i> Save Settings
-        </button>
-        <button class="btn btn-secondary btn-lg" onclick="resetSettings()">
-            <i class="fas fa-undo"></i> Reset to Defaults
-        </button>
+<div class="employee-modal" id="passwordModal" aria-hidden="true">
+    <div class="employee-modal-backdrop" data-close-password-modal></div>
+    <div class="employee-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+        <div class="employee-modal-header">
+            <h2 id="passwordModalTitle">Change Password</h2>
+            <button type="button" class="employee-modal-close" data-close-password-modal aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="passwordChangeForm" class="employee-modal-body">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_new_password" class="form-label">New Password</label>
+                <input type="password" id="id_new_password" name="new_password" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="id_confirm_password" class="form-label">Confirm Password</label>
+                <input type="password" id="id_confirm_password" name="confirm_password" required autocomplete="new-password">
+            </div>
+            <div class="modal-error" id="passwordModalError" role="alert"></div>
+            <div class="employee-modal-actions">
+                <button type="button" class="btn btn-secondary" data-close-password-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitPasswordChange">
+                    Change Password
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/employee/settings.js' %}"></script>
+    <script src="{% static 'inventory/js/employee/settings.js' %}?v=15"></script>
 {% endblock %}
