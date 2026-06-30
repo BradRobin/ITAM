@@ -12,9 +12,7 @@
         <div class="notification-container" id="notificationContainer">
             <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
-                    {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
-                </span>
+                <span class="notification-badge notification-dot {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge"></span>
             </button>
             <div class="employee-notification-dropdown" id="employeeNotificationDropdown">
                 <div class="notification-dropdown-header">

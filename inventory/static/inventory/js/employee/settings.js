@@ -25,7 +25,7 @@
         const badge = document.getElementById('notificationBadge');
         if (!badge) return;
 
-        badge.textContent = count > 0 ? String(count) : '';
+        badge.textContent = '';
         badge.classList.toggle('hidden', count <= 0);
     }
 
