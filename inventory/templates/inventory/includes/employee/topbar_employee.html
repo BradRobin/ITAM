@@ -40,14 +40,13 @@
 
         <!-- Profile Dropdown -->
         <div class="profile-dropdown">
-            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <a class="profile-btn" id="profileToggle" href="{% url 'employee_settings' %}" aria-label="Open settings">
                 <img class="profile-avatar" 
                      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
                      alt="{{ user.username }}"
                      width="32"
                      height="32">
-                <span class="profile-name">{{ user.username }}</span>
-            </button>
+            </a>
         </div>
     </div>
 </header>
