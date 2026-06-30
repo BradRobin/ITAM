@@ -4,7 +4,7 @@
 {% block title %}Dashboard - ITAM System{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=5">
 {% endblock %}
 
 {% block content %}
@@ -47,66 +47,16 @@
     <!-- STATS CARDS                               -->
     <!-- ========================================== -->
     <div class="dashboard-stats">
-        {% with total=total_assets|default:0 avail=available_assets|default:0 assigned=assigned_assets|default:0 maint=maintenance_assets|default:0 %}
-        
-        <div class="stat-card stat-total">
-            <i class="fas fa-boxes stat-icon"></i>
-            <div class="stat-content">
-                <h3>Total Assets</h3>
-                <p class="stat-number" data-count="{{ total }}">{{ total }}</p>
-                <span class="stat-trend">All equipment</span>
+        {% for stat in dashboard_stats %}
+            <div class="stat-card {{ stat.css_class }}">
+                <i class="fas {{ stat.icon }} stat-icon"></i>
+                <div class="stat-content">
+                    <h3>{{ stat.label }}</h3>
+                    <p class="stat-number"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
+                    <span class="stat-trend">{{ stat.trend }}</span>
+                </div>
             </div>
-            <div class="stat-progress">
-                <span class="stat-percent">100%</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
-            </div>
-        </div>
-        
-        <div class="stat-card stat-available">
-            <i class="fas fa-check-circle stat-icon"></i>
-            <div class="stat-content">
-                <h3>Available</h3>
-                <p class="stat-number" data-count="{{ avail }}">{{ avail }}</p>
-                <span class="stat-trend">Ready for assignment</span>
-            </div>
-            <div class="stat-progress">
-                {% widthratio avail total 100 as avail_pct %}
-                <span class="stat-percent">{{ avail_pct|default:0 }}%</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:{{ avail_pct|default:0 }}%"></div></div>
-            </div>
-        </div>
-        
-        <div class="stat-card stat-assigned">
-            <i class="fas fa-user-check stat-icon"></i>
-            <div class="stat-content">
-                <h3>Assigned</h3>
-                <p class="stat-number" data-count="{{ assigned }}">
-                    {{ assigned }} / {{ total }}
-                </p>
-                <span class="stat-trend">Currently with employees</span>
-            </div>
-            <div class="stat-progress">
-                {% widthratio assigned total 100 as assigned_pct %}
-                <span class="stat-percent">{{ assigned_pct|default:0 }}%</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:{{ assigned_pct|default:0 }}%"></div></div>
-            </div>
-        </div>
-        
-        <div class="stat-card stat-maintenance">
-            <i class="fas fa-tools stat-icon"></i>
-            <div class="stat-content">
-                <h3>Under Maintenance</h3>
-                <p class="stat-number" data-count="{{ maint }}">{{ maint }}</p>
-                <span class="stat-trend">In repair shop</span>
-            </div>
-            <div class="stat-progress">
-                {% widthratio maint total 100 as maint_pct %}
-                <span class="stat-percent">{{ maint_pct|default:0 }}%</span>
-                <div class="progress-bar"><div class="progress-fill" style="width:{{ maint_pct|default:0 }}%"></div></div>
-            </div>
-        </div>
-        
-        {% endwith %}
+        {% endfor %}
     </div>
 
     <!-- ========================================== -->
@@ -117,10 +67,7 @@
         <div class="quick-stats">
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-chart-pie"></i> Utilization Rate</span>
-                <span class="quick-stat-value">
-                    {% widthratio assigned_assets|default:0 total_assets|default:0 100 as util_rate %}
-                    {{ util_rate|default:0 }}%
-                </span>
+                <span class="quick-stat-value">{{ utilization_rate|default:0 }}%</span>
             </div>
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
@@ -132,9 +79,8 @@
             </div>
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
-                {% widthratio maintenance_assets|default:0 total_assets|default:0 100 as health_rate %}
-                <span class="quick-stat-value {% if health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}">
-                    {{ health_rate|default:0 }}% issues
+                <span class="quick-stat-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}">
+                    {{ asset_health_rate|default:0 }}% issues
                 </span>
             </div>
         </div>
@@ -195,33 +141,18 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- FOOTER STATS                              -->
+    <!-- DASHBOARD FOOTER                          -->
     <!-- ========================================== -->
     <div class="dashboard-footer">
         <div class="footer-stat">
             <span class="footer-stat-label"><i class="fas fa-clock"></i> Last Updated</span>
             <span class="footer-stat-value" id="lastUpdated">{% now "Y-m-d H:i:s" %}</span>
         </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label"><i class="fas fa-box"></i> Total Assets</span>
-            <span class="footer-stat-value">{{ total_assets|default:"0" }}</span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label"><i class="fas fa-chart-line"></i> Utilization</span>
-            <span class="footer-stat-value">
-                {% widthratio assigned_assets|default:0 total_assets|default:0 100 as util %}
-                {{ util|default:0 }}%
-            </span>
-        </div>
-        <div class="footer-stat">
-            <span class="footer-stat-label"><i class="fas fa-user-tie"></i> Employees</span>
-            <span class="footer-stat-value">{{ employee_count|default:"0" }}</span>
-        </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

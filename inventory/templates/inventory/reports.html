@@ -162,8 +162,8 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Asset Health</span>
-                <span class="stat-value {% if maintenance_assets < total_assets|divisibleby:10 %}success{% else %}warning{% endif %}">
-                    {% widthratio maintenance_assets total_assets 100 %}%
+                <span class="stat-value {% if asset_health_rate < 10 %}success{% else %}warning{% endif %}">
+                    {{ asset_health_rate }}%
                 </span>
                 <span class="stat-hint">Issues reported</span>
             </div>

@@ -184,20 +184,6 @@
     }
     
     // ============================================
-    // Animate Progress Bars
-    // ============================================
-    function animateProgressBars() {
-        var progressFills = document.querySelectorAll('.progress-fill');
-        progressFills.forEach(function(fill) {
-            var width = fill.style.width;
-            fill.style.width = '0';
-            setTimeout(function() {
-                fill.style.width = width;
-            }, 100);
-        });
-    }
-    
-    // ============================================
     // Animate Overdue Cards
     // ============================================
     function animateOverdueCards() {
@@ -224,11 +210,11 @@
         if ('IntersectionObserver' in window) {
             statsObserver = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                        resetStats();
+                    if (entry.isIntersecting && !isStatsAnimated) {
+                        isStatsAnimated = true;
                         animateStats();
-                        animateProgressBars();
                         animateOverdueCards();
+                        statsObserver.disconnect();
                     }
                 });
             }, {
@@ -239,7 +225,6 @@
             statsObserver.observe(statsSection);
         } else {
             animateStats();
-            animateProgressBars();
             animateOverdueCards();
         }
     }
@@ -251,11 +236,6 @@
         var statNumbers = document.querySelectorAll('.stat-number[data-count]');
         statNumbers.forEach(function(stat) {
             stat.textContent = '0';
-        });
-        
-        var progressFills = document.querySelectorAll('.progress-fill');
-        progressFills.forEach(function(fill) {
-            fill.style.width = '0';
         });
         
         var cards = document.querySelectorAll('.overdue-card');

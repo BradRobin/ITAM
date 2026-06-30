@@ -1,0 +1,97 @@
+import json
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
+from django.views import View
+from django.views.generic import TemplateView
+
+from .services.metrics import get_reports_context
+from .services.notifications import (
+    add_session_notification,
+    get_display_notifications,
+    get_unread_count,
+    mark_all_notifications_read,
+    mark_notification_read,
+)
+
+
+class NotificationListView(LoginRequiredMixin, TemplateView):
+    template_name = "inventory/notifications.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        mark_all_notifications_read(self.request)
+        context["notifications"] = get_display_notifications(self.request)
+        context["unread_count"] = 0
+        return context
+
+
+class NotificationAPIView(LoginRequiredMixin, View):
+    def get(self, request):
+        return JsonResponse(
+            {
+                "notifications": get_display_notifications(request),
+                "unread_count": get_unread_count(request),
+            },
+            safe=False,
+            encoder=DjangoJSONEncoder,
+        )
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        notification = add_session_notification(
+            request,
+            notification_type=data.get("type", "info"),
+            title=data.get("title", "Notification"),
+            message=data.get("message", ""),
+            link=data.get("link"),
+            source=data.get("source", "system"),
+        )
+        return JsonResponse({"success": True, "notification": notification})
+
+
+class NotificationMarkReadView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        mark_notification_read(request, pk)
+        return JsonResponse({"success": True})
+
+
+class NotificationMarkAllReadView(LoginRequiredMixin, View):
+    def post(self, request):
+        mark_all_notifications_read(request)
+        return JsonResponse({"success": True})
+
+
+class ReportsView(LoginRequiredMixin, TemplateView):
+    template_name = "inventory/reports.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(get_reports_context())
+        return context
+
+
+class SettingsView(LoginRequiredMixin, TemplateView):
+    template_name = "inventory/settings.html"
+
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = "inventory/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["user"] = self.request.user
+        context["user_full_name"] = (
+            self.request.user.get_full_name() or self.request.user.username
+        )
+        context["user_email"] = self.request.user.email
+        context["user_date_joined"] = self.request.user.date_joined
+        context["user_last_login"] = self.request.user.last_login
+        context["is_staff"] = self.request.user.is_staff
+        context["is_superuser"] = self.request.user.is_superuser
+        return context

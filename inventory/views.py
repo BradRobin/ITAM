@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
+from django.db.models import Max, OuterRef, Q, Subquery
 from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -30,6 +30,21 @@ from django.utils.decorators import method_decorator
 
 from .forms import AssetForm, AssignmentForm, EmployeeForm, MaintenanceLogForm
 from .models import Asset, Assignment, Employee, MaintenanceLog
+from .services.metrics import (
+    get_dashboard_context,
+    get_overdue_assets_queryset,
+    get_service_overdue_cutoff,
+)
+from .services.notifications import add_session_notification
+from .views_extras import (
+    NotificationAPIView,
+    NotificationListView,
+    NotificationMarkAllReadView,
+    NotificationMarkReadView,
+    ProfileView,
+    ReportsView,
+    SettingsView,
+)
 
 
 # ============================================
@@ -178,71 +193,12 @@ class CSVBuffer:
         return value
 
 
-def get_service_overdue_cutoff():
-    return timezone.now() - datetime.timedelta(days=Asset.SERVICE_INTERVAL_DAYS)
-
-
-def get_overdue_assets_queryset():
-    overdue_cutoff = get_service_overdue_cutoff().date()
-    created_cutoff = get_service_overdue_cutoff()
-    recent_maintenance = MaintenanceLog.objects.filter(
-        asset=OuterRef("pk"),
-        date__gte=overdue_cutoff,
-    )
-    return (
-        Asset.objects.annotate(
-            has_recent_maintenance=Exists(recent_maintenance),
-            last_maintenance_date=Max("maintenance_logs__date"),
-        )
-        .filter(has_recent_maintenance=False)
-        .filter(
-            Q(last_maintenance_date__lt=overdue_cutoff)
-            | Q(last_maintenance_date__isnull=True, date_created__lt=created_cutoff)
-        )
-        .order_by("name", "serial_number")
-    )
-
-
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "inventory/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        status_counts = Asset.objects.values("status").annotate(total=Count("id"))
-        employee_count = Employee.objects.count()
-        aggregate_counts = Asset.objects.aggregate(
-            total_assets=Count("id"),
-            available_assets=Count(
-                "id",
-                filter=Q(status=Asset.AssetStatus.AVAILABLE),
-            ),
-            assigned_assets=Count(
-                "id",
-                filter=Q(status=Asset.AssetStatus.ASSIGNED),
-            ),
-            maintenance_assets=Count(
-                "id",
-                filter=Q(status=Asset.AssetStatus.UNDER_MAINTENANCE),
-            ),
-        )
-        overdue_cutoff = get_service_overdue_cutoff().date()
-        overdue_assets = get_overdue_assets_queryset()
-
-        context.update(
-            {
-                "total_assets": aggregate_counts["total_assets"],
-                "assigned_assets": aggregate_counts["assigned_assets"],
-                "available_assets": aggregate_counts["available_assets"],
-                "maintenance_assets": aggregate_counts["maintenance_assets"],
-                "employee_count": employee_count,
-                "total_employees": employee_count,
-                "status_counts": status_counts,
-                "asset_summary": aggregate_counts,
-                "overdue_assets": overdue_assets,
-                "overdue_assets_count": overdue_assets.count(),
-                "overdue_cutoff": overdue_cutoff,
-            }
-        )
+        context.update(get_dashboard_context())
         return context
 
 
@@ -393,22 +349,14 @@ class AssetCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        
-        notifications = self.request.session.get('notifications', [])
-        new_notification = {
-            'id': len(notifications) + 1,
-            'type': 'success',
-            'title': 'New Asset Added',
-            'message': f'Asset "{self.object.name}" has been added to inventory.',
-            'time': timezone.now().isoformat(),
-            'read': False,
-            'link': f'/assets/{self.object.pk}/',
-            'source': 'asset_creation'
-        }
-        notifications.insert(0, new_notification)
-        if len(notifications) > 100:
-            notifications = notifications[:100]
-        self.request.session['notifications'] = notifications
+        add_session_notification(
+            self.request,
+            notification_type="success",
+            title="New Asset Added",
+            message=f'Asset "{self.object.name}" has been added to inventory.',
+            link=reverse("asset_detail", kwargs={"pk": self.object.pk}),
+            source="asset_creation",
+        )
         
         messages.success(self.request, "Asset created successfully.")
         return response
@@ -430,22 +378,14 @@ class AssetUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        
-        notifications = self.request.session.get('notifications', [])
-        new_notification = {
-            'id': len(notifications) + 1,
-            'type': 'info',
-            'title': 'Asset Updated',
-            'message': f'Asset "{self.object.name}" has been updated.',
-            'time': timezone.now().isoformat(),
-            'read': False,
-            'link': f'/assets/{self.object.pk}/',
-            'source': 'asset_update'
-        }
-        notifications.insert(0, new_notification)
-        if len(notifications) > 100:
-            notifications = notifications[:100]
-        self.request.session['notifications'] = notifications
+        add_session_notification(
+            self.request,
+            notification_type="info",
+            title="Asset Updated",
+            message=f'Asset "{self.object.name}" has been updated.',
+            link=reverse("asset_detail", kwargs={"pk": self.object.pk}),
+            source="asset_update",
+        )
         
         messages.success(self.request, "Asset updated successfully.")
         return response
@@ -506,22 +446,14 @@ class EmployeeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        
-        notifications = self.request.session.get('notifications', [])
-        new_notification = {
-            'id': len(notifications) + 1,
-            'type': 'success',
-            'title': 'New Employee Added',
-            'message': f'Employee "{self.object.name}" has been added to the system.',
-            'time': timezone.now().isoformat(),
-            'read': False,
-            'link': f'/employees/{self.object.pk}/',
-            'source': 'employee_creation'
-        }
-        notifications.insert(0, new_notification)
-        if len(notifications) > 100:
-            notifications = notifications[:100]
-        self.request.session['notifications'] = notifications
+        add_session_notification(
+            self.request,
+            notification_type="success",
+            title="New Employee Added",
+            message=f'Employee "{self.object.name}" has been added to the system.',
+            link=reverse("employee_list"),
+            source="employee_creation",
+        )
         
         messages.success(self.request, "Employee created successfully.")
         return response
@@ -606,22 +538,17 @@ class AssignAssetView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
             asset.status = Asset.AssetStatus.ASSIGNED
             asset.save(update_fields=["status"])
-            
-            notifications = self.request.session.get('notifications', [])
-            new_notification = {
-                'id': len(notifications) + 1,
-                'type': 'success',
-                'title': 'Asset Assigned',
-                'message': f'Asset "{asset.name}" has been assigned to {assignment.employee.name}.',
-                'time': timezone.now().isoformat(),
-                'read': False,
-                'link': f'/assets/{asset.pk}/',
-                'source': 'asset_assignment'
-            }
-            notifications.insert(0, new_notification)
-            if len(notifications) > 100:
-                notifications = notifications[:100]
-            self.request.session['notifications'] = notifications
+            add_session_notification(
+                self.request,
+                notification_type="success",
+                title="Asset Assigned",
+                message=(
+                    f'Asset "{asset.name}" has been assigned to '
+                    f"{assignment.employee.name}."
+                ),
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+                source="asset_assignment",
+            )
 
         messages.success(self.request, "Asset assigned successfully.")
         return super().form_valid(form)
@@ -654,22 +581,14 @@ class ReturnAssetView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             asset.status = Asset.AssetStatus.AVAILABLE
             asset.save(update_fields=["status"])
-            
-            notifications = request.session.get('notifications', [])
-            new_notification = {
-                'id': len(notifications) + 1,
-                'type': 'info',
-                'title': 'Asset Returned',
-                'message': f'Asset "{asset.name}" has been returned to inventory.',
-                'time': timezone.now().isoformat(),
-                'read': False,
-                'link': f'/assets/{asset.pk}/',
-                'source': 'asset_return'
-            }
-            notifications.insert(0, new_notification)
-            if len(notifications) > 100:
-                notifications = notifications[:100]
-            request.session['notifications'] = notifications
+            add_session_notification(
+                request,
+                notification_type="info",
+                title="Asset Returned",
+                message=f'Asset "{asset.name}" has been returned to inventory.',
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+                source="asset_return",
+            )
 
         messages.success(
             request,
@@ -711,22 +630,14 @@ class CompleteMaintenanceView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             asset.status = Asset.AssetStatus.AVAILABLE
             asset.save(update_fields=["status"])
-            
-            notifications = request.session.get('notifications', [])
-            new_notification = {
-                'id': len(notifications) + 1,
-                'type': 'success',
-                'title': 'Maintenance Completed',
-                'message': f'Maintenance for asset "{asset.name}" has been completed.',
-                'time': timezone.now().isoformat(),
-                'read': False,
-                'link': f'/assets/{asset.pk}/',
-                'source': 'maintenance_complete'
-            }
-            notifications.insert(0, new_notification)
-            if len(notifications) > 100:
-                notifications = notifications[:100]
-            request.session['notifications'] = notifications
+            add_session_notification(
+                request,
+                notification_type="success",
+                title="Maintenance Completed",
+                message=f'Maintenance for asset "{asset.name}" has been completed.',
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+                source="maintenance_complete",
+            )
 
         messages.success(
             request,
@@ -1068,260 +979,3 @@ class EmployeeAPIDetailView(LoginRequiredMixin, View):
 # ============================================
 # SETTINGS VIEW
 # ============================================
-class SettingsView(LoginRequiredMixin, TemplateView):
-    """
-    Settings page view for user preferences and application configuration.
-    """
-    template_name = "inventory/settings.html"
-
-
-# ============================================
-# PROFILE VIEW
-# ============================================
-class ProfileView(LoginRequiredMixin, TemplateView):
-    """
-    User profile page view displaying user information and account details.
-    """
-    template_name = "inventory/profile.html"
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user'] = self.request.user
-        context['user_full_name'] = self.request.user.get_full_name() or self.request.user.username
-        context['user_email'] = self.request.user.email
-        context['user_date_joined'] = self.request.user.date_joined
-        context['user_last_login'] = self.request.user.last_login
-        context['is_staff'] = self.request.user.is_staff
-        context['is_superuser'] = self.request.user.is_superuser
-        return context
-
-# ============================================
-# NOTIFICATIONS
-# ============================================
-
-class NotificationListView(LoginRequiredMixin, TemplateView):
-    """
-    View for displaying all notifications from real data
-    """
-    template_name = "inventory/notifications.html"
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Get real notifications from session
-        notifications = self.request.session.get('notifications', [])
-        
-        # Mark all notifications as read when viewing the page
-        for notification in notifications:
-            notification['read'] = True
-        
-        # Save the updated notifications back to session
-        self.request.session['notifications'] = notifications
-        
-        # Convert time strings back to datetime objects for template
-        display_notifications = []
-        for notification in notifications:
-            notif_copy = notification.copy()
-            if isinstance(notif_copy.get('time'), str):
-                try:
-                    notif_copy['time'] = datetime.datetime.fromisoformat(
-                        notif_copy['time'].replace('Z', '+00:00')
-                    )
-                except (ValueError, AttributeError):
-                    notif_copy['time'] = timezone.now()
-            elif notif_copy.get('time') is None:
-                notif_copy['time'] = timezone.now()
-            display_notifications.append(notif_copy)
-        
-        context['notifications'] = display_notifications
-        context['unread_count'] = 0  # All are now read
-        return context
-
-
-class NotificationAPIView(LoginRequiredMixin, View):
-    """
-    API endpoint for getting notifications
-    """
-    def get(self, request):
-        notifications = request.session.get('notifications', [])
-        
-        # Convert to display format with datetime objects
-        display_notifications = []
-        for notification in notifications:
-            notif_copy = notification.copy()
-            if isinstance(notif_copy.get('time'), str):
-                try:
-                    notif_copy['time'] = datetime.datetime.fromisoformat(
-                        notif_copy['time'].replace('Z', '+00:00')
-                    )
-                except (ValueError, AttributeError):
-                    notif_copy['time'] = timezone.now()
-            display_notifications.append(notif_copy)
-        
-        unread_count = sum(1 for n in display_notifications if not n.get('read', False))
-        return JsonResponse({
-            'notifications': display_notifications,
-            'unread_count': unread_count
-        }, safe=False, encoder=CustomJSONEncoder)
-    
-    def post(self, request):
-        """Add a new notification from real data"""
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        
-        notifications = request.session.get('notifications', [])
-        
-        new_notification = {
-            'id': len(notifications) + 1,
-            'type': data.get('type', 'info'),
-            'title': data.get('title', 'Notification'),
-            'message': data.get('message', ''),
-            'time': timezone.now().isoformat(),
-            'read': False,
-            'link': data.get('link', None),
-            'source': data.get('source', 'system')
-        }
-        
-        notifications.insert(0, new_notification)
-        if len(notifications) > 100:
-            notifications = notifications[:100]
-        
-        request.session['notifications'] = notifications
-        return JsonResponse({'success': True, 'notification': new_notification})
-
-
-class NotificationMarkReadView(LoginRequiredMixin, View):
-    """
-    API endpoint to mark a single notification as read
-    """
-    def post(self, request, pk):
-        notifications = request.session.get('notifications', [])
-        for notification in notifications:
-            if notification.get('id') == pk:
-                notification['read'] = True
-                break
-        
-        request.session['notifications'] = notifications
-        return JsonResponse({'success': True})
-
-
-class NotificationMarkAllReadView(LoginRequiredMixin, View):
-    """
-    API endpoint to mark all notifications as read
-    """
-    def post(self, request):
-        notifications = request.session.get('notifications', [])
-        for notification in notifications:
-            notification['read'] = True
-        
-        request.session['notifications'] = notifications
-        return JsonResponse({'success': True})
-    # ============================================
-# REPORTS VIEW
-# ============================================
-
-class ReportsView(LoginRequiredMixin, TemplateView):
-    """
-    Reports page with charts and analytics for assets
-    """
-    template_name = "inventory/reports.html"
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Basic stats
-        total_assets = Asset.objects.count()
-        available_assets = Asset.objects.filter(status=Asset.AssetStatus.AVAILABLE).count()
-        assigned_assets = Asset.objects.filter(status=Asset.AssetStatus.ASSIGNED).count()
-        maintenance_assets = Asset.objects.filter(status=Asset.AssetStatus.UNDER_MAINTENANCE).count()
-        total_employees = Employee.objects.count()
-        
-        # Asset by type
-        asset_by_type = {}
-        for type_choice in Asset.AssetType.choices:
-            count = Asset.objects.filter(type=type_choice[0]).count()
-            if count > 0:
-                asset_by_type[type_choice[1]] = count
-        
-        # Asset by status
-        asset_by_status = {
-            'Available': available_assets,
-            'Assigned': assigned_assets,
-            'Under Maintenance': maintenance_assets
-        }
-        
-        # Monthly asset creation (last 6 months)
-        monthly_assets = []
-        for i in range(5, -1, -1):
-            month = timezone.now() - datetime.timedelta(days=30 * i)
-            start_date = month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            if i == 0:
-                end_date = timezone.now()
-            else:
-                next_month = month.replace(day=28) + datetime.timedelta(days=4)
-                end_date = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            count = Asset.objects.filter(date_created__gte=start_date, date_created__lt=end_date).count()
-            monthly_assets.append({
-                'month': start_date.strftime('%b %Y'),
-                'count': count
-            })
-        
-        # Asset utilization rate
-        utilization_rate = (assigned_assets / total_assets * 100) if total_assets > 0 else 0
-        
-        # Maintenance logs (last 6 months)
-        maintenance_by_month = []
-        for i in range(5, -1, -1):
-            month = timezone.now() - datetime.timedelta(days=30 * i)
-            start_date = month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            if i == 0:
-                end_date = timezone.now()
-            else:
-                next_month = month.replace(day=28) + datetime.timedelta(days=4)
-                end_date = next_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            count = MaintenanceLog.objects.filter(date__gte=start_date, date__lt=end_date).count()
-            maintenance_by_month.append({
-                'month': start_date.strftime('%b %Y'),
-                'count': count
-            })
-        
-        # Top 5 most assigned assets
-        top_assets = Asset.objects.annotate(
-            assignment_count=Count('assignments')
-        ).order_by('-assignment_count')[:5]
-        
-        top_assets_data = []
-        for asset in top_assets:
-            top_assets_data.append({
-                'name': asset.name,
-                'assignments': asset.assignment_count
-            })
-        
-        # Department distribution
-        department_counts = {}
-        for employee in Employee.objects.all():
-            dept = employee.department or 'Unassigned'
-            department_counts[dept] = department_counts.get(dept, 0) + 1
-        
-        # Overdue assets count
-        overdue_count = get_overdue_assets_queryset().count()
-        
-        context.update({
-            'total_assets': total_assets,
-            'available_assets': available_assets,
-            'assigned_assets': assigned_assets,
-            'maintenance_assets': maintenance_assets,
-            'total_employees': total_employees,
-            'asset_by_type': json.dumps(asset_by_type),
-            'asset_by_status': json.dumps(asset_by_status),
-            'monthly_assets': json.dumps(monthly_assets),
-            'maintenance_by_month': json.dumps(maintenance_by_month),
-            'top_assets_data': json.dumps(top_assets_data),
-            'department_counts': json.dumps(department_counts),
-            'utilization_rate': round(utilization_rate, 1),
-            'overdue_count': overdue_count,
-        })
-        
-        return context
