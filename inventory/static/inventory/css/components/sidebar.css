@@ -118,10 +118,15 @@
     height: 20px;
     flex-shrink: 0;
     color: #64748b;
+    font-size: 1rem;
     line-height: 1;
-    position: relative;
-    top: 1px;
+    text-align: center;
     transition: color 0.15s ease;
+}
+
+.sidebar-link .sidebar-icon::before {
+    display: block;
+    line-height: 1;
 }
 
 [data-theme="dark"] .sidebar-link .sidebar-icon {
