@@ -238,10 +238,6 @@
             if (isAuthPage()) {
                 return;
             }
-            
-            if (typeof window.Loader !== 'undefined' && window.Loader.show) {
-                window.Loader.show(CONFIG.LOADER_MESSAGE);
-            }
         });
     }
     
