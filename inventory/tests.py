@@ -12,6 +12,7 @@ from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
 from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
 from .services.background_jobs import enqueue_job
 from .services.dates import format_duration_since, format_duration_until
+from .services.serial_numbers import build_serial_suggestion_payload, generate_unique_serial_numbers
 
 
 def future_return_date(days=30):
@@ -411,6 +412,45 @@ class DashboardContextTests(TestCase):
         self.assertEqual(overdue_names, {old_asset.name, old_unserviced_asset.name})
 
 
+class SerialNumberSuggestionTests(TestCase):
+    def test_generate_unique_serial_numbers_avoids_existing_values(self):
+        Asset.objects.create(
+            name="Existing Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="ITAM-LAP-EXISTING",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+        suggestions = generate_unique_serial_numbers(
+            count=3,
+            asset_type=Asset.AssetType.LAPTOP,
+        )
+
+        self.assertEqual(len(suggestions), 3)
+        self.assertTrue(all("ITAM-LAP-" in serial for serial in suggestions))
+        self.assertNotIn("ITAM-LAP-EXISTING", suggestions)
+
+    def test_serial_suggestions_background_job_returns_typed_pool(self):
+        user = get_user_model().objects.create_user(
+            username="serial-suggest-user",
+            password="password123",
+            is_staff=True,
+        )
+        job = enqueue_job(
+            user,
+            BackgroundJob.JobType.SERIAL_SUGGESTIONS,
+            params={"per_type": 2},
+            force=True,
+        )
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        suggestions = job.result["suggestions"]
+        self.assertEqual(len(suggestions), 8)
+        self.assertTrue(
+            any(item["asset_type"] == Asset.AssetType.LAPTOP for item in suggestions)
+        )
+
+
 class BackgroundJobTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -574,14 +614,28 @@ class ManagementViewSecurityTests(TestCase):
                 "name": "Staff Created Router",
                 "type": Asset.AssetType.ROUTER,
                 "serial_number": "STAFF-ROUTER-001",
-                "status": Asset.AssetStatus.AVAILABLE,
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            Asset.objects.filter(serial_number="STAFF-ROUTER-001").exists()
+        created = Asset.objects.get(serial_number="STAFF-ROUTER-001")
+        self.assertEqual(created.status, Asset.AssetStatus.AVAILABLE)
+
+    def test_asset_create_page_includes_serial_suggest_ui(self):
+        user = get_user_model().objects.create_user(
+            username="staff-ui-user",
+            email="staff-ui@example.com",
+            password="test-pass-12345",
+            is_staff=True,
         )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("asset_add"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["async_serial_suggestions"])
+        self.assertContains(response, "suggest-serial-btn")
+        self.assertNotContains(response, 'name="status"')
 
 
 class AuthRoutingTests(TestCase):

@@ -249,6 +249,7 @@ class BackgroundJob(models.Model):
         ASSET_SECTIONS = "asset_sections", "Asset list sections"
         DASHBOARD = "dashboard", "Dashboard metrics"
         CSV_EXPORT = "csv_export", "Asset CSV export"
+        SERIAL_SUGGESTIONS = "serial_suggestions", "Asset serial number suggestions"
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
@@ -260,6 +261,7 @@ class BackgroundJob(models.Model):
         JobType.REPORTS: 100,
         JobType.ASSET_SECTIONS: 90,
         JobType.DASHBOARD: 80,
+        JobType.SERIAL_SUGGESTIONS: 75,
         JobType.CSV_EXPORT: 70,
     }
 

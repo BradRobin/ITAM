@@ -13,6 +13,19 @@ class AssetForm(forms.ModelForm):
         model = Asset
         fields = ["name", "type", "serial_number", "status"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields.pop("status", None)
+
+    def save(self, commit=True):
+        asset = super().save(commit=False)
+        if not self.instance.pk:
+            asset.status = Asset.AssetStatus.AVAILABLE
+        if commit:
+            asset.save()
+        return asset
+
     def clean_serial_number(self) -> str:
         serial_number = self.cleaned_data["serial_number"]
         duplicate_assets = Asset.objects.filter(serial_number__iexact=serial_number)

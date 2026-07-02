@@ -526,6 +526,11 @@ class AssetCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if self.request.user.is_authenticated:
             raise PermissionDenied
         return super().handle_no_permission()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["async_serial_suggestions"] = True
+        return context
     
     def form_valid(self, form):
         response = super().form_valid(form)

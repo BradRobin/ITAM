@@ -4,7 +4,7 @@
 {% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Asset{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/components/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/forms.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -14,13 +14,19 @@
             {% if form.instance.pk %}
                 Update the asset details below.
             {% else %}
-                Enter the asset details to add it to inventory.
+                Enter the asset details to add it to inventory. New assets are created as Available.
             {% endif %}
         </p>
     </div>
 
     <div class="form-container">
-        <form method="post" class="{% if form.errors %}validation-attempted{% endif %}" novalidate>
+        <form
+            method="post"
+            id="{% if async_serial_suggestions %}asset-create-form{% else %}asset-form{% endif %}"
+            {% if async_serial_suggestions %}data-async-serial-suggestions="true"{% endif %}
+            class="{% if form.errors %}validation-attempted{% endif %}"
+            novalidate
+        >
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -33,25 +39,50 @@
             
             <div class="form-grid">
                 {% for field in form %}
-                    <div class="form-group {% if field.errors %}has-error{% endif %}">
-                        <label for="{{ field.id_for_label }}" class="form-label">
-                            {{ field.label }}
-                            {% if field.field.required %}
-                                <span class="required-asterisk deferred-required-asterisk">*</span>
-                            {% endif %}
-                        </label>
-                        {{ field }}
-                        {% if field.help_text %}
-                            <p class="help-text">{{ field.help_text }}</p>
-                        {% endif %}
-                        {% if field.errors %}
-                            <div class="field-errors">
-                                {% for error in field.errors %}
-                                    <span class="error-message">{{ error }}</span>
-                                {% endfor %}
+                    {% if not form.instance.pk and field.name == "serial_number" %}
+                        <div class="form-group serial-number-suggest-group {% if field.errors %}has-error{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="required-asterisk deferred-required-asterisk">*</span>
+                                {% endif %}
+                            </label>
+                            <div class="serial-number-input-row">
+                                {{ field }}
+                                <button type="button" id="suggest-serial-btn" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-magic"></i> Suggest
+                                </button>
                             </div>
-                        {% endif %}
-                    </div>
+                            <p class="help-text serial-suggest-status" id="serial-suggest-status">Preparing serial number suggestions...</p>
+                            {% if field.errors %}
+                                <div class="field-errors">
+                                    {% for error in field.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="form-group {% if field.errors %}has-error{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="required-asterisk deferred-required-asterisk">*</span>
+                                {% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="help-text">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="field-errors">
+                                    {% for error in field.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 {% endfor %}
             </div>
             
@@ -64,5 +95,18 @@
 {% endblock %}
 
 {% block extra_js %}
+    {% if async_serial_suggestions %}
+        <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    {% endif %}
     <script src="{% static 'inventory/js/modules/forms.js' %}"></script>
+    {% if async_serial_suggestions %}
+        <script src="{% static 'inventory/js/modules/asset-form.js' %}?v=1"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (window.AssetFormSerialSuggest) {
+                    window.AssetFormSerialSuggest.init();
+                }
+            });
+        </script>
+    {% endif %}
 {% endblock %}

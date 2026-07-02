@@ -196,6 +196,26 @@ form.validation-attempted .form-group.has-error .deferred-required-asterisk {
     line-height: 1.3;
 }
 
+.serial-number-input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.serial-number-input-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.serial-number-input-row .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.serial-suggest-status {
+    min-height: 1rem;
+}
+
 [data-theme="dark"] .help-text {
     color: var(--text-muted, #64748b);
 }

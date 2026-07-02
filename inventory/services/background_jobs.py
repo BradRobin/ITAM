@@ -14,6 +14,7 @@ from django.utils import timezone
 from inventory.models import Asset, BackgroundJob
 from inventory.services.assets import get_asset_list_sections
 from inventory.services.metrics import get_dashboard_context, get_reports_context
+from inventory.services.serial_numbers import build_serial_suggestion_payload
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,12 @@ def handle_reports_job(job: BackgroundJob) -> dict:
 @register_handler(BackgroundJob.JobType.ASSET_SECTIONS)
 def handle_asset_sections_job(job: BackgroundJob) -> dict:
     return _serialize_asset_sections(get_asset_list_sections())
+
+
+@register_handler(BackgroundJob.JobType.SERIAL_SUGGESTIONS)
+def handle_serial_suggestions(job: BackgroundJob) -> dict:
+    per_type = int(job.params.get("per_type", 8))
+    return build_serial_suggestion_payload(per_type=per_type)
 
 
 @register_handler(BackgroundJob.JobType.CSV_EXPORT)
