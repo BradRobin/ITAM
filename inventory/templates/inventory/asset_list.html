@@ -416,4 +416,16 @@
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=13"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!window.location.hash) {
+                return;
+            }
+
+            var target = document.querySelector(window.location.hash);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    </script>
 {% endblock %}

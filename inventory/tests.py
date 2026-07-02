@@ -342,6 +342,11 @@ class DashboardContextTests(TestCase):
         self.assertEqual(response.context["overdue_assets_count"], 0)
         self.assertContains(response, "Total Employees")
         self.assertContains(response, '<span class="quick-stat-value">2</span>', html=True)
+        self.assertContains(response, reverse("asset_list"))
+        self.assertContains(response, f'{reverse("asset_list")}#available-assets')
+        self.assertContains(response, f'{reverse("asset_list")}#assigned-assets')
+        self.assertContains(response, f'{reverse("asset_list")}#maintenance-assets')
+        self.assertContains(response, 'class="stat-card stat-card-link stat-total"')
 
     def test_dashboard_overdue_count_uses_creation_or_recent_maintenance_date(self):
         recent_asset = Asset.objects.create(

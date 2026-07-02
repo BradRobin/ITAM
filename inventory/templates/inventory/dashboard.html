@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=6">
 {% endblock %}
 
 {% block content %}
@@ -48,14 +48,14 @@
     <!-- ========================================== -->
     <div class="dashboard-stats">
         {% for stat in dashboard_stats %}
-            <div class="stat-card {{ stat.css_class }}">
+            <a href="{{ stat.link }}" class="stat-card stat-card-link {{ stat.css_class }}" data-loader="true" data-loader-message="Loading Assets...">
                 <i class="fas {{ stat.icon }} stat-icon"></i>
                 <div class="stat-content">
                     <h3>{{ stat.label }}</h3>
                     <p class="stat-number"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
                     <span class="stat-trend">{{ stat.trend }}</span>
                 </div>
-            </div>
+            </a>
         {% endfor %}
     </div>
 

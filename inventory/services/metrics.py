@@ -3,6 +3,7 @@ import json
 
 from django.db.models import Count, Exists, Max, OuterRef, Q
 from django.db.models.functions import TruncMonth
+from django.urls import reverse
 from django.utils import timezone
 
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
@@ -70,6 +71,7 @@ def get_dashboard_context() -> dict:
     maintenance_assets = counts["maintenance_assets"]
     employee_count = Employee.objects.count()
     overdue_assets = get_overdue_assets_queryset()
+    asset_list_url = reverse("asset_list")
 
     return {
         **counts,
@@ -91,6 +93,7 @@ def get_dashboard_context() -> dict:
                 "icon": "fa-boxes",
                 "data_count": total_assets,
                 "animate_count": True,
+                "link": asset_list_url,
             },
             {
                 "label": "Available",
@@ -98,6 +101,7 @@ def get_dashboard_context() -> dict:
                 "trend": "Ready for assignment",
                 "css_class": "stat-available",
                 "icon": "fa-check-circle",
+                "link": f"{asset_list_url}#available-assets",
             },
             {
                 "label": "Assigned",
@@ -105,6 +109,7 @@ def get_dashboard_context() -> dict:
                 "trend": "Currently with employees",
                 "css_class": "stat-assigned",
                 "icon": "fa-user-check",
+                "link": f"{asset_list_url}#assigned-assets",
             },
             {
                 "label": "Under Maintenance",
@@ -112,6 +117,7 @@ def get_dashboard_context() -> dict:
                 "trend": "In repair shop",
                 "css_class": "stat-maintenance",
                 "icon": "fa-tools",
+                "link": f"{asset_list_url}#maintenance-assets",
             },
         ],
     }
