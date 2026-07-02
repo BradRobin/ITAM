@@ -10,28 +10,32 @@ urlpatterns = [
     path("logout/", views.AuthLogoutView.as_view(), name="logout"),
     
     # ==========================================
-    # PASSWORD RESET URLs - All using auth.html
+    # PASSWORD RESET URLs - WITH extra_context
     # ==========================================
     path('password-reset/', 
          auth_views.PasswordResetView.as_view(
              template_name='inventory/auth.html',
              email_template_name='inventory/password_reset_email.html',
-             subject_template_name='inventory/password_reset_subject.txt'
+             subject_template_name='inventory/password_reset_subject.txt',
+             extra_context={'page': 'password_reset'}  # <-- ADD THIS
          ), 
          name='password_reset'),
     path('password-reset/done/', 
          auth_views.PasswordResetDoneView.as_view(
-             template_name='inventory/auth.html'
+             template_name='inventory/auth.html',
+             extra_context={'page': 'password_reset_done'}  # <-- ADD THIS
          ), 
          name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', 
          auth_views.PasswordResetConfirmView.as_view(
-             template_name='inventory/auth.html'
+             template_name='inventory/auth.html',
+             extra_context={'page': 'password_reset_confirm'}  # <-- ADD THIS
          ), 
          name='password_reset_confirm'),
     path('password-reset-complete/', 
          auth_views.PasswordResetCompleteView.as_view(
-             template_name='inventory/auth.html'
+             template_name='inventory/auth.html',
+             extra_context={'page': 'password_reset_complete'}  # <-- ADD THIS
          ), 
          name='password_reset_complete'),
     
