@@ -53,13 +53,14 @@
             loadNotificationCount();
         }
         
-        // Listen for click on bell - clear badge immediately
-        bell.addEventListener('click', function(e) {
-            // Mark as viewed when clicking the bell
+        // Listen for click on bell - clear badge and remember return page
+        bell.addEventListener('click', function() {
             sessionStorage.setItem('notifications_viewed', 'true');
-            // Clear badge immediately
+            sessionStorage.setItem(
+                'notifications_return_url',
+                window.location.pathname + window.location.search
+            );
             updateBadge(0);
-            // Allow navigation to proceed
         });
         
         // Start polling for updates
@@ -191,9 +192,8 @@
                 updateBadge(0);
                 sessionStorage.removeItem('notification_count');
                 sessionStorage.setItem('notifications_viewed', 'true');
-                
-                // Dispatch event
                 document.dispatchEvent(new CustomEvent('notifications-cleared'));
+                returnToPreviousPage();
             }
         })
         .catch(function(error) {
@@ -201,6 +201,33 @@
         });
     }
     
+    // ============================================
+    // Return to page before notifications
+    // ============================================
+    function returnToPreviousPage() {
+        var returnUrl = sessionStorage.getItem('notifications_return_url');
+        sessionStorage.removeItem('notifications_return_url');
+
+        if (returnUrl && returnUrl.indexOf('/notifications') === -1) {
+            window.location.href = returnUrl;
+            return;
+        }
+
+        if (document.referrer) {
+            try {
+                var referrerPath = new URL(document.referrer).pathname;
+                if (referrerPath.indexOf('/notifications') === -1) {
+                    window.location.href = document.referrer;
+                    return;
+                }
+            } catch (e) {
+                // Fall through to dashboard.
+            }
+        }
+
+        window.location.href = '/';
+    }
+
     // ============================================
     // Get CSRF Token
     // ============================================
@@ -296,6 +323,7 @@
         updateBadge: updateBadge,
         incrementBadge: incrementBadge,
         markAllAsRead: markAllAsRead,
+        returnToPreviousPage: returnToPreviousPage,
         getUnreadCount: function() { return unreadCount; },
         stopPolling: stopPolling,
         startPolling: startPolling

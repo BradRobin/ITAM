@@ -110,10 +110,12 @@
             });
         });
 
-        // Mark all as read
+        // Mark all as read, then return to the previous admin page
         var markAllBtn = document.getElementById('markAllReadBtn');
         if (markAllBtn) {
             markAllBtn.addEventListener('click', function() {
+                markAllBtn.disabled = true;
+
                 fetch('/api/notifications/mark-all-read/', {
                     method: 'POST',
                     headers: {
@@ -124,19 +126,21 @@
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if (data.success) {
-                        document.querySelectorAll('.notification-item-page').forEach(function(item) {
-                            item.classList.remove('unread');
-                            var markBtn = item.querySelector('.notification-mark-read');
-                            if (markBtn) markBtn.remove();
-                        });
-                        markAllBtn.style.display = 'none';
+                        sessionStorage.setItem('notifications_viewed', 'true');
+                        sessionStorage.removeItem('notification_count');
                         if (window.Notifications) {
                             window.Notifications.updateBadge(0);
+                            window.Notifications.returnToPreviousPage();
+                        } else {
+                            window.location.href = '/';
                         }
+                    } else {
+                        markAllBtn.disabled = false;
                     }
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
+                    markAllBtn.disabled = false;
                 });
             });
         }
