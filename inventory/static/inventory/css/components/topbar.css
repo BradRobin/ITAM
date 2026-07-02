@@ -49,46 +49,69 @@
    ========================================== */
 .sidebar-toggle {
     display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 24px;
-    height: 18px;
-    background: none;
-    border: none;
-    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     padding: 0;
-    transition: all 0.3s ease;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg-secondary, #f1f5f9);
+    color: var(--text-primary, #1e293b);
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
     flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.sidebar-toggle span {
+.sidebar-toggle:hover {
+    background: var(--bg-hover, #e2e8f0);
+}
+
+.sidebar-toggle:focus-visible {
+    outline: 2px solid var(--primary-color, #3b82f6);
+    outline-offset: 2px;
+}
+
+.sidebar-toggle-bars {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 18px;
+    height: 14px;
+}
+
+.sidebar-toggle-line {
     display: block;
-    height: 2.5px;
+    height: 2px;
     width: 100%;
-    background: var(--text-primary, #1e293b);
-    border-radius: 2px;
-    transition: all 0.3s ease;
+    background: currentColor;
+    border-radius: 999px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+    transform-origin: center;
 }
 
-[data-theme="dark"] .sidebar-toggle span {
-    background: #e2e8f0;
+.sidebar-toggle.open .sidebar-toggle-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
 }
 
-.sidebar-toggle.open span:nth-child(1) {
-    transform: translateY(7.5px) rotate(45deg);
-}
-
-.sidebar-toggle.open span:nth-child(2) {
+.sidebar-toggle.open .sidebar-toggle-line:nth-child(2) {
     opacity: 0;
     transform: scaleX(0);
 }
 
-.sidebar-toggle.open span:nth-child(3) {
-    transform: translateY(-7.5px) rotate(-45deg);
+.sidebar-toggle.open .sidebar-toggle-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
 }
 
-.sidebar-toggle:hover {
-    opacity: 0.8;
+[data-theme="dark"] .sidebar-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.14);
 }
 
 /* ==========================================
@@ -466,5 +489,11 @@
 
     .notification-bell .fa-bell {
         font-size: 0.9rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .sidebar-toggle {
+        display: none !important;
     }
 }

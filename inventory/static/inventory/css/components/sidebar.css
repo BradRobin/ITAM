@@ -331,53 +331,6 @@
 }
 
 /* ==========================================
-   SIDEBAR TOGGLE BUTTON (Hamburger)
-   ========================================== */
-.sidebar-toggle {
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 24px;
-    height: 18px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.sidebar-toggle span {
-    display: block;
-    height: 2.5px;
-    width: 100%;
-    background: var(--text-primary, #1e293b);
-    border-radius: 2px;
-    transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .sidebar-toggle span {
-    background: #e2e8f0;
-}
-
-.sidebar-toggle.open span:nth-child(1) {
-    transform: translateY(7.5px) rotate(45deg);
-}
-
-.sidebar-toggle.open span:nth-child(2) {
-    opacity: 0;
-    transform: scaleX(0);
-}
-
-.sidebar-toggle.open span:nth-child(3) {
-    transform: translateY(-7.5px) rotate(-45deg);
-}
-
-.sidebar-toggle:hover {
-    opacity: 0.8;
-}
-
-/* ==========================================
    RESPONSIVE - Mobile
    ========================================== */
 @media (max-width: 768px) {
@@ -394,27 +347,10 @@
         opacity: 1;
         visibility: visible;
     }
-
-    .sidebar-toggle {
-        display: flex !important;
-        min-width: 44px;
-        min-height: 44px;
-        padding: 10px;
-        justify-content: center;
-    }
-
-    .sidebar-toggle span {
-        width: 22px;
-    }
 }
 
 @media (min-width: 769px) {
     .sidebar-overlay {
         display: none;
-    }
-    
-    /* Hide toggle button on desktop */
-    .sidebar-toggle {
-        display: none !important;
     }
 }
