@@ -1,0 +1,296 @@
+/* ==========================================
+   EMPLOYEE - SETTINGS.CSS
+   ========================================== */
+
+.employee-settings {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.25rem 0 2rem;
+}
+
+.settings-header {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg, 12px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card, #ffffff);
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.05));
+}
+
+.settings-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.settings-header .subtitle {
+    color: var(--text-secondary, #64748b);
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.15rem;
+    margin-bottom: 1.25rem;
+}
+
+.settings-card {
+    background: var(--bg-card, #ffffff);
+    border-radius: var(--radius-lg, 12px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.05));
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.settings-card:hover {
+    box-shadow: var(--shadow-md, 0 10px 25px rgba(15, 23, 42, 0.08));
+}
+
+.settings-card .card-header {
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.06), transparent);
+}
+
+.settings-card .card-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+}
+
+.settings-card .card-body {
+    padding: 1.15rem;
+}
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 0.5rem;
+}
+
+.profile-settings-card .profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.settings-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 3px solid rgba(59, 130, 246, 0.16);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+}
+
+.profile-summary h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+}
+
+.profile-summary p {
+    font-size: 0.82rem;
+    color: var(--text-secondary, #64748b);
+    margin: 0.25rem 0 0 0;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light, #e2e8f0);
+    text-align: center;
+}
+
+.profile-stats > div {
+    padding: 0.7rem;
+    border-radius: 10px;
+    background: var(--bg-secondary, #f8fafc);
+}
+
+.profile-stats strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--text-primary, #1e293b);
+}
+
+.profile-stats span {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #64748b);
+}
+
+.employee-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+
+.employee-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employee-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.employee-modal-dialog {
+    position: relative;
+    background: var(--bg-card, #ffffff);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    padding: 0;
+    box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.25));
+    z-index: 1;
+}
+
+.employee-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
+}
+
+.employee-modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+}
+
+.employee-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.15rem;
+    color: var(--text-secondary, #64748b);
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.employee-modal-close:hover {
+    color: #ef4444;
+}
+
+.employee-modal-body {
+    padding: 1.25rem;
+}
+
+.employee-modal-body .form-group {
+    margin-bottom: 1rem;
+}
+
+.employee-modal-body .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 0.45rem;
+}
+
+.employee-modal-body .form-group input {
+    width: 100%;
+    padding: 0.58rem 0.75rem;
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.86rem;
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #1e293b);
+    transition: all 0.2s ease;
+}
+
+.employee-modal-body .form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.modal-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 0.45rem;
+    display: none;
+}
+
+.modal-error.show {
+    display: block;
+}
+
+.employee-modal-actions {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 1.1rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .settings-card .card-body {
+        padding: 1rem;
+    }
+
+    .profile-stats {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .settings-header h1 {
+        font-size: 1.35rem;
+    }
+
+    .profile-settings-card .profile-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .employee-modal-actions {
+        flex-direction: column;
+    }
+
+    .employee-modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
