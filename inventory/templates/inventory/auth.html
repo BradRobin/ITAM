@@ -243,7 +243,25 @@
     </div>
 
 {% else %}
-    <meta http-equiv="refresh" content="0; url={% url 'login' %}">
+    <div class="auth-container">
+        <div class="auth-card logout-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ itam_product_name }}</span>
+                </div>
+                <h1>Authentication</h1>
+                <p>Please use the available authentication links below.</p>
+            </div>
+            <div class="auth-actions">
+                <a href="{% url 'login' %}" class="btn btn-primary">Go to Login</a>
+            </div>
+        </div>
+    </div>
 {% endif %}
 
 {% endblock %}

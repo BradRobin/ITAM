@@ -16,7 +16,7 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% if request.path|slice:":6" == '/login' or request.path|slice:":6" == '/signup' or request.path|slice:":6" == '/logout' or '/auth/' in request.path %}auth-page{% endif %}">
+<body class="{% if request.path|slice:":6" == '/login' or request.path|slice:":6" == '/signup' or request.path|slice:":6" == '/logout' or '/auth/' in request.path or '/password-reset' in request.path %}auth-page{% endif %}">
     
     <!-- ===== CONDITIONAL SIDEBAR ===== -->
     {% if user.is_authenticated %}
@@ -33,7 +33,7 @@
     
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
-    <div class="main-wrapper">
+    <div class="main-wrapper {% if request.path|slice:":6" == '/login' or request.path|slice:":6" == '/signup' or request.path|slice:":6" == '/logout' or '/auth/' in request.path or '/password-reset' in request.path %}auth-page{% endif %}">
         <!-- ===== CONDITIONAL TOPBAR ===== -->
         {% if user.is_authenticated %}
             {% if user.is_staff or user.is_superuser %}

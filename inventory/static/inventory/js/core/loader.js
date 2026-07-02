@@ -118,81 +118,14 @@
     // Show Loader
     // ============================================
     function show(message) {
-        // Skip if on auth page
-        if (isAuthPage()) {
-            console.log('Auth page - skipping loader show');
-            return;
-        }
-        
-        // If already active, just update message
-        if (state.isActive) {
-            if (message && state.textEl) {
-                state.textEl.textContent = message;
-            }
-            return;
-        }
-        
-        // Create elements if needed
-        createLoaderElements();
-        
-        // Set message
-        var msg = message || CONFIG.DEFAULT_MESSAGE;
-        if (state.textEl) {
-            state.textEl.textContent = msg;
-        }
-        state.message = msg;
-        
-        // Clear any existing timeouts
-        if (state.timeoutId) {
-            clearTimeout(state.timeoutId);
-            state.timeoutId = null;
-        }
-        
-        // Show overlay with animation
-        requestAnimationFrame(function() {
-            state.overlay.classList.add('active');
-            state.isActive = true;
-            setTimeout(animateDots, 100);
-        });
-        
-        // Safety timeout
-        state.timeoutId = setTimeout(function() {
-            hide();
-        }, CONFIG.TIMEOUT);
-        
-        console.log('Loader shown:', msg);
+        return;
     }
     
     // ============================================
     // Hide Loader
     // ============================================
     function hide() {
-        if (!state.isActive || !state.overlay) return;
-        
-        // Clear intervals and timeouts
-        if (state.dotInterval) {
-            clearInterval(state.dotInterval);
-            state.dotInterval = null;
-        }
-        if (state.timeoutId) {
-            clearTimeout(state.timeoutId);
-            state.timeoutId = null;
-        }
-        
-        state.overlay.classList.remove('active');
-        state.isActive = false;
-        
-        // Remove from DOM after transition
-        setTimeout(function() {
-            if (state.overlay && state.overlay.parentNode) {
-                state.overlay.remove();
-                state.overlay = null;
-                state.textEl = null;
-                state.dotsEl = null;
-            }
-        }, CONFIG.FADE_DURATION);
-        
-        console.log('Loader hidden');
+        return;
     }
     
     // ============================================
