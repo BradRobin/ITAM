@@ -73,12 +73,12 @@
                 <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
                 <span class="quick-stat-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
             </a>
-            <div class="quick-stat-item">
+            <a href="{% url 'asset_list' %}#maintenance-assets" class="quick-stat-item quick-stat-item-link">
                 <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
                 <span class="quick-stat-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}" id="asset-health-value">
                     {{ asset_health_rate|default:0 }}% issues
                 </span>
-            </div>
+            </a>
         </div>
 
         <div id="overdue-section-mount" class="{% if async_dashboard %}async-loading{% endif %}">
