@@ -364,6 +364,17 @@
     border-color: var(--primary-color, #3b82f6);
 }
 
+.quick-stat-item-link {
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.quick-stat-item-link:focus-visible {
+    outline: 2px solid var(--primary-color, #3b82f6);
+    outline-offset: 2px;
+}
+
 [data-theme="dark"] .quick-stat-item {
     background: var(--bg-card, #1e293b);
     border-color: var(--border-color, #334155);

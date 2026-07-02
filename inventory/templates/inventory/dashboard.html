@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=7">
 {% endblock %}
 
 {% block content %}
@@ -69,10 +69,10 @@
                 <span class="quick-stat-label"><i class="fas fa-chart-pie"></i> Utilization Rate</span>
                 <span class="quick-stat-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
             </div>
-            <div class="quick-stat-item">
+            <a href="{% url 'employee_list' %}" class="quick-stat-item quick-stat-item-link">
                 <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
                 <span class="quick-stat-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
-            </div>
+            </a>
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
                 <span class="quick-stat-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}" id="asset-health-value">
