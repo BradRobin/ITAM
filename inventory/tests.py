@@ -9,6 +9,24 @@ from django.utils import timezone
 
 from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
 from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog
+from .services.dates import format_duration_since, format_duration_until
+
+
+def future_return_date(days=30):
+    return (timezone.localdate() + datetime.timedelta(days=days)).isoformat()
+
+
+def open_maintenance_payload(**overrides):
+    payload = {
+        "issue_description": "Screen replacement",
+        "technician": "Grace",
+        "repair_shop": "TechFix Repairs",
+        "worker_contact": "grace@techfix.example",
+        "expected_completion_date": future_return_date(14),
+        "date": timezone.localdate().isoformat(),
+    }
+    payload.update(overrides)
+    return payload
 
 
 class AssetFormSerialNumberValidationTests(TestCase):
@@ -100,10 +118,10 @@ class AssignmentStateMachineViewTests(TestCase):
             email="eugene@example.com",
         )
 
-    def test_assignment_form_only_exposes_employee_field(self):
+    def test_assignment_form_exposes_assignment_fields(self):
         form = AssignmentForm()
 
-        self.assertEqual(list(form.fields), ["employee"])
+        self.assertEqual(list(form.fields), ["employee", "expected_return_date"])
         self.assertEqual(
             list(form.fields["employee"].queryset),
             list(Employee.objects.order_by("name")),
@@ -171,7 +189,10 @@ class AssignmentStateMachineViewTests(TestCase):
     def test_assign_asset_creates_assignment_and_marks_asset_assigned(self):
         response = self.client.post(
             reverse("assign_asset", kwargs={"pk": self.asset.pk}),
-            data={"employee": self.employee.pk},
+            data={
+                "employee": self.employee.pk,
+                "expected_return_date": future_return_date(),
+            },
         )
 
         self.assertRedirects(response, reverse("asset_list"))
@@ -194,7 +215,10 @@ class AssignmentStateMachineViewTests(TestCase):
 
         response = self.client.post(
             reverse("assign_asset", kwargs={"pk": self.asset.pk}),
-            data={"employee": self.employee.pk},
+            data={
+                "employee": self.employee.pk,
+                "expected_return_date": future_return_date(),
+            },
         )
 
         self.assertRedirects(
@@ -409,6 +433,7 @@ class InventoryAdminConfigurationTests(TestCase):
                 "employee",
                 "confirmed_by_employee",
                 "date_assigned",
+                "expected_return_date",
                 "date_returned",
             ),
         )
@@ -426,7 +451,14 @@ class InventoryAdminConfigurationTests(TestCase):
 
         self.assertEqual(
             model_admin.list_display,
-            ("asset", "technician", "date", "resolved"),
+            (
+                "asset",
+                "technician",
+                "repair_shop",
+                "expected_completion_date",
+                "date",
+                "resolved",
+            ),
         )
         self.assertEqual(model_admin.list_filter, ("resolved", "date"))
         self.assertIn("issue_description", model_admin.search_fields)
@@ -464,7 +496,10 @@ class ManagementViewSecurityTests(TestCase):
 
         response = self.client.post(
             reverse("assign_asset", kwargs={"pk": self.asset.pk}),
-            data={"employee": self.employee.pk},
+            data={
+                "employee": self.employee.pk,
+                "expected_return_date": future_return_date(),
+            },
         )
 
         self.assertEqual(response.status_code, 403)
@@ -640,6 +675,29 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertContains(response, "Assignee")
         self.assertContains(response, "API Employee")
         self.assertContains(response, "TCPD")
+        self.assertContains(response, "Assigned Assets")
+        self.assertContains(response, "Available Assets")
+        self.assertContains(response, "Under Maintenance Assets")
+        self.assertContains(response, "Laptops")
+        self.assertContains(response, "Monitors")
+        self.assertContains(response, "Printers")
+        self.assertContains(response, "Routers")
+
+    def test_asset_list_sections_include_expected_return_date(self):
+        Assignment.objects.create(
+            asset=self.asset,
+            employee=self.employee,
+            expected_return_date=timezone.localdate() + datetime.timedelta(days=21),
+        )
+        self.asset.status = Asset.AssetStatus.ASSIGNED
+        self.asset.save(update_fields=["status"])
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Return Date")
+        self.assertContains(response, "Available Assets")
 
     def test_asset_api_assignment_updates_state(self):
         self.client.force_login(self.admin)
@@ -809,6 +867,22 @@ class MaintenanceLogCRUDTests(TestCase):
         self.assertContains(response, reverse("maintenance_log_edit", kwargs={"pk": log.pk}))
         self.assertContains(response, reverse("maintenance_log_delete", kwargs={"pk": log.pk}))
 
+    def test_admin_can_create_open_maintenance_log_and_mark_asset_under_maintenance(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("maintenance_log_add", kwargs={"asset_pk": self.asset.pk}),
+            data=open_maintenance_payload(),
+        )
+
+        self.assertRedirects(response, reverse("asset_detail", kwargs={"pk": self.asset.pk}))
+        self.asset.refresh_from_db()
+        self.assertEqual(self.asset.status, Asset.AssetStatus.UNDER_MAINTENANCE)
+        log = MaintenanceLog.objects.get(asset=self.asset)
+        self.assertEqual(log.repair_shop, "TechFix Repairs")
+        self.assertEqual(log.worker_contact, "grace@techfix.example")
+        self.assertFalse(log.resolved)
+
     def test_admin_can_create_maintenance_log_for_asset(self):
         self.client.force_login(self.admin)
 
@@ -883,6 +957,21 @@ class MaintenanceLogCRUDTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(MaintenanceLog.objects.filter(asset=self.asset).exists())
+
+
+class DurationFormattingTests(TestCase):
+    def test_format_duration_since_uses_months_and_days(self):
+        start = timezone.localdate() - datetime.timedelta(days=337)
+        duration = format_duration_since(start)
+
+        self.assertIn("month", duration)
+        self.assertTrue("wk" in duration or "day" in duration)
+
+    def test_format_duration_until_returns_due_today_for_same_day(self):
+        self.assertEqual(
+            format_duration_until(timezone.localdate()),
+            "Due today",
+        )
 
 
 class EmployeePortalTests(TestCase):

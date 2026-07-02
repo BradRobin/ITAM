@@ -24,7 +24,7 @@
 }
 
 /* ==========================================
-   TOPBAR LEFT - Contains sidebar toggle + notification
+   TOPBAR LEFT - Contains sidebar toggle
    ========================================== */
 .topbar-left {
     display: flex;
@@ -196,7 +196,7 @@
 }
 
 /* ==========================================
-   NOTIFICATION BELL - Left side
+   NOTIFICATION BELL
    ========================================== */
 .notification-container {
     position: relative;

@@ -24,6 +24,7 @@ class AssignmentAdmin(admin.ModelAdmin):
         "employee",
         "confirmed_by_employee",
         "date_assigned",
+        "expected_return_date",
         "date_returned",
     )
     list_filter = ("confirmed_by_employee", "date_assigned", "date_returned")
@@ -40,6 +41,8 @@ class MaintenanceLogAdmin(admin.ModelAdmin):
     list_display = (
         "asset",
         "technician",
+        "repair_shop",
+        "expected_completion_date",
         "date",
         "resolved",
     )

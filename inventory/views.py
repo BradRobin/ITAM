@@ -40,6 +40,7 @@ from .forms import (
     MaintenanceLogForm,
 )
 from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog
+from .services.assets import get_asset_list_sections
 from .services.metrics import (
     get_dashboard_context,
     get_overdue_assets_queryset,
@@ -415,6 +416,7 @@ class AssetListView(LoginRequiredMixin, ListView):
                 "overdue_cutoff": get_service_overdue_cutoff().date(),
             }
         )
+        context.update(get_asset_list_sections())
         return context
 
 
@@ -798,8 +800,12 @@ class MaintenanceLogCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVi
 
     def form_valid(self, form):
         form.instance.asset = self.asset
+        response = super().form_valid(form)
+        if not form.instance.resolved:
+            self.asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
+            self.asset.save(update_fields=["status"])
         messages.success(self.request, "Maintenance log added successfully.")
-        return super().form_valid(form)
+        return response
 
     def get_success_url(self):
         return reverse("asset_detail", kwargs={"pk": self.asset.pk})
@@ -998,7 +1004,38 @@ class AssetAssignAPIView(LoginRequiredMixin, View):
                     status=400,
                 )
 
-            Assignment.objects.create(asset=asset, employee=employee)
+            expected_return_date = payload.get("expected_return_date")
+            if expected_return_date:
+                try:
+                    expected_return_date = datetime.date.fromisoformat(
+                        str(expected_return_date)
+                    )
+                except ValueError:
+                    return JsonResponse(
+                        {
+                            "expected_return_date": [
+                                "Enter a valid date in YYYY-MM-DD format."
+                            ]
+                        },
+                        status=400,
+                    )
+                if expected_return_date < timezone.localdate():
+                    return JsonResponse(
+                        {
+                            "expected_return_date": [
+                                "Expected return date cannot be in the past."
+                            ]
+                        },
+                        status=400,
+                    )
+            else:
+                expected_return_date = None
+
+            Assignment.objects.create(
+                asset=asset,
+                employee=employee,
+                expected_return_date=expected_return_date,
+            )
             asset.status = Asset.AssetStatus.ASSIGNED
             asset.save(update_fields=["status"])
             create_employee_notification(

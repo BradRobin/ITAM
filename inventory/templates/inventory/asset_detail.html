@@ -68,6 +68,7 @@
                         <p><strong>Department:</strong> {{ active_assignment.employee.department }}</p>
                         <p><strong>Email:</strong> {{ active_assignment.employee.email }}</p>
                         <p><strong>Assigned on:</strong> {{ active_assignment.date_assigned|date:"M d, Y H:i" }}</p>
+                        <p><strong>Expected return:</strong> {{ active_assignment.expected_return_date|date:"M d, Y"|default:"—" }}</p>
                         <form method="post" action="{% url 'return_asset' asset.pk %}" class="mt-2">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-success">Return Asset</button>
@@ -104,6 +105,7 @@
                             <th>Employee</th>
                             <th>Department</th>
                             <th>Assigned</th>
+                            <th>Expected Return</th>
                             <th>Returned</th>
                         </tr>
                     </thead>
@@ -113,6 +115,7 @@
                                 <td>{{ assignment.employee.name }}</td>
                                 <td>{{ assignment.employee.department }}</td>
                                 <td>{{ assignment.date_assigned|date:"M d, Y H:i" }}</td>
+                                <td>{{ assignment.expected_return_date|date:"M d, Y"|default:"—" }}</td>
                                 <td>
                                     {% if assignment.date_returned %}
                                         {{ assignment.date_returned|date:"M d, Y H:i" }}
@@ -149,6 +152,15 @@
                         </div>
                         <div class="issue">{{ log.issue_description }}</div>
                         <div class="technician">Technician: {{ log.technician }}</div>
+                        {% if log.repair_shop %}
+                            <div class="technician">Repair Shop: {{ log.repair_shop }}</div>
+                        {% endif %}
+                        {% if log.worker_contact %}
+                            <div class="technician">Contact: {{ log.worker_contact }}</div>
+                        {% endif %}
+                        {% if log.expected_completion_date %}
+                            <div class="technician">Expected Completion: {{ log.expected_completion_date|date:"M d, Y" }}</div>
+                        {% endif %}
                         {% if user.is_staff or user.is_superuser %}
                             <div class="maintenance-actions mt-2">
                                 <a href="{% url 'maintenance_log_edit' log.pk %}" class="btn btn-sm btn-secondary">Edit</a>
