@@ -164,6 +164,17 @@
     // ============================================
     // Setup Navigation Interception
     // ============================================
+    function resetNavigationState() {
+        isNavigating = false;
+        if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
+            try {
+                window.Loader.hide();
+            } catch (error) {
+                console.warn('Failed to reset loader state:', error);
+            }
+        }
+    }
+
     function setupNavigationInterception() {
         document.addEventListener('click', function(e) {
             if (isAuthPage()) {
@@ -186,8 +197,7 @@
             }
             
             if (typeof window.Loader !== 'undefined' && window.Loader.show) {
-                isNavigating = true;
-                window.Loader.show(CONFIG.LOADER_MESSAGE);
+                isNavigating = false;
                 console.log('Navigation to:', href);
             }
         }, true);
@@ -215,8 +225,7 @@
             }
             
             if (typeof window.Loader !== 'undefined' && window.Loader.show) {
-                isNavigating = true;
-                window.Loader.show(CONFIG.LOADER_MESSAGE);
+                isNavigating = false;
             }
         }, true);
     }
@@ -241,7 +250,7 @@
     // ============================================
     function setupPageShowHandler() {
         window.addEventListener('pageshow', function(e) {
-            if (e.persisted) {
+            if (e.persisted || !isNavigating) {
                 if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
                     setTimeout(function() {
                         window.Loader.hide();
@@ -250,6 +259,21 @@
                 }
             }
             setTimeout(highlightActiveLink, 100);
+        });
+
+        window.addEventListener('beforeunload', function() {
+            isNavigating = false;
+            if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
+                try {
+                    window.Loader.hide();
+                } catch (error) {
+                    console.warn('Failed to clear loader on unload:', error);
+                }
+            }
+        });
+
+        window.addEventListener('load', function() {
+            setTimeout(resetNavigationState, 200);
         });
     }
     
