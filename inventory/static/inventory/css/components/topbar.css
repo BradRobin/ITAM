@@ -150,14 +150,22 @@
     padding: 4px 12px 4px 4px;
     border-radius: 50px;
     background: var(--bg-secondary, #f1f5f9);
-    cursor: default;
+    cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
     border: 1px solid transparent;
+    text-decoration: none;
+    color: inherit;
 }
 
 .profile-badge:hover {
     background: var(--bg-hover, #e2e8f0);
+    text-decoration: none;
+}
+
+.profile-badge:focus {
+    outline: 2px solid var(--primary-color, #3b82f6);
+    outline-offset: 2px;
 }
 
 [data-theme="dark"] .profile-badge {
