@@ -312,17 +312,17 @@ class SignUpView(CreateView):
         return context
 
 
-class AuthLogoutView(TemplateView):
+class AuthLogoutView(View):
     template_name = "inventory/auth.html"
 
-    def dispatch(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         logout(request)
-        return super().dispatch(request, *args, **kwargs)
+        return render(request, self.template_name, {"page": "logout"})
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "logout"
-        return context
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("dashboard")
+        return render(request, self.template_name, {"page": "logout"})
 
 
 # ============================================

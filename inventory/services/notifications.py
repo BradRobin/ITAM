@@ -41,6 +41,7 @@ def add_session_notification(
     }
     notifications.insert(0, notification)
     request.session["notifications"] = notifications[:MAX_SESSION_NOTIFICATIONS]
+    request.session.modified = True
     return notification
 
 
@@ -77,6 +78,7 @@ def mark_all_notifications_read(request) -> list:
     for notification in notifications:
         notification["read"] = True
     request.session["notifications"] = notifications
+    request.session.modified = True
     return notifications
 
 
@@ -87,4 +89,5 @@ def mark_notification_read(request, notification_id: int) -> list:
             notification["read"] = True
             break
     request.session["notifications"] = notifications
+    request.session.modified = True
     return notifications

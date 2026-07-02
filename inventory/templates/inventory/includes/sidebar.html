@@ -68,10 +68,7 @@
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link sidebar-logout" href="{% url 'logout' %}" data-loader="true" data-loader-message="Logging out...">
-                    <i class="fas fa-sign-out-alt sidebar-icon"></i>
-                    <span class="sidebar-label">Logout</span>
-                </a>
+                {% include "inventory/includes/logout_form.html" %}
             </li>
         </ul>
         <div class="sidebar-version">{{ itam_version }}</div>

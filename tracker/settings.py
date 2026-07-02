@@ -103,6 +103,10 @@ if "test" in sys.argv:
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "test.sqlite3",
     }
+elif DATABASES["default"]["ENGINE"].endswith("postgresql"):
+    # Supabase/pgBouncer transaction pooling needs non-persistent connections.
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -148,7 +152,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Login/Logout URLs
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
-LOGOUT_REDIRECT_URL = "dashboard"
+LOGOUT_REDIRECT_URL = "login"
+
+# Session configuration
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 24 * 14)
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # Print configuration status
 print("\nConfiguration Summary:")

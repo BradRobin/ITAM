@@ -1,0 +1,16 @@
+BEGIN;
+
+-- Django system tables must not use RLS. Row-level security blocks session
+-- reads/writes and causes users to be logged out unexpectedly.
+ALTER TABLE IF EXISTS "django_migrations" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "django_content_type" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_permission" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_group" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_group_permissions" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_user" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_user_groups" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "auth_user_user_permissions" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "django_admin_log" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "django_session" DISABLE ROW LEVEL SECURITY;
+
+COMMIT;

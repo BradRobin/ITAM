@@ -1,15 +1,8 @@
 BEGIN;
 
-ALTER TABLE IF EXISTS "django_migrations" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "django_content_type" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_permission" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_group" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_group_permissions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_user" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_user_groups" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "auth_user_user_permissions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "django_admin_log" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS "django_session" ENABLE ROW LEVEL SECURITY;
+-- Do not enable RLS on Django system tables. Session/auth tables need full
+-- application access or users will be logged out unexpectedly.
+-- Apply inventory table policies separately if needed.
 
 ALTER TABLE IF EXISTS "inventory_asset" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS "inventory_employee" ENABLE ROW LEVEL SECURITY;

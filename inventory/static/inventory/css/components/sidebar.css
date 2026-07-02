@@ -218,6 +218,34 @@
     color: #fca5a5;
 }
 
+.logout-form {
+    margin: 0;
+    width: 100%;
+}
+
+.logout-form button.sidebar-link {
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+
+.logout-form-inline {
+    display: inline-block;
+}
+
+.logout-form .quick-action,
+.logout-form .dropdown-item {
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+
 .sidebar-version {
     font-size: 0.6rem;
     color: #64748b;

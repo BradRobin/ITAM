@@ -560,11 +560,44 @@ class AuthRoutingTests(TestCase):
         )
         self.client.force_login(user)
 
-        response = self.client.get(reverse("logout"))
+        response = self.client.post(reverse("logout"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "inventory/auth.html")
         self.assertEqual(response.context["page"], "logout")
+
+    def test_logout_get_does_not_end_active_session(self):
+        user = get_user_model().objects.create_user(
+            username="stay-logged-in",
+            email="stay-logged-in@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("logout"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("dashboard"))
+        self.assertTrue(
+            get_user_model().objects.filter(pk=user.pk).exists()
+        )
+        self.client.get(reverse("dashboard"))
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+
+    def test_session_persists_across_requests(self):
+        user = get_user_model().objects.create_user(
+            username="session-user",
+            email="session-user@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(user)
+
+        first = self.client.get(reverse("dashboard"))
+        second = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
 
 
 class AssetCSVExportTests(TestCase):
