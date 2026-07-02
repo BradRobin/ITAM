@@ -4,7 +4,7 @@
 {% block title %}Assets - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=13">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=2">
 {% endblock %}
 
@@ -19,6 +19,7 @@
 
     <div class="filters">
         <form method="get" class="filter-form">
+            <span class="filter-label">Filter by:</span>
             <select name="type" class="filter-select" aria-label="Filter by asset type" onchange="this.form.submit()">
                 <option value="">All Types</option>
                 <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
