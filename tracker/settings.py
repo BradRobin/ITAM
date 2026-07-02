@@ -1,36 +1,41 @@
-import sys
+import logging
+import os
 import sys
 from pathlib import Path
-import os
 
 import environ
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+logger = logging.getLogger(__name__)
 
-# Initialize environ
+BASE_DIR = Path(__file__).resolve().parent.parent
+IS_VERCEL = bool(os.environ.get("VERCEL"))
+
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
 )
 
-# Try to read .env file safely
-env_file = BASE_DIR / ".env"
-if env_file.exists():
-    try:
-        environ.Env.read_env(env_file)
-        print(".env file loaded successfully")
-    except Exception as e:
-        print(f"Warning: Could not read .env file: {e}")
-        print("Using environment variables or defaults instead.")
-else:
-    print("No .env file found. Using environment variables or defaults.")
+# Local: .env or Vercel CLI: .env.local (never commit either)
+for env_path in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
+    if env_path.exists():
+        try:
+            environ.Env.read_env(env_path)
+            break
+        except Exception as exc:
+            logger.warning("Could not read %s: %s", env_path.name, exc)
 
-# Get settings from environment or use defaults
-SECRET_KEY = os.environ.get("SECRET_KEY") or env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
-DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes") or env("DEBUG", default=True)
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") or env("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+SECRET_KEY = os.environ.get("SECRET_KEY") or env(
+    "SECRET_KEY", default="django-insecure-dev-key-change-in-production"
+)
+DEBUG = env.bool("DEBUG", default=not IS_VERCEL)
 
-# Application definition
+_raw_hosts = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1")
+ALLOWED_HOSTS = [host.strip() for host in _raw_hosts.split(",") if host.strip()]
+if IS_VERCEL:
+    for vercel_host in (".vercel.app", ".now.sh"):
+        if vercel_host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(vercel_host)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -72,10 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "tracker.wsgi.application"
 
-# Database Configuration
-# Choose one of the following configurations:
-
-# Option 1: PostgreSQL (for production with Supabase)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -86,18 +87,11 @@ DATABASES = {
         "PORT": os.environ.get("DB_PORT") or env("DB_PORT", default="5432"),
         "OPTIONS": {
             "sslmode": os.environ.get("DB_SSLMODE") or env("DB_SSLMODE", default="require"),
-            "gssencmode": os.environ.get("DB_GSSENCMODE") or env("DB_GSSENCMODE", default="disable"),
+            "gssencmode": os.environ.get("DB_GSSENCMODE")
+            or env("DB_GSSENCMODE", default="disable"),
         },
     }
 }
-
-# Uncomment below to use SQLite for local development instead
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 if "test" in sys.argv:
     DATABASES["default"] = {
@@ -105,57 +99,47 @@ if "test" in sys.argv:
         "NAME": BASE_DIR / "test.sqlite3",
     }
 elif DATABASES["default"]["ENGINE"].endswith("postgresql"):
-    # Supabase/pgBouncer transaction pooling needs non-persistent connections.
     DATABASES["default"]["CONN_MAX_AGE"] = 0
     DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = env("TIME_ZONE", default="Africa/Nairobi")
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media files (user uploaded files)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 CSRF_TRUSTED_ORIGINS = [
-    origin
+    origin.strip()
     for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
-    if origin
+    if origin.strip()
 ]
+vercel_url = os.environ.get("VERCEL_URL")
+if vercel_url:
+    origin = f"https://{vercel_url}"
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Login/Logout URLs
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
-# Session configuration
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 24 * 14)
 SESSION_SAVE_EVERY_REQUEST = True
@@ -167,16 +151,6 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-# Print configuration status
-print("\nConfiguration Summary:")
-print(f"   DEBUG: {DEBUG}")
-print(f"   ALLOWED_HOSTS: {ALLOWED_HOSTS}")
-print(f"   Database: {DATABASES['default']['ENGINE']}")
-print(f"   Database Host: {DATABASES['default'].get('HOST', 'local')}")
-print(f"   Database Port: {DATABASES['default'].get('PORT', 'default')}")
-print("Configuration loaded successfully.\n")
-
-# Background job processing (async workloads 3s+)
 BACKGROUND_JOB_POLL_MS = env.int("BACKGROUND_JOB_POLL_MS", default=1500)
 BACKGROUND_JOB_RESULT_TTL_SECONDS = env.int(
     "BACKGROUND_JOB_RESULT_TTL_SECONDS", default=120
@@ -186,5 +160,5 @@ BACKGROUND_JOB_CSV_ASYNC_MIN_ASSETS = env.int(
 )
 BACKGROUND_JOBS_USE_THREADS = env.bool(
     "BACKGROUND_JOBS_USE_THREADS",
-    default="test" not in sys.argv,
+    default=not IS_VERCEL and "test" not in sys.argv,
 )

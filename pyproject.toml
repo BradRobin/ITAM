@@ -1,0 +1,5 @@
+[tool.vercel]
+entrypoint = "tracker.wsgi:application"
+
+[tool.vercel.scripts]
+build = "python manage.py migrate --noinput"
