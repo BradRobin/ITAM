@@ -115,6 +115,11 @@ class Assignment(models.Model):
         related_name="assignments",
     )
     date_assigned = models.DateTimeField(auto_now_add=True)
+    expected_return_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Expected date the asset should be returned.",
+    )
     date_returned = models.DateTimeField(null=True, blank=True)
     confirmed_by_employee = models.BooleanField(default=False)
     confirmed_at = models.DateTimeField(null=True, blank=True)
@@ -172,6 +177,18 @@ class MaintenanceLog(models.Model):
     )
     issue_description = models.TextField()
     technician = models.CharField(max_length=255)
+    repair_shop = models.CharField(max_length=255, blank=True, default="")
+    worker_contact = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Phone number or email for the maintenance worker.",
+    )
+    expected_completion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Estimated date when maintenance will be completed.",
+    )
     date = models.DateField(default=timezone.now)
     resolved = models.BooleanField(default=False)
 

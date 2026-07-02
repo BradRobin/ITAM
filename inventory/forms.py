@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
+from django.utils import timezone
 
 from .models import Asset, Assignment, Employee, MaintenanceLog
 
@@ -132,17 +133,69 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ["employee"]
+        fields = ["employee", "expected_return_date"]
+        widgets = {
+            "expected_return_date": forms.DateInput(attrs={"type": "date"}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["employee"].queryset = Employee.objects.all().order_by("name")
+        self.fields["expected_return_date"].required = True
+
+    def clean_expected_return_date(self):
+        expected_return_date = self.cleaned_data.get("expected_return_date")
+        if (
+            expected_return_date
+            and expected_return_date < timezone.localdate()
+        ):
+            raise forms.ValidationError(
+                "Expected return date cannot be in the past."
+            )
+        return expected_return_date
 
 
 class MaintenanceLogForm(forms.ModelForm):
     class Meta:
         model = MaintenanceLog
-        fields = ["issue_description", "technician", "date", "resolved"]
+        fields = [
+            "issue_description",
+            "technician",
+            "repair_shop",
+            "worker_contact",
+            "expected_completion_date",
+            "date",
+            "resolved",
+        ]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
+            "expected_completion_date": forms.DateInput(attrs={"type": "date"}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        resolved = cleaned_data.get("resolved")
+        repair_shop = cleaned_data.get("repair_shop")
+        worker_contact = cleaned_data.get("worker_contact")
+        expected_completion_date = cleaned_data.get("expected_completion_date")
+
+        if not resolved:
+            if not repair_shop:
+                self.add_error("repair_shop", "Repair shop is required for open maintenance.")
+            if not worker_contact:
+                self.add_error(
+                    "worker_contact",
+                    "Maintenance worker contact is required for open maintenance.",
+                )
+            if not expected_completion_date:
+                self.add_error(
+                    "expected_completion_date",
+                    "Expected completion date is required for open maintenance.",
+                )
+            elif expected_completion_date < timezone.localdate():
+                self.add_error(
+                    "expected_completion_date",
+                    "Expected completion date cannot be in the past.",
+                )
+
+        return cleaned_data
