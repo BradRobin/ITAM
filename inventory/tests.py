@@ -485,13 +485,40 @@ class BackgroundJobTests(TestCase):
         job = enqueue_job(self.user, BackgroundJob.JobType.CSV_EXPORT, force=True)
         job.refresh_from_db()
         self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
-        self.assertTrue(job.result_file)
+        self.assertTrue(job.result_file or job.result.get("csv_content"))
         self.client.force_login(self.user)
         response = self.client.get(
             reverse("background_job_download", kwargs={"job_id": job.id})
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response["Content-Type"])
+        if hasattr(response, "content"):
+            self.assertIn(b"Serial Number", response.content)
+        else:
+            body = b"".join(response.streaming_content)
+            self.assertIn(b"Serial Number", body)
+
+    def test_csv_export_job_uses_inline_storage_when_media_readonly(self):
+        from unittest.mock import patch
+
+        with patch(
+            "inventory.services.background_jobs._can_write_media_exports",
+            return_value=False,
+        ):
+            job = enqueue_job(self.user, BackgroundJob.JobType.CSV_EXPORT, force=True)
+
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        self.assertFalse(job.result_file)
+        self.assertIn("csv_content", job.result)
+        self.assertIn("Background Laptop", job.result["csv_content"])
+
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("background_job_download", kwargs={"job_id": job.id})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Background Laptop", response.content)
 
 
 class InventoryAdminConfigurationTests(TestCase):

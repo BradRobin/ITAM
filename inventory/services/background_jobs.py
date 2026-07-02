@@ -125,6 +125,21 @@ def handle_serial_suggestions(job: BackgroundJob) -> dict:
     return build_serial_suggestion_payload(per_type=per_type)
 
 
+def _can_write_media_exports() -> bool:
+    if getattr(settings, "IS_VERCEL", False):
+        return False
+
+    export_dir = settings.MEDIA_ROOT / "exports"
+    try:
+        export_dir.mkdir(parents=True, exist_ok=True)
+        test_file = export_dir / ".write_test"
+        test_file.write_text("ok", encoding="utf-8")
+        test_file.unlink()
+        return True
+    except OSError:
+        return False
+
+
 @register_handler(BackgroundJob.JobType.CSV_EXPORT)
 def handle_csv_export_job(job: BackgroundJob) -> dict:
     buffer = io.StringIO()
@@ -148,17 +163,24 @@ def handle_csv_export_job(job: BackgroundJob) -> dict:
         )
         row_count += 1
 
-    filename = f"itam_asset_report_{job.id}.csv"
-    job.result_file.save(
-        filename,
-        ContentFile(buffer.getvalue().encode("utf-8")),
-        save=False,
-    )
-    return {
+    csv_content = buffer.getvalue()
+    filename = "itam_asset_report.csv"
+    result = {
         "row_count": row_count,
-        "filename": "itam_asset_report.csv",
+        "filename": filename,
         "download_url": reverse("background_job_download", kwargs={"job_id": job.id}),
     }
+
+    if _can_write_media_exports():
+        job.result_file.save(
+            f"itam_asset_report_{job.id}.csv",
+            ContentFile(csv_content.encode("utf-8")),
+            save=False,
+        )
+    else:
+        result["csv_content"] = csv_content
+
+    return result
 
 
 def get_result_ttl():
@@ -308,7 +330,10 @@ def serialize_job(job: BackgroundJob) -> dict:
     }
     if job.status == BackgroundJob.Status.COMPLETED:
         payload["result"] = job.result
-        if job.result_file:
+        has_download = bool(
+            job.result_file or (job.result or {}).get("csv_content")
+        )
+        if has_download:
             payload["download_url"] = reverse(
                 "background_job_download",
                 kwargs={"job_id": job.id},

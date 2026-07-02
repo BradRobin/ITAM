@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
 
@@ -45,12 +45,24 @@ class BackgroundJobDetailView(LoginRequiredMixin, View):
 class BackgroundJobDownloadView(LoginRequiredMixin, View):
     def get(self, request, job_id):
         job = get_object_or_404(BackgroundJob, pk=job_id, user=request.user)
-        if job.status != BackgroundJob.Status.COMPLETED or not job.result_file:
+        if job.status != BackgroundJob.Status.COMPLETED:
             raise Http404("Export file is not ready")
-        filename = (job.result or {}).get("filename", job.result_file.name)
-        return FileResponse(
-            job.result_file.open("rb"),
-            as_attachment=True,
-            filename=filename,
-            content_type="text/csv",
-        )
+
+        result = job.result or {}
+        filename = result.get("filename", "export.csv")
+        csv_content = result.get("csv_content")
+
+        if csv_content:
+            response = HttpResponse(csv_content, content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return response
+
+        if job.result_file:
+            return FileResponse(
+                job.result_file.open("rb"),
+                as_attachment=True,
+                filename=filename,
+                content_type="text/csv",
+            )
+
+        raise Http404("Export file is not ready")
