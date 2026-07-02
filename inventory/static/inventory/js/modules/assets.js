@@ -10,11 +10,16 @@
     // DOM Elements
     // ============================================
     let elements = {};
+    let isInitialized = false;
     
     // ============================================
     // Initialize Asset Module
     // ============================================
     function init() {
+        if (isInitialized) {
+            return;
+        }
+        isInitialized = true;
         // Cache DOM elements
         elements = {
             assetTable: document.querySelector('.asset-table'),

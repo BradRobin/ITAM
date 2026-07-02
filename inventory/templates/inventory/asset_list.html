@@ -19,20 +19,19 @@
 
     <div class="filters">
         <form method="get" class="filter-form">
-            <select name="type" class="filter-select">
+            <select name="type" class="filter-select" aria-label="Filter by asset type" onchange="this.form.submit()">
                 <option value="">All Types</option>
                 <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
                 <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
                 <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
                 <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
             </select>
-            <select name="status" class="filter-select">
+            <select name="status" class="filter-select" aria-label="Filter by asset status" onchange="this.form.submit()">
                 <option value="">All Statuses</option>
                 <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
                 <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
                 <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
             </select>
-            <button type="submit" class="btn btn-primary">Filter</button>
             <a href="{% url 'asset_list' %}" class="btn btn-secondary">Clear</a>
         </form>
     </div>
@@ -427,6 +426,10 @@
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            if (window.AssetManager && typeof window.AssetManager.init === 'function') {
+                window.AssetManager.init();
+            }
+
             if (!window.location.hash) {
                 return;
             }
