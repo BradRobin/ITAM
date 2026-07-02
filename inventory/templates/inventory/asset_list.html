@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
@@ -62,8 +62,8 @@
                 </thead>
                 <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
                     {% for asset in assets %}
-                        <tr>
-                            <td><a href="{% url 'asset_detail' asset.pk %}" class="asset-name-link">{{ asset.name }}</a></td>
+                        <tr class="asset-table-row" data-asset-id="{{ asset.pk }}" tabindex="0" role="button" aria-label="View details for {{ asset.name }}">
+                            <td><span class="asset-name-text">{{ asset.name }}</span></td>
                             <td>{{ asset.type }}</td>
                             <td>{{ asset.serial_number }}</td>
                             <td>
@@ -95,9 +95,8 @@
                             <td class="date-cell">{{ asset.last_assigned_date|date:"M d, Y"|default:"—" }}</td>
                             <td class="date-cell">{{ asset.last_returned_date|date:"M d, Y"|default:"—" }}</td>
                             <td class="actions-cell">
-                                <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View</a>
-                                <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary">Edit</a>
-                                <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary" data-row-action="true">Edit</a>
+                                <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger" data-row-action="true">Delete</a>
                             </td>
                         </tr>
                     {% empty %}
@@ -144,12 +143,29 @@
         </div>
     </div>
     {% endif %}
+
+    <div id="asset-detail-card" class="asset-detail-card" aria-hidden="true">
+        <div class="asset-detail-card-backdrop" data-close-card></div>
+        <article class="asset-detail-card-panel" role="dialog" aria-modal="true" aria-labelledby="asset-detail-card-title">
+            <header class="asset-detail-card-header">
+                <div class="asset-detail-card-heading">
+                    <h3 id="asset-detail-card-title"></h3>
+                    <p class="asset-detail-card-subtitle"></p>
+                </div>
+                <button type="button" class="asset-detail-card-close" aria-label="Close asset details" data-close-card>
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="asset-detail-card-body"></div>
+            <footer class="asset-detail-card-footer"></footer>
+        </article>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=15"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.AssetManager && typeof window.AssetManager.init === 'function') {
