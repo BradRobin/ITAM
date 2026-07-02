@@ -13,7 +13,7 @@
         <h1>Assets</h1>
         <div class="actions">
             <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
-            <a href="{% url 'asset_export' %}" class="btn btn-success">Export CSV</a>
+            <button type="button" class="btn btn-success" id="export-csv-btn" data-export-url="{% url 'asset_export' %}?async=1">Export CSV</button>
         </div>
     </div>
 
@@ -136,308 +136,46 @@
         </div>
     {% endif %}
 
-    <div class="asset-sections">
-        <section class="asset-section" id="assigned-assets">
-            <div class="asset-section-header">
-                <div class="asset-section-title">
-                    <i class="fas fa-user-check"></i>
-                    <h2>Assigned Assets</h2>
-                </div>
-                <span class="asset-section-count">{{ assigned_asset_rows|length }} item{{ assigned_asset_rows|length|pluralize }}</span>
-            </div>
-            {% if assigned_asset_rows %}
-                <div class="table-wrapper asset-section-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asset Name</th>
-                                <th>Type</th>
-                                <th>Assignee</th>
-                                <th>Date Assigned</th>
-                                <th>Return Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in assigned_asset_rows %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                    </td>
-                                    <td>{{ row.type }}</td>
-                                    <td>{{ row.assignee }}</td>
-                                    <td>{{ row.date_assigned|date:"M d, Y" }}</td>
-                                    <td>
-                                        {% if row.expected_return_date %}
-                                            {{ row.expected_return_date|date:"M d, Y" }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="asset-section-empty">No assets are currently assigned.</div>
-            {% endif %}
-        </section>
-
-        <section class="asset-section" id="available-assets">
-            <div class="asset-section-header">
-                <div class="asset-section-title">
-                    <i class="fas fa-check-circle"></i>
-                    <h2>Available Assets</h2>
-                </div>
-                <span class="asset-section-count">{{ available_asset_rows|length }} item{{ available_asset_rows|length|pluralize }}</span>
-            </div>
-            {% if available_asset_rows %}
-                <div class="table-wrapper asset-section-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asset Name</th>
-                                <th>Type</th>
-                                <th>Available Since</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in available_asset_rows %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                    </td>
-                                    <td>{{ row.type }}</td>
-                                    <td>{{ row.available_since }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="asset-section-empty">No available assets right now.</div>
-            {% endif %}
-        </section>
-
-        <section class="asset-section" id="maintenance-assets">
-            <div class="asset-section-header">
-                <div class="asset-section-title">
-                    <i class="fas fa-tools"></i>
-                    <h2>Under Maintenance Assets</h2>
-                </div>
-                <span class="asset-section-count">{{ maintenance_asset_rows|length }} item{{ maintenance_asset_rows|length|pluralize }}</span>
-            </div>
-            {% if maintenance_asset_rows %}
-                <div class="table-wrapper asset-section-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asset Name</th>
-                                <th>Type</th>
-                                <th>Repair Shop</th>
-                                <th>Maintenance Worker Contact</th>
-                                <th>Period Till Full Repair</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in maintenance_asset_rows %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                    </td>
-                                    <td>{{ row.type }}</td>
-                                    <td>{{ row.repair_shop }}</td>
-                                    <td>{{ row.worker_contact }}</td>
-                                    <td>{{ row.repair_period }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="asset-section-empty">No assets are currently under maintenance.</div>
-            {% endif %}
-        </section>
-
-        <div class="asset-type-grid">
-            <section class="asset-section" id="laptop-assets">
-                <div class="asset-section-header">
-                    <div class="asset-section-title">
-                        <i class="fas fa-laptop"></i>
-                        <h2>Laptops</h2>
-                    </div>
-                    <span class="asset-section-count">{{ laptop_rows|length }} item{{ laptop_rows|length|pluralize }}</span>
-                </div>
-                {% if laptop_rows %}
-                    <div class="table-wrapper asset-section-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Serial Number</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in laptop_rows %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                        </td>
-                                        <td>{{ row.type }}</td>
-                                        <td>{{ row.serial_number }}</td>
-                                        <td>
-                                            <span class="badge badge-{{ row.status|lower|cut:' ' }}">{{ row.status }}</span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="asset-section-empty">No laptops found.</div>
-                {% endif %}
-            </section>
-
-            <section class="asset-section" id="monitor-assets">
-                <div class="asset-section-header">
-                    <div class="asset-section-title">
-                        <i class="fas fa-desktop"></i>
-                        <h2>Monitors</h2>
-                    </div>
-                    <span class="asset-section-count">{{ monitor_rows|length }} item{{ monitor_rows|length|pluralize }}</span>
-                </div>
-                {% if monitor_rows %}
-                    <div class="table-wrapper asset-section-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Serial Number</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in monitor_rows %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                        </td>
-                                        <td>{{ row.type }}</td>
-                                        <td>{{ row.serial_number }}</td>
-                                        <td>
-                                            <span class="badge badge-{{ row.status|lower|cut:' ' }}">{{ row.status }}</span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="asset-section-empty">No monitors found.</div>
-                {% endif %}
-            </section>
-
-            <section class="asset-section" id="printer-assets">
-                <div class="asset-section-header">
-                    <div class="asset-section-title">
-                        <i class="fas fa-print"></i>
-                        <h2>Printers</h2>
-                    </div>
-                    <span class="asset-section-count">{{ printer_rows|length }} item{{ printer_rows|length|pluralize }}</span>
-                </div>
-                {% if printer_rows %}
-                    <div class="table-wrapper asset-section-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Serial Number</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in printer_rows %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                        </td>
-                                        <td>{{ row.type }}</td>
-                                        <td>{{ row.serial_number }}</td>
-                                        <td>
-                                            <span class="badge badge-{{ row.status|lower|cut:' ' }}">{{ row.status }}</span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="asset-section-empty">No printers found.</div>
-                {% endif %}
-            </section>
-
-            <section class="asset-section" id="router-assets">
-                <div class="asset-section-header">
-                    <div class="asset-section-title">
-                        <i class="fas fa-network-wired"></i>
-                        <h2>Routers</h2>
-                    </div>
-                    <span class="asset-section-count">{{ router_rows|length }} item{{ router_rows|length|pluralize }}</span>
-                </div>
-                {% if router_rows %}
-                    <div class="table-wrapper asset-section-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Serial Number</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in router_rows %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'asset_detail' row.asset_pk %}" class="asset-name-link">{{ row.name }}</a>
-                                        </td>
-                                        <td>{{ row.type }}</td>
-                                        <td>{{ row.serial_number }}</td>
-                                        <td>
-                                            <span class="badge badge-{{ row.status|lower|cut:' ' }}">{{ row.status }}</span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="asset-section-empty">No routers found.</div>
-                {% endif %}
-            </section>
+    {% if async_asset_sections %}
+    <div id="asset-sections-mount" class="async-loading">
+        <div class="async-job-panel">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading asset sections in the background...</span>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=14"></script>
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=15"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.AssetManager && typeof window.AssetManager.init === 'function') {
                 window.AssetManager.init();
             }
-
-            if (!window.location.hash) {
-                return;
+            if (window.AssetSections && typeof window.AssetSections.init === 'function') {
+                window.AssetSections.init();
             }
 
-            var target = document.querySelector(window.location.hash);
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var exportBtn = document.getElementById('export-csv-btn');
+            if (exportBtn && window.BackgroundJobs) {
+                exportBtn.addEventListener('click', function() {
+                    exportBtn.disabled = true;
+                    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing export...';
+                    window.BackgroundJobs.run('csv_export', { force: true })
+                        .then(function(job) {
+                            window.BackgroundJobs.downloadExport(job);
+                            exportBtn.disabled = false;
+                            exportBtn.innerHTML = 'Export CSV';
+                        })
+                        .catch(function(error) {
+                            exportBtn.disabled = false;
+                            exportBtn.innerHTML = 'Export CSV';
+                            alert(error.message || 'Export failed');
+                        });
+                });
             }
         });
     </script>

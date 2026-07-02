@@ -1,4 +1,5 @@
 import sys
+import sys
 from pathlib import Path
 import os
 
@@ -174,3 +175,16 @@ print(f"   Database: {DATABASES['default']['ENGINE']}")
 print(f"   Database Host: {DATABASES['default'].get('HOST', 'local')}")
 print(f"   Database Port: {DATABASES['default'].get('PORT', 'default')}")
 print("Configuration loaded successfully.\n")
+
+# Background job processing (async workloads 3s+)
+BACKGROUND_JOB_POLL_MS = env.int("BACKGROUND_JOB_POLL_MS", default=1500)
+BACKGROUND_JOB_RESULT_TTL_SECONDS = env.int(
+    "BACKGROUND_JOB_RESULT_TTL_SECONDS", default=120
+)
+BACKGROUND_JOB_CSV_ASYNC_MIN_ASSETS = env.int(
+    "BACKGROUND_JOB_CSV_ASYNC_MIN_ASSETS", default=100
+)
+BACKGROUND_JOBS_USE_THREADS = env.bool(
+    "BACKGROUND_JOBS_USE_THREADS",
+    default="test" not in sys.argv,
+)

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+import uuid
 
 
 class Asset(models.Model):
@@ -238,3 +239,57 @@ class EmployeeNotification(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} for {self.employee}"
+
+
+class BackgroundJob(models.Model):
+    """Database-backed async job for slow operations (3s+)."""
+
+    class JobType(models.TextChoices):
+        REPORTS = "reports", "Reports analytics"
+        ASSET_SECTIONS = "asset_sections", "Asset list sections"
+        DASHBOARD = "dashboard", "Dashboard metrics"
+        CSV_EXPORT = "csv_export", "Asset CSV export"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    JOB_PRIORITIES = {
+        JobType.REPORTS: 100,
+        JobType.ASSET_SECTIONS: 90,
+        JobType.DASHBOARD: 80,
+        JobType.CSV_EXPORT: 70,
+    }
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    job_type = models.CharField(max_length=32, choices=JobType.choices)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    priority = models.PositiveSmallIntegerField(default=50)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="background_jobs",
+    )
+    params = models.JSONField(default=dict, blank=True)
+    result = models.JSONField(null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    result_file = models.FileField(upload_to="exports/", null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-priority", "created_at"]
+        indexes = [
+            models.Index(fields=["status", "-priority", "created_at"], name="bgjob_status_prio_idx"),
+            models.Index(fields=["user", "job_type", "-created_at"], name="bgjob_user_type_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.job_type} ({self.status})"

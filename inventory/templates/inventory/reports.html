@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="reports-container">
+<div class="reports-container"{% if async_reports %} data-async-reports="true"{% endif %}>
     <div class="reports-header">
         <div>
             <h1>Reports & Analytics</h1>
@@ -33,7 +33,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">Total Assets</span>
-                <span class="summary-value">{{ total_assets }}</span>
+                <span class="summary-value" data-summary-key="total_assets">{{ total_assets }}</span>
             </div>
         </div>
         <div class="summary-card">
@@ -42,7 +42,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">Assigned</span>
-                <span class="summary-value">{{ assigned_assets }}</span>
+                <span class="summary-value" data-summary-key="assigned_assets">{{ assigned_assets }}</span>
             </div>
         </div>
         <div class="summary-card">
@@ -51,7 +51,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">Available</span>
-                <span class="summary-value">{{ available_assets }}</span>
+                <span class="summary-value" data-summary-key="available_assets">{{ available_assets }}</span>
             </div>
         </div>
         <div class="summary-card">
@@ -60,7 +60,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">In Maintenance</span>
-                <span class="summary-value">{{ maintenance_assets }}</span>
+                <span class="summary-value" data-summary-key="maintenance_assets">{{ maintenance_assets }}</span>
             </div>
         </div>
         <div class="summary-card">
@@ -69,7 +69,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">Total Employees</span>
-                <span class="summary-value">{{ total_employees }}</span>
+                <span class="summary-value" data-summary-key="total_employees">{{ total_employees }}</span>
             </div>
         </div>
         <div class="summary-card">
@@ -78,7 +78,7 @@
             </div>
             <div class="summary-content">
                 <span class="summary-label">Utilization Rate</span>
-                <span class="summary-value">{{ utilization_rate }}%</span>
+                <span class="summary-value" data-summary-key="utilization_rate">{{ utilization_rate }}%</span>
             </div>
         </div>
     </div>
@@ -151,7 +151,7 @@
         <div class="stats-row">
             <div class="stat-item">
                 <span class="stat-label">Overdue Assets</span>
-                <span class="stat-value {% if overdue_count > 0 %}danger{% else %}success{% endif %}">
+                <span class="stat-value {% if overdue_count > 0 %}danger{% else %}success{% endif %}" data-stat-key="overdue_count">
                     {{ overdue_count }}
                 </span>
                 {% if overdue_count > 0 %}
@@ -162,14 +162,14 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Asset Health</span>
-                <span class="stat-value {% if asset_health_rate < 10 %}success{% else %}warning{% endif %}">
+                <span class="stat-value {% if asset_health_rate < 10 %}success{% else %}warning{% endif %}" data-stat-key="asset_health_rate">
                     {{ asset_health_rate }}%
                 </span>
                 <span class="stat-hint">Issues reported</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Total Assignments</span>
-                <span class="stat-value">{{ total_assignments|default:0 }}</span>
+                <span class="stat-value" data-stat-key="total_assignments">{{ total_assignments|default:0 }}</span>
                 <span class="stat-hint">All time</span>
             </div>
             <div class="stat-item">
@@ -184,10 +184,13 @@
 
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="{% static 'inventory/js/modules/reports.js' %}"></script>
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/reports.js' %}?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.Reports && typeof window.Reports.init === 'function') {
+            if (window.Reports && typeof window.Reports.bootstrap === 'function') {
+                window.Reports.bootstrap();
+            } else if (window.Reports && typeof window.Reports.init === 'function') {
                 window.Reports.init({
                     assetByStatus: {{ asset_by_status|safe }},
                     assetByType: {{ asset_by_type|safe }},

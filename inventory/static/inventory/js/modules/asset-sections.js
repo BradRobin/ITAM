@@ -1,0 +1,166 @@
+/**
+ * ASSET SECTIONS - async-rendered section tables
+ */
+(function() {
+    'use strict';
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return '—';
+        }
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return escapeHtml(value);
+        }
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function statusBadge(status) {
+        var css = String(status || '').toLowerCase().replace(/\s+/g, '');
+        return '<span class="badge badge-' + escapeHtml(css) + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function assetLink(pk, name) {
+        return '<a href="/assets/' + pk + '/" class="asset-name-link">' + escapeHtml(name) + '</a>';
+    }
+
+    function sectionHeader(id, icon, title, count) {
+        return '' +
+            '<section class="asset-section" id="' + id + '">' +
+                '<div class="asset-section-header">' +
+                    '<div class="asset-section-title">' +
+                        '<i class="fas ' + icon + '"></i>' +
+                        '<h2>' + title + '</h2>' +
+                    '</div>' +
+                    '<span class="asset-section-count">' + count + ' item' + (count === 1 ? '' : 's') + '</span>' +
+                '</div>';
+    }
+
+    function renderAssigned(rows) {
+        var html = sectionHeader('assigned-assets', 'fa-user-check', 'Assigned Assets', rows.length);
+        if (!rows.length) {
+            return html + '<div class="asset-section-empty">No assets are currently assigned.</div></section>';
+        }
+        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
+            '<th>Asset Name</th><th>Type</th><th>Assignee</th><th>Date Assigned</th><th>Return Date</th>' +
+            '</tr></thead><tbody>';
+        rows.forEach(function(row) {
+            html += '<tr><td>' + assetLink(row.asset_pk, row.name) + '</td>' +
+                '<td>' + escapeHtml(row.type) + '</td>' +
+                '<td>' + escapeHtml(row.assignee) + '</td>' +
+                '<td>' + formatDate(row.date_assigned) + '</td>' +
+                '<td>' + formatDate(row.expected_return_date) + '</td></tr>';
+        });
+        return html + '</tbody></table></div></section>';
+    }
+
+    function renderAvailable(rows) {
+        var html = sectionHeader('available-assets', 'fa-check-circle', 'Available Assets', rows.length);
+        if (!rows.length) {
+            return html + '<div class="asset-section-empty">No available assets right now.</div></section>';
+        }
+        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
+            '<th>Asset Name</th><th>Type</th><th>Available Since</th></tr></thead><tbody>';
+        rows.forEach(function(row) {
+            html += '<tr><td>' + assetLink(row.asset_pk, row.name) + '</td>' +
+                '<td>' + escapeHtml(row.type) + '</td>' +
+                '<td>' + escapeHtml(row.available_since) + '</td></tr>';
+        });
+        return html + '</tbody></table></div></section>';
+    }
+
+    function renderMaintenance(rows) {
+        var html = sectionHeader('maintenance-assets', 'fa-tools', 'Under Maintenance Assets', rows.length);
+        if (!rows.length) {
+            return html + '<div class="asset-section-empty">No assets are currently under maintenance.</div></section>';
+        }
+        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
+            '<th>Asset Name</th><th>Type</th><th>Repair Shop</th><th>Maintenance Worker Contact</th><th>Period Till Full Repair</th>' +
+            '</tr></thead><tbody>';
+        rows.forEach(function(row) {
+            html += '<tr><td>' + assetLink(row.asset_pk, row.name) + '</td>' +
+                '<td>' + escapeHtml(row.type) + '</td>' +
+                '<td>' + escapeHtml(row.repair_shop) + '</td>' +
+                '<td>' + escapeHtml(row.worker_contact) + '</td>' +
+                '<td>' + escapeHtml(row.repair_period) + '</td></tr>';
+        });
+        return html + '</tbody></table></div></section>';
+    }
+
+    function renderTypeSection(id, icon, title, rows) {
+        var html = sectionHeader(id, icon, title, rows.length);
+        if (!rows.length) {
+            return html + '<div class="asset-section-empty">No ' + title.toLowerCase() + ' found.</div></section>';
+        }
+        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
+            '<th>Asset Name</th><th>Type</th><th>Serial Number</th><th>Status</th></tr></thead><tbody>';
+        rows.forEach(function(row) {
+            html += '<tr><td>' + assetLink(row.asset_pk, row.name) + '</td>' +
+                '<td>' + escapeHtml(row.type) + '</td>' +
+                '<td>' + escapeHtml(row.serial_number) + '</td>' +
+                '<td>' + statusBadge(row.status) + '</td></tr>';
+        });
+        return html + '</tbody></table></div></section>';
+    }
+
+    function renderAll(data) {
+        return '<div class="asset-sections">' +
+            renderAssigned(data.assigned_asset_rows || []) +
+            renderAvailable(data.available_asset_rows || []) +
+            renderMaintenance(data.maintenance_asset_rows || []) +
+            '<div class="asset-type-grid">' +
+                renderTypeSection('laptop-assets', 'fa-laptop', 'Laptops', data.laptop_rows || []) +
+                renderTypeSection('monitor-assets', 'fa-desktop', 'Monitors', data.monitor_rows || []) +
+                renderTypeSection('printer-assets', 'fa-print', 'Printers', data.printer_rows || []) +
+                renderTypeSection('router-assets', 'fa-network-wired', 'Routers', data.router_rows || []) +
+            '</div></div>';
+    }
+
+    function init() {
+        var mount = document.getElementById('asset-sections-mount');
+        if (!mount || !window.BackgroundJobs) {
+            return;
+        }
+
+        window.BackgroundJobs.run('asset_sections', {
+            onProgress: function(job) {
+                if (job.status === 'running') {
+                    mount.classList.add('async-loading');
+                }
+            }
+        }).then(function(job) {
+            mount.classList.remove('async-loading');
+            mount.innerHTML = renderAll(job.result || {});
+            if (window.location.hash) {
+                var target = document.querySelector(window.location.hash);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }).catch(function(error) {
+            mount.classList.remove('async-loading');
+            mount.innerHTML = '<div class="async-job-error"><i class="fas fa-exclamation-circle"></i> ' +
+                escapeHtml(error.message || 'Failed to load asset sections') + '</div>';
+        });
+    }
+
+    window.AssetSections = {
+        init: init,
+        renderAll: renderAll
+    };
+})();

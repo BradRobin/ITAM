@@ -389,12 +389,91 @@
         });
     }
     
+    function updateSummaryCards(data) {
+        var mapping = {
+            total_assets: data.total_assets,
+            assigned_assets: data.assigned_assets,
+            available_assets: data.available_assets,
+            maintenance_assets: data.maintenance_assets,
+            total_employees: data.total_employees,
+            utilization_rate: data.utilization_rate + '%'
+        };
+        Object.keys(mapping).forEach(function(key) {
+            var el = document.querySelector('[data-summary-key="' + key + '"]');
+            if (el) {
+                el.textContent = mapping[key];
+            }
+        });
+    }
+
+    function updateAdditionalStats(data) {
+        var overdue = document.querySelector('[data-stat-key="overdue_count"]');
+        var health = document.querySelector('[data-stat-key="asset_health_rate"]');
+        var assignments = document.querySelector('[data-stat-key="total_assignments"]');
+        if (overdue) {
+            overdue.textContent = data.overdue_count;
+            overdue.classList.toggle('danger', data.overdue_count > 0);
+            overdue.classList.toggle('success', data.overdue_count === 0);
+        }
+        if (health) {
+            health.textContent = data.asset_health_rate + '%';
+            health.classList.toggle('success', data.asset_health_rate < 10);
+            health.classList.toggle('warning', data.asset_health_rate >= 10);
+        }
+        if (assignments) {
+            assignments.textContent = data.total_assignments || 0;
+        }
+    }
+
+    function parseJsonField(value, fallback) {
+        if (typeof value === 'object') {
+            return value;
+        }
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            return fallback;
+        }
+    }
+
+    function loadAsyncReports() {
+        var container = document.querySelector('.reports-container');
+        if (!container || !window.BackgroundJobs) {
+            return;
+        }
+
+        container.classList.add('async-loading');
+        window.BackgroundJobs.run('reports', {
+            force: false
+        }).then(function(job) {
+            var data = job.result || {};
+            container.classList.remove('async-loading');
+            updateSummaryCards(data);
+            updateAdditionalStats(data);
+            init({
+                assetByStatus: parseJsonField(data.asset_by_status, {}),
+                assetByType: parseJsonField(data.asset_by_type, {}),
+                monthlyAssets: parseJsonField(data.monthly_assets, []),
+                maintenanceByMonth: parseJsonField(data.maintenance_by_month, []),
+                topAssets: parseJsonField(data.top_assets_data, []),
+                departmentData: parseJsonField(data.department_counts, {})
+            });
+        }).catch(function(error) {
+            container.classList.remove('async-loading');
+            console.error('Reports async load failed:', error);
+        });
+    }
+
     // ============================================
     // Initialize Reports
     // ============================================
     function init(data) {
         console.log('Reports module initializing...');
         
+        if (!data) {
+            return;
+        }
+
         // Create charts
         createStatusChart(data.assetByStatus);
         createTypeChart(data.assetByType);
@@ -412,11 +491,20 @@
         var refreshBtn = document.getElementById('refreshReports');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', function() {
-                location.reload();
+                loadAsyncReports();
             });
         }
         
         console.log('Reports module initialized.');
+    }
+
+    function bootstrap() {
+        var container = document.querySelector('.reports-container');
+        if (container && container.dataset.asyncReports === 'true') {
+            loadAsyncReports();
+            return;
+        }
+        console.log('Reports module waiting for inline data.');
     }
     
     // ============================================
@@ -424,6 +512,8 @@
     // ============================================
     window.Reports = {
         init: init,
+        bootstrap: bootstrap,
+        loadAsync: loadAsyncReports,
         updateCharts: updateChartsOnThemeChange
     };
     

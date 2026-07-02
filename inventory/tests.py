@@ -9,7 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
-from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
+from .services.background_jobs import enqueue_job
 from .services.dates import format_duration_since, format_duration_until
 
 
@@ -334,20 +335,22 @@ class DashboardContextTests(TestCase):
         response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_assets"], 3)
-        self.assertEqual(response.context["assigned_assets"], 1)
-        self.assertEqual(response.context["available_assets"], 1)
-        self.assertEqual(response.context["maintenance_assets"], 1)
-        self.assertEqual(response.context["employee_count"], 2)
-        self.assertEqual(response.context["total_employees"], 2)
-        self.assertEqual(response.context["overdue_assets_count"], 0)
+        self.assertTrue(response.context["async_dashboard"])
+        self.assertContains(response, "data-async-dashboard")
         self.assertContains(response, "Total Employees")
-        self.assertContains(response, '<span class="quick-stat-value">2</span>', html=True)
         self.assertContains(response, reverse("asset_list"))
-        self.assertContains(response, f'{reverse("asset_list")}#available-assets')
-        self.assertContains(response, f'{reverse("asset_list")}#assigned-assets')
-        self.assertContains(response, f'{reverse("asset_list")}#maintenance-assets')
         self.assertContains(response, 'class="stat-card stat-card-link stat-total"')
+
+        job = enqueue_job(self.user, BackgroundJob.JobType.DASHBOARD, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        data = job.result
+        self.assertEqual(data["total_assets"], 3)
+        self.assertEqual(data["assigned_assets"], 1)
+        self.assertEqual(data["available_assets"], 1)
+        self.assertEqual(data["maintenance_assets"], 1)
+        self.assertEqual(data["employee_count"], 2)
+        self.assertEqual(data["overdue_assets_count"], 0)
 
     def test_dashboard_overdue_count_uses_creation_or_recent_maintenance_date(self):
         recent_asset = Asset.objects.create(
@@ -398,14 +401,57 @@ class DashboardContextTests(TestCase):
         response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_assets"], 7)
-        self.assertEqual(response.context["overdue_assets_count"], 2)
-        self.assertQuerySetEqual(
-            response.context["overdue_assets"],
-            [old_asset, old_unserviced_asset],
-            transform=lambda asset: asset,
-            ordered=False,
+        job = enqueue_job(self.user, BackgroundJob.JobType.DASHBOARD, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        data = job.result
+        self.assertEqual(data["total_assets"], 7)
+        self.assertEqual(data["overdue_assets_count"], 2)
+        overdue_names = {asset["name"] for asset in data["overdue_assets"]}
+        self.assertEqual(overdue_names, {old_asset.name, old_unserviced_asset.name})
+
+
+class BackgroundJobTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="bgjob-user",
+            password="password123",
+            is_staff=True,
         )
+        Asset.objects.create(
+            name="Background Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="BG-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+    def test_create_and_process_reports_job(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("background_job_create"),
+            data=json.dumps({"job_type": "reports"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 202)
+        job_id = response.json()["id"]
+        job = BackgroundJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        detail = self.client.get(reverse("background_job_detail", kwargs={"job_id": job_id}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["status"], "completed")
+        self.assertIn("total_assets", detail.json()["result"])
+
+    def test_csv_export_job_writes_downloadable_file(self):
+        job = enqueue_job(self.user, BackgroundJob.JobType.CSV_EXPORT, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        self.assertTrue(job.result_file)
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("background_job_download", kwargs={"job_id": job.id})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response["Content-Type"])
 
 
 class InventoryAdminConfigurationTests(TestCase):
@@ -755,13 +801,14 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertContains(response, "Assignee")
         self.assertContains(response, "API Employee")
         self.assertContains(response, "TCPD")
-        self.assertContains(response, "Assigned Assets")
-        self.assertContains(response, "Available Assets")
-        self.assertContains(response, "Under Maintenance Assets")
-        self.assertContains(response, "Laptops")
-        self.assertContains(response, "Monitors")
-        self.assertContains(response, "Printers")
-        self.assertContains(response, "Routers")
+        self.assertContains(response, "asset-sections-mount")
+
+        job = enqueue_job(self.user, BackgroundJob.JobType.ASSET_SECTIONS, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        sections = job.result
+        self.assertIn("assigned_asset_rows", sections)
+        self.assertIn("laptop_rows", sections)
 
     def test_asset_list_sections_include_expected_return_date(self):
         Assignment.objects.create(
@@ -776,8 +823,15 @@ class FrontendAPIBridgeTests(TestCase):
         response = self.client.get(reverse("asset_list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Return Date")
-        self.assertContains(response, "Available Assets")
+        self.assertContains(response, "asset-sections-mount")
+
+        job = enqueue_job(self.user, BackgroundJob.JobType.ASSET_SECTIONS, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.status, BackgroundJob.Status.COMPLETED)
+        assigned_rows = job.result["assigned_asset_rows"]
+        self.assertEqual(len(assigned_rows), 1)
+        self.assertEqual(assigned_rows[0]["assignee"], "API Employee")
+        self.assertIsNotNone(assigned_rows[0]["expected_return_date"])
 
     def test_asset_api_assignment_updates_state(self):
         self.client.force_login(self.admin)

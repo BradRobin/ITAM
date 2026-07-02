@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from django.views import View
 from django.views.generic import TemplateView
 
-from .services.metrics import get_reports_context
 from .services.notifications import (
     add_session_notification,
     get_display_notifications,
@@ -72,7 +71,27 @@ class ReportsView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(get_reports_context())
+        context["async_reports"] = True
+        context.update(
+            {
+                "total_assets": "—",
+                "assigned_assets": "—",
+                "available_assets": "—",
+                "maintenance_assets": "—",
+                "total_employees": "—",
+                "utilization_rate": "—",
+                "overdue_count": "—",
+                "asset_health_rate": "—",
+                "total_assignments": "—",
+                "asset_avg_age": "—",
+                "asset_by_status": "{}",
+                "asset_by_type": "{}",
+                "monthly_assets": "[]",
+                "maintenance_by_month": "[]",
+                "top_assets_data": "[]",
+                "department_counts": "{}",
+            }
+        )
         return context
 
 

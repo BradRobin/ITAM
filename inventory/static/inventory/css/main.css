@@ -319,3 +319,32 @@ main {
     background: rgba(239, 68, 68, 0.12) !important;
     color: #fca5a5;
 }
+
+/* Async background job UI */
+.async-loading {
+    opacity: 0.85;
+}
+
+.async-job-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    color: var(--text-muted, #64748b);
+    font-size: 0.9rem;
+}
+
+.async-job-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 8px;
+}
+
+.reports-container.async-loading .chart-body canvas {
+    opacity: 0.35;
+}

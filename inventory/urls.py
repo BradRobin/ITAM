@@ -50,6 +50,15 @@ urlpatterns = [
     path("api/notifications/", views.NotificationAPIView.as_view(), name="api_notifications"),
     path("api/notifications/<int:pk>/read/", views.NotificationMarkReadView.as_view(), name="api_notification_read"),
     path("api/notifications/mark-all-read/", views.NotificationMarkAllReadView.as_view(), name="api_notification_mark_all_read"),
+
+    # Background jobs (async processing)
+    path("api/jobs/", views.BackgroundJobCreateView.as_view(), name="background_job_create"),
+    path("api/jobs/<uuid:job_id>/", views.BackgroundJobDetailView.as_view(), name="background_job_detail"),
+    path(
+        "api/jobs/<uuid:job_id>/download/",
+        views.BackgroundJobDownloadView.as_view(),
+        name="background_job_download",
+    ),
     
     # Reports
     path("reports/", views.ReportsView.as_view(), name="reports"),

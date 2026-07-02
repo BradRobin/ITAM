@@ -46,7 +46,7 @@
     <!-- ========================================== -->
     <!-- STATS CARDS                               -->
     <!-- ========================================== -->
-    <div class="dashboard-stats">
+    <div class="dashboard-stats" id="dashboard-stats"{% if async_dashboard %} data-async-dashboard="true"{% endif %}>
         {% for stat in dashboard_stats %}
             <a href="{{ stat.link }}" class="stat-card stat-card-link {{ stat.css_class }}" data-loader="true" data-loader-message="Loading Assets...">
                 <i class="fas {{ stat.icon }} stat-icon"></i>
@@ -67,22 +67,27 @@
         <div class="quick-stats">
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-chart-pie"></i> Utilization Rate</span>
-                <span class="quick-stat-value">{{ utilization_rate|default:0 }}%</span>
+                <span class="quick-stat-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
             </div>
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-users"></i> Total Employees</span>
-                <span class="quick-stat-value">{{ employee_count|default:"0" }}</span>
+                <span class="quick-stat-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
             </div>
             <div class="quick-stat-item">
                 <span class="quick-stat-label"><i class="fas fa-heartbeat"></i> Asset Health</span>
-                <span class="quick-stat-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}">
+                <span class="quick-stat-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}" id="asset-health-value">
                     {{ asset_health_rate|default:0 }}% issues
                 </span>
             </div>
         </div>
 
-        <!-- Overdue Section -->
-        {% if overdue_assets %}
+        <div id="overdue-section-mount" class="{% if async_dashboard %}async-loading{% endif %}">
+        {% if async_dashboard %}
+            <div class="async-job-panel">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading service status in the background...</span>
+            </div>
+        {% elif overdue_assets %}
             <div class="overdue-section">
                 <div class="overdue-header">
                     <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Overdue Service</h2>
@@ -134,6 +139,7 @@
                 <p class="overdue-clear-message"><i class="fas fa-check"></i> All assets serviced within 6 months</p>
             </div>
         {% endif %}
+        </div>
     </div>
 
     <!-- ========================================== -->
@@ -148,7 +154,8 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=3"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

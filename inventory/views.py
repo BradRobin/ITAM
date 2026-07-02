@@ -40,10 +40,10 @@ from .forms import (
     EmployeeForm,
     MaintenanceLogForm,
 )
-from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
 from .services.assets import get_asset_list_sections
+from .services.background_jobs import enqueue_job, serialize_job
 from .services.metrics import (
-    get_dashboard_context,
     get_overdue_assets_queryset,
     get_service_overdue_cutoff,
 )
@@ -56,6 +56,11 @@ from .views_extras import (
     ProfileView,
     ReportsView,
     SettingsView,
+)
+from .views_background import (
+    BackgroundJobCreateView,
+    BackgroundJobDetailView,
+    BackgroundJobDownloadView,
 )
 
 
@@ -265,7 +270,46 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(get_dashboard_context())
+        asset_list_url = reverse("asset_list")
+        context["async_dashboard"] = True
+        context["dashboard_stats"] = [
+            {
+                "label": "Total Assets",
+                "value": "—",
+                "trend": "Loading...",
+                "css_class": "stat-total",
+                "icon": "fa-boxes",
+                "link": asset_list_url,
+            },
+            {
+                "label": "Available",
+                "value": "—",
+                "trend": "Loading...",
+                "css_class": "stat-available",
+                "icon": "fa-check-circle",
+                "link": f"{asset_list_url}#available-assets",
+            },
+            {
+                "label": "Assigned",
+                "value": "—",
+                "trend": "Loading...",
+                "css_class": "stat-assigned",
+                "icon": "fa-user-check",
+                "link": f"{asset_list_url}#assigned-assets",
+            },
+            {
+                "label": "Under Maintenance",
+                "value": "—",
+                "trend": "Loading...",
+                "css_class": "stat-maintenance",
+                "icon": "fa-tools",
+                "link": f"{asset_list_url}#maintenance-assets",
+            },
+        ]
+        context["utilization_rate"] = "—"
+        context["employee_count"] = "—"
+        context["asset_health_rate"] = "—"
+        context["overdue_assets"] = None
         return context
 
 
@@ -426,9 +470,16 @@ class AssetListView(LoginRequiredMixin, ListView):
                 "selected_type": self.request.GET.get("type", ""),
                 "selected_status": self.request.GET.get("status", ""),
                 "overdue_cutoff": get_service_overdue_cutoff().date(),
+                "async_asset_sections": True,
+                "assigned_asset_rows": [],
+                "available_asset_rows": [],
+                "maintenance_asset_rows": [],
+                "laptop_rows": [],
+                "monitor_rows": [],
+                "printer_rows": [],
+                "router_rows": [],
             }
         )
-        context.update(get_asset_list_sections())
         return context
 
 
@@ -887,6 +938,26 @@ class ExportAssetCSVView(LoginRequiredMixin, UserPassesTestMixin, View):
         return super().handle_no_permission()
 
     def get(self, request):
+        threshold = getattr(settings, "BACKGROUND_JOB_CSV_ASYNC_MIN_ASSETS", 100)
+        wants_async = request.GET.get("async") == "1"
+        asset_count = Asset.objects.count()
+
+        if wants_async or asset_count >= threshold:
+            job = enqueue_job(
+                request.user,
+                BackgroundJob.JobType.CSV_EXPORT,
+                force=request.GET.get("force") == "1",
+            )
+            if "application/json" in request.headers.get("Accept", ""):
+                return JsonResponse(serialize_job(job), status=202)
+            return JsonResponse(
+                {
+                    "detail": "Export started in background",
+                    "job": serialize_job(job),
+                },
+                status=202,
+            )
+
         response = StreamingHttpResponse(
             self.stream_asset_rows(),
             content_type="text/csv",
