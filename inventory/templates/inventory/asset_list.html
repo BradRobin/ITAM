@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=13">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -37,75 +37,84 @@
         </form>
     </div>
 
-    <div class="table-wrapper">
-        <table class="asset-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Serial Number</th>
-                    <th>Status</th>
-                    <th>Assignee</th>
-                    <th>Created</th>
-                    <th>Assigned</th>
-                    <th>Returned</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
-                {% for asset in assets %}
+    <section class="asset-section" id="all-assets">
+        <div class="asset-section-header">
+            <div class="asset-section-title">
+                <i class="fas fa-boxes"></i>
+                <h2>All Assets</h2>
+            </div>
+            <span class="asset-section-count">{{ page_obj.paginator.count|default:assets|length }} item{{ page_obj.paginator.count|default:assets|length|pluralize }}</span>
+        </div>
+        <div class="table-wrapper asset-section-table">
+            <table class="asset-table">
+                <thead>
                     <tr>
-                        <td><a href="{% url 'asset_detail' asset.pk %}">{{ asset.name }}</a></td>
-                        <td>{{ asset.type }}</td>
-                        <td>{{ asset.serial_number }}</td>
-                        <td>
-                            <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
-                                {{ asset.status }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if asset.assigned_employee_name %}
-                                <div class="assignee-cell">
-                                    <span class="assignee-name">{{ asset.assigned_employee_name }}</span>
-                                    <span class="department-abbreviation">
-                                        {% if asset.assigned_employee_department == "Technical & Core Programme Directorates" %}
-                                            TCPD
-                                        {% elif asset.assigned_employee_department == "Capacity Building & Innovation Directorates" %}
-                                            CBID
-                                        {% elif asset.assigned_employee_department == "Institutional Support & Advisory Operations" %}
-                                            ISAO
-                                        {% else %}
-                                            {{ asset.assigned_employee_department }}
-                                        {% endif %}
-                                    </span>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Serial Number</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>Created</th>
+                        <th>Assigned</th>
+                        <th>Returned</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
+                    {% for asset in assets %}
+                        <tr>
+                            <td><a href="{% url 'asset_detail' asset.pk %}" class="asset-name-link">{{ asset.name }}</a></td>
+                            <td>{{ asset.type }}</td>
+                            <td>{{ asset.serial_number }}</td>
+                            <td>
+                                <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                    {{ asset.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if asset.assigned_employee_name %}
+                                    <div class="assignee-cell">
+                                        <span class="assignee-name">{{ asset.assigned_employee_name }}</span>
+                                        <span class="department-abbreviation">
+                                            {% if asset.assigned_employee_department == "Technical & Core Programme Directorates" %}
+                                                TCPD
+                                            {% elif asset.assigned_employee_department == "Capacity Building & Innovation Directorates" %}
+                                                CBID
+                                            {% elif asset.assigned_employee_department == "Institutional Support & Advisory Operations" %}
+                                                ISAO
+                                            {% else %}
+                                                {{ asset.assigned_employee_department }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td class="date-cell">{{ asset.date_created|date:"M d, Y" }}</td>
+                            <td class="date-cell">{{ asset.last_assigned_date|date:"M d, Y"|default:"—" }}</td>
+                            <td class="date-cell">{{ asset.last_returned_date|date:"M d, Y"|default:"—" }}</td>
+                            <td class="actions-cell">
+                                <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View</a>
+                                <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                                <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="empty-state">
+                                <div class="empty-state-content">
+                                    <h3>No assets found</h3>
+                                    <p>Start by adding your first asset.</p>
+                                    <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
                                 </div>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ asset.date_created|date:"M d, Y H:i" }}</td>
-                        <td>{{ asset.last_assigned_date|date:"M d, Y H:i"|default:"-" }}</td>
-                        <td>{{ asset.last_returned_date|date:"M d, Y H:i"|default:"-" }}</td>
-                        <td class="actions-cell">
-                            <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-primary">View</a>
-                            <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary">Edit</a>
-                            <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger">Delete</a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="9" class="empty-state">
-                            <div class="empty-state-content">
-                                <h3>No assets found</h3>
-                                <p>Start by adding your first asset.</p>
-                                <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
-                            </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     {% if is_paginated %}
         <div class="pagination">
@@ -415,7 +424,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (!window.location.hash) {

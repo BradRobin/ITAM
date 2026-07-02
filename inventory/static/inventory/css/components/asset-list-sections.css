@@ -80,6 +80,10 @@
     text-decoration: underline;
 }
 
+.asset-section-table .date-cell {
+    white-space: nowrap;
+}
+
 .asset-section-empty {
     padding: 1.5rem 1.25rem;
     color: var(--text-muted, #64748b);
