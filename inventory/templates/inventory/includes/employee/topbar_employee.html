@@ -1,5 +1,5 @@
 {% load static %}
-<header class="topbar-employee">
+<header class="topbar">  <!-- Changed from topbar-employee -->
     <div class="topbar-left">
         <button type="button" class="sidebar-toggle" id="sidebarToggleEmployee" aria-label="Toggle sidebar">
             <span class="sidebar-toggle-bars" aria-hidden="true">
@@ -14,9 +14,11 @@
         <div class="notification-container" id="notificationContainer">
             <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge notification-dot {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge"></span>
+                <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
+                    {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
+                </span>
             </button>
-            <div class="employee-notification-dropdown" id="employeeNotificationDropdown">
+            <div class="notification-dropdown" id="employeeNotificationDropdown">  <!-- Changed from employee-notification-dropdown -->
                 <div class="notification-dropdown-header">
                     <strong>Notifications</strong>
                     {% if unread_notifications > 0 %}
@@ -39,13 +41,14 @@
         </button>
 
         <!-- Profile Dropdown -->
-        <div class="profile-dropdown">
-            <a class="profile-btn" id="profileToggle" href="{% url 'employee_settings' %}" aria-label="Open settings">
+        <div class="profile-badge">  <!-- Changed from profile-dropdown -->
+            <a href="{% url 'employee_settings' %}" aria-label="Open settings">
                 <img class="profile-avatar" 
                      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
                      alt="{{ user.username }}"
                      width="32"
                      height="32">
+                <span class="profile-name">{{ user.get_full_name|default:user.username }}</span>
             </a>
         </div>
     </div>
