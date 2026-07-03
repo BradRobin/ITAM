@@ -1,5 +1,5 @@
 {% load static %}
-<header class="topbar">  <!-- Changed from topbar-employee -->
+<header class="topbar">
     <div class="topbar-left">
         <button type="button" class="sidebar-toggle" id="sidebarToggleEmployee" aria-label="Toggle sidebar">
             <span class="sidebar-toggle-bars" aria-hidden="true">
@@ -18,7 +18,7 @@
                     {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
                 </span>
             </button>
-            <div class="notification-dropdown" id="employeeNotificationDropdown">  <!-- Changed from employee-notification-dropdown -->
+            <div class="notification-dropdown" id="employeeNotificationDropdown">
                 <div class="notification-dropdown-header">
                     <strong>Notifications</strong>
                     {% if unread_notifications > 0 %}
@@ -27,7 +27,16 @@
                 </div>
                 <div class="notification-dropdown-list">
                     {% for notification in recent_notifications %}
-                        {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
+                        <div class="notification-item {% if not notification.is_read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
+                            <div class="notification-icon {{ notification.type|default:'info' }}">
+                                <i class="fas {{ notification.icon|default:'fa-info-circle' }}"></i>
+                            </div>
+                            <div class="notification-content">
+                                <div class="notification-title">{{ notification.title }}</div>
+                                <div class="notification-message">{{ notification.message }}</div>
+                                <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
                     {% empty %}
                         <div class="notification-empty">No notifications yet.</div>
                     {% endfor %}
@@ -40,8 +49,8 @@
             <i class="fas fa-moon theme-icon"></i>
         </button>
 
-        <!-- Profile Dropdown -->
-        <div class="profile-badge">  <!-- Changed from profile-dropdown -->
+        <!-- Profile Badge -->
+        <div class="profile-badge">
             <a href="{% url 'employee_settings' %}" aria-label="Open settings">
                 <img class="profile-avatar" 
                      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
