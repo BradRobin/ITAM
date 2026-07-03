@@ -94,24 +94,82 @@
     }
     
     // ============================================
-    // Setup Loader
+    // Setup Loader - Auto-attach to all navigation
     // ============================================
     function setupLoader() {
         if (typeof window.Loader !== 'undefined') {
             try {
+                // Auto-attach to all sidebar links
+                if (typeof window.Loader.showOnNavigation === 'function') {
+                    // Attach to all sidebar links
+                    window.Loader.showOnNavigation('.sidebar-link');
+                    // Attach to employee sidebar links
+                    window.Loader.showOnNavigation('.sidebar-employee .sidebar-link');
+                    // Attach to any link with data-loader attribute
+                    window.Loader.showOnNavigation('a[data-loader="true"]');
+                }
+                
+                // Auto-attach to forms
                 if (typeof window.Loader.showOnSubmit === 'function') {
                     window.Loader.showOnSubmit('form[data-loader="true"]');
                 }
-                if (typeof window.Loader.showOnNavigation === 'function') {
-                    window.Loader.showOnNavigation('a[data-loader="true"]');
-                }
-                if (typeof window.Loader.showOnAjax === 'function') {
-                    window.Loader.showOnAjax();
-                }
+                
+                // AJAX auto-show is disabled to prevent loops
+                // window.Loader.showOnAjax(); // Disabled
+                
+                console.log('Loader auto-attached to all navigation links');
             } catch (error) {
                 console.warn('Error setting up loader:', error.message);
             }
         }
+    }
+    
+    // ============================================
+    // Global Link Click Handler - Catch all navigation
+    // ============================================
+    function setupGlobalLinkHandler() {
+        document.addEventListener('click', function(e) {
+            // Find the closest anchor tag
+            var link = e.target.closest('a[href]');
+            if (!link) return;
+            
+            // Skip if already has data-loader or is a sidebar link (handled separately)
+            if (link.hasAttribute('data-loader')) return;
+            if (link.classList.contains('sidebar-link')) return;
+            
+            var href = link.getAttribute('href');
+            
+            // Skip invalid links
+            if (!href || href === '#' || href === '' || href.startsWith('javascript:')) {
+                return;
+            }
+            
+            // Skip external links
+            if (href.startsWith('http') && !href.includes(window.location.hostname)) {
+                return;
+            }
+            
+            // Skip download links
+            if (href.includes('download') || link.hasAttribute('download')) {
+                return;
+            }
+            
+            // Skip if target is _blank
+            if (link.target === '_blank') {
+                return;
+            }
+            
+            // Skip auth pages
+            if (href.includes('/login') || href.includes('/logout') || href.includes('/signup') || href.includes('/auth/')) {
+                return;
+            }
+            
+            // Show loader immediately
+            if (typeof window.Loader !== 'undefined' && typeof window.Loader.show === 'function') {
+                var message = link.getAttribute('data-loader-message') || 'Loading...';
+                window.Loader.show(message);
+            }
+        });
     }
     
     // ============================================
@@ -198,8 +256,16 @@
         try {
             console.log('ITAM System initializing...');
             
+            // Load core modules
             loadCoreModules();
+            
+            // Setup loader - auto-attach to navigation
             setupLoader();
+            
+            // Setup global link handler for all navigation
+            setupGlobalLinkHandler();
+            
+            // Initialize forms
             initForms();
             
             // Initialize sidebar (handled by sidebar.js)
@@ -207,32 +273,36 @@
                 window.Sidebar.init();
             }
             
+            // Initialize notifications
             initNotifications();
             initMarkAllRead();
             
+            // Load page-specific modules
             var page = getCurrentPage();
             loadPageModules(page);
             
+            // Dispatch ready event
             document.dispatchEvent(new CustomEvent('itam-ready', {
                 detail: { page: page }
             }));
             
             console.log('ITAM System ready. Page:', page);
             
-            if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
+            // Hide any lingering loader
+            if (typeof window.Loader !== 'undefined' && window.Loader.forceHide) {
                 setTimeout(function() {
                     try {
-                        window.Loader.hide();
+                        window.Loader.forceHide();
                     } catch (e) {
                         // Ignore
                     }
-                }, 500);
+                }, 300);
             }
             
         } catch (error) {
             console.error('Failed to initialize application:', error);
-            if (window.Loader && typeof window.Loader.hide === 'function') {
-                window.Loader.hide();
+            if (window.Loader && typeof window.Loader.forceHide === 'function') {
+                window.Loader.forceHide();
             }
         }
     }
@@ -261,6 +331,10 @@
         }
         initNotifications();
         initMarkAllRead();
+        // Hide any lingering loader
+        if (typeof window.Loader !== 'undefined' && window.Loader.forceHide) {
+            window.Loader.forceHide();
+        }
     });
     
     document.addEventListener('htmx:afterSwap', function() {
@@ -269,6 +343,17 @@
         }
         initNotifications();
         initMarkAllRead();
+        // Hide any lingering loader
+        if (typeof window.Loader !== 'undefined' && window.Loader.forceHide) {
+            window.Loader.forceHide();
+        }
+    });
+    
+    // Handle back/forward cache
+    window.addEventListener('pageshow', function() {
+        if (typeof window.Loader !== 'undefined' && window.Loader.forceHide) {
+            window.Loader.forceHide();
+        }
     });
     
     // ============================================
@@ -288,6 +373,11 @@
         openSidebar: function() {
             if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.open === 'function') {
                 window.Sidebar.open();
+            }
+        },
+        forceHideLoader: function() {
+            if (typeof window.Loader !== 'undefined' && window.Loader.forceHide) {
+                window.Loader.forceHide();
             }
         }
     };

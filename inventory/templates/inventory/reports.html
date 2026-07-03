@@ -5,14 +5,14 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/reports.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/reports.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
 <div class="reports-container"{% if async_reports %} data-async-reports="true"{% endif %}>
     <div class="reports-header">
         <div>
-            <h1>Reports & Analytics</h1>
+            <h1><i class="fas fa-chart-line" style="color: var(--primary-500, #3b82f6); margin-right: 0.5rem;"></i> Reports & Analytics</h1>
             <p class="reports-subtitle">Comprehensive insights into your asset ecosystem</p>
         </div>
         <div class="reports-actions">
@@ -27,101 +27,97 @@
 
     <!-- Summary Cards -->
     <div class="summary-grid">
-        <div class="summary-card">
-            <div class="summary-icon total">
-                <i class="fas fa-boxes"></i>
-            </div>
+        <div class="summary-card total">
+            <div class="summary-icon"><i class="fas fa-boxes"></i></div>
             <div class="summary-content">
                 <span class="summary-label">Total Assets</span>
-                <span class="summary-value" data-summary-key="total_assets">{{ total_assets }}</span>
+                <span class="summary-value" data-summary-key="total_assets">{{ total_assets|default:0 }}</span>
             </div>
         </div>
-        <div class="summary-card">
-            <div class="summary-icon assigned">
-                <i class="fas fa-user-check"></i>
-            </div>
+        <div class="summary-card assigned">
+            <div class="summary-icon"><i class="fas fa-user-check"></i></div>
             <div class="summary-content">
                 <span class="summary-label">Assigned</span>
-                <span class="summary-value" data-summary-key="assigned_assets">{{ assigned_assets }}</span>
+                <span class="summary-value" data-summary-key="assigned_assets">{{ assigned_assets|default:0 }}</span>
             </div>
         </div>
-        <div class="summary-card">
-            <div class="summary-icon available">
-                <i class="fas fa-check-circle"></i>
-            </div>
+        <div class="summary-card available">
+            <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
             <div class="summary-content">
                 <span class="summary-label">Available</span>
-                <span class="summary-value" data-summary-key="available_assets">{{ available_assets }}</span>
+                <span class="summary-value" data-summary-key="available_assets">{{ available_assets|default:0 }}</span>
             </div>
         </div>
-        <div class="summary-card">
-            <div class="summary-icon maintenance">
-                <i class="fas fa-tools"></i>
-            </div>
+        <div class="summary-card maintenance">
+            <div class="summary-icon"><i class="fas fa-tools"></i></div>
             <div class="summary-content">
-                <span class="summary-label">In Maintenance</span>
-                <span class="summary-value" data-summary-key="maintenance_assets">{{ maintenance_assets }}</span>
+                <span class="summary-label">Maintenance</span>
+                <span class="summary-value" data-summary-key="maintenance_assets">{{ maintenance_assets|default:0 }}</span>
             </div>
         </div>
-        <div class="summary-card">
-            <div class="summary-icon employees">
-                <i class="fas fa-users"></i>
-            </div>
+        <div class="summary-card employees">
+            <div class="summary-icon"><i class="fas fa-users"></i></div>
             <div class="summary-content">
-                <span class="summary-label">Total Employees</span>
-                <span class="summary-value" data-summary-key="total_employees">{{ total_employees }}</span>
+                <span class="summary-label">Employees</span>
+                <span class="summary-value" data-summary-key="total_employees">{{ total_employees|default:0 }}</span>
             </div>
         </div>
-        <div class="summary-card">
-            <div class="summary-icon utilization">
-                <i class="fas fa-chart-line"></i>
-            </div>
+        <div class="summary-card utilization">
+            <div class="summary-icon"><i class="fas fa-chart-line"></i></div>
             <div class="summary-content">
-                <span class="summary-label">Utilization Rate</span>
-                <span class="summary-value" data-summary-key="utilization_rate">{{ utilization_rate }}%</span>
+                <span class="summary-label">Utilization</span>
+                <span class="summary-value" data-summary-key="utilization_rate">{{ utilization_rate|default:0 }}%</span>
             </div>
         </div>
     </div>
 
     <!-- Charts Grid -->
     <div class="charts-grid">
-        <!-- Asset by Status Chart -->
-        <div class="chart-card">
+        <!-- Status Chart -->
+        <div class="chart-card chart-card-doughnut">
             <div class="chart-header">
                 <h3><i class="fas fa-chart-pie"></i> Assets by Status</h3>
             </div>
             <div class="chart-body">
-                <canvas id="statusChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Asset by Type Chart -->
+        <!-- Type Chart -->
         <div class="chart-card">
             <div class="chart-header">
                 <h3><i class="fas fa-chart-bar"></i> Assets by Type</h3>
             </div>
             <div class="chart-body">
-                <canvas id="typeChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="typeChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Monthly Asset Creation -->
-        <div class="chart-card">
+        <!-- Monthly Chart -->
+        <div class="chart-card chart-card-wide">
             <div class="chart-header">
                 <h3><i class="fas fa-calendar-alt"></i> Assets Created (Last 6 Months)</h3>
             </div>
             <div class="chart-body">
-                <canvas id="monthlyChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Maintenance Trends -->
-        <div class="chart-card">
+        <!-- Maintenance Chart -->
+        <div class="chart-card chart-card-wide">
             <div class="chart-header">
                 <h3><i class="fas fa-wrench"></i> Maintenance Logs (Last 6 Months)</h3>
             </div>
             <div class="chart-body">
-                <canvas id="maintenanceChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="maintenanceChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -131,17 +127,21 @@
                 <h3><i class="fas fa-trophy"></i> Most Assigned Assets</h3>
             </div>
             <div class="chart-body">
-                <canvas id="topAssetsChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="topAssetsChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Department Distribution -->
+        <!-- Department Chart -->
         <div class="chart-card">
             <div class="chart-header">
-                <h3><i class="fas fa-building"></i> Employee Distribution by Department</h3>
+                <h3><i class="fas fa-building"></i> Employee Distribution</h3>
             </div>
             <div class="chart-body">
-                <canvas id="departmentChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="departmentChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -152,30 +152,29 @@
             <div class="stat-item">
                 <span class="stat-label">Overdue Assets</span>
                 <span class="stat-value {% if overdue_count > 0 %}danger{% else %}success{% endif %}" data-stat-key="overdue_count">
-                    {{ overdue_count }}
+                    {{ overdue_count|default:0 }}
                 </span>
-                {% if overdue_count > 0 %}
-                    <span class="stat-hint">Needs attention</span>
-                {% else %}
-                    <span class="stat-hint">All up to date</span>
-                {% endif %}
+                <span class="stat-hint">
+                    <i class="fas {% if overdue_count > 0 %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                    {% if overdue_count > 0 %}Needs attention{% else %}All up to date{% endif %}
+                </span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Asset Health</span>
                 <span class="stat-value {% if asset_health_rate < 10 %}success{% else %}warning{% endif %}" data-stat-key="asset_health_rate">
-                    {{ asset_health_rate }}%
+                    {{ asset_health_rate|default:0 }}%
                 </span>
-                <span class="stat-hint">Issues reported</span>
+                <span class="stat-hint"><i class="fas fa-heartbeat"></i> Issues reported</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Total Assignments</span>
                 <span class="stat-value" data-stat-key="total_assignments">{{ total_assignments|default:0 }}</span>
-                <span class="stat-hint">All time</span>
+                <span class="stat-hint"><i class="fas fa-history"></i> All time</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Average Age of Assets</span>
+                <span class="stat-label">Avg Asset Age</span>
                 <span class="stat-value">{{ asset_avg_age|default:"N/A" }}</span>
-                <span class="stat-hint">Since creation</span>
+                <span class="stat-hint"><i class="fas fa-clock"></i> Since creation</span>
             </div>
         </div>
     </div>
@@ -185,7 +184,7 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/reports.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/modules/reports.js' %}?v=3"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Reports && typeof window.Reports.bootstrap === 'function') {

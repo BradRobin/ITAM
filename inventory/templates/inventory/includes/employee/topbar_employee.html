@@ -8,7 +8,7 @@
             </span>
         </button>
         
-        <!-- Notification Bell - Moved to Left -->
+        <!-- Notification Bell -->
         <div class="notification-container" id="notificationContainer">
             <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
@@ -23,21 +23,18 @@
                         <button type="button" class="mark-all-link" onclick="markAllRead()">Mark all read</button>
                     {% endif %}
                 </div>
-                <div class="notification-dropdown-list">
-                    {% for notification in recent_notifications %}
-                        <div class="notification-item {% if not notification.is_read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
-                            <div class="notification-icon {{ notification.type|default:'info' }}">
-                                <i class="fas {{ notification.icon|default:'fa-info-circle' }}"></i>
-                            </div>
-                            <div class="notification-content">
-                                <div class="notification-title">{{ notification.title }}</div>
-                                <div class="notification-message">{{ notification.message }}</div>
-                                <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
-                            </div>
-                        </div>
+                <div class="notification-dropdown-list" id="notificationList">
+                    {% for notification in recent_notifications|slice:":5" %}
+                        {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
                     {% empty %}
                         <div class="notification-empty">No notifications yet.</div>
                     {% endfor %}
+                </div>
+                <!-- ===== VIEW ALL LINK - FOOTER ===== -->
+                <div class="notification-dropdown-footer">
+                    <a href="{% url 'employee_notifications' %}" class="notification-view-all-link">
+                        <i class="fas fa-arrow-right"></i> View All Notifications
+                    </a>
                 </div>
             </div>
         </div>

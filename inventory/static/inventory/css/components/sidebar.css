@@ -25,7 +25,7 @@
 }
 
 /* ==========================================
-   SIDEBAR BRAND - Fixed Dark Mode Visibility
+   SIDEBAR BRAND - With SVG Logo Support
    ========================================== */
 .sidebar-brand {
     display: flex;
@@ -36,6 +36,7 @@
     min-height: 70px;
 }
 
+/* Brand Icon (Font Awesome) - Kept for compatibility */
 .brand-icon {
     font-size: 1.5rem;
     color: var(--primary-400, #60a5fa);
@@ -48,6 +49,19 @@
 }
 
 [data-theme="dark"] .brand-icon {
+    color: #60a5fa;
+}
+
+/* Brand SVG Logo - New style */
+.brand-svg {
+    width: 40px;
+    height: 40px;
+    color: var(--primary-400, #60a5fa);
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+[data-theme="dark"] .brand-svg {
     color: #60a5fa;
 }
 

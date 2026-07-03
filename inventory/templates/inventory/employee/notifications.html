@@ -18,23 +18,24 @@
             <button class="btn btn-secondary" onclick="markAllRead()">
                 <i class="fas fa-check-double"></i> Mark All Read
             </button>
-            <button class="btn btn-secondary" onclick="clearAll()">
-                <i class="fas fa-trash-alt"></i> Clear All
-            </button>
         </div>
     </div>
 
     <!-- Notification Filters -->
     <div class="notification-filters">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="unread">Unread</button>
-        <button class="filter-btn" data-filter="read">Read</button>
-        <button class="filter-btn" data-filter="asset">Asset</button>
-        <button class="filter-btn" data-filter="system">System</button>
+        <button class="filter-btn active" data-filter="all">
+            All <span class="filter-count">{{ notifications|length }}</span>
+        </button>
+        <button class="filter-btn" data-filter="unread">
+            Unread <span class="filter-count">{{ unread_count|default:0 }}</span>
+        </button>
+        <button class="filter-btn" data-filter="read">
+            Read <span class="filter-count">{{ read_count|default:0 }}</span>
+        </button>
     </div>
 
     <!-- Notifications List -->
-    <div class="notifications-list">
+    <div class="notifications-list" id="notificationsList">
         {% for notification in notifications %}
             {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
         {% empty %}

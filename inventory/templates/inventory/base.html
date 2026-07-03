@@ -6,6 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ itam_product_name }}{% endblock %}</title>
     
+    <!-- ===== PREVENT THEME FLASH - Runs before CSS loads ===== -->
+    <script>
+        (function() {
+            // This runs immediately before any CSS renders to prevent theme flash
+            try {
+                var theme = localStorage.getItem('itam_theme');
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.classList.add('dark');
+                } else if (theme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.classList.remove('dark');
+                } else {
+                    // Check system preference
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        document.documentElement.classList.add('dark');
+                    }
+                }
+            } catch (e) {
+                // Ignore errors (localStorage might not be available)
+            }
+        })();
+    </script>
+    
     <!-- Favicon - Using Font Awesome style cube icon (Properly encoded) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E">
     
@@ -20,6 +45,9 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% if request.path|slice:":6" == '/login' or request.path|slice:":6" == '/signup' or request.path|slice:":6" == '/logout' or '/auth/' in request.path or '/password-reset' in request.path %}auth-page{% endif %}">
+    
+    <!-- ===== LOADING OVERLAY ===== -->
+    <!-- The loader is dynamically created by loader.js -->
     
     <!-- ===== CONDITIONAL SIDEBAR ===== -->
     {% if user.is_authenticated %}
@@ -59,8 +87,8 @@
     
     <!-- ===== CORE JAVASCRIPT ===== -->
     <script src="{% static 'inventory/js/core/utils.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/core/loader.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/core/theme.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/core/loader.js' %}?v=14"></script>
+    <script src="{% static 'inventory/js/core/theme.js' %}?v=14"></script>
     <script src="{% static 'inventory/js/core/sidebar.js' %}?v=14"></script>
     <script src="{% static 'inventory/js/core/navigation.js' %}?v=13"></script>
     <script src="{% static 'inventory/js/core/alerts.js' %}?v=13"></script>
@@ -79,7 +107,7 @@
     <script src="{% static 'inventory/js/employee/report.js' %}?v=14"></script>
     {% endif %}
     
-    <script src="{% static 'inventory/js/main.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/main.js' %}?v=14"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

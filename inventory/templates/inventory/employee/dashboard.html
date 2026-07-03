@@ -9,10 +9,28 @@
 
 {% block content %}
 <div class="employee-dashboard">
-    <!-- Header -->
-    <div class="dashboard-header">
-        <div class="header-left">
-            <h1>{{ greeting }} {{ user.get_full_name|default:user.username }}</h1>
+    <!-- Welcome Section -->
+    <div class="dashboard-welcome">
+        <div class="welcome-content">
+            <div class="greeting-section">
+                <i class="fas fa-sun greeting-icon" id="greetingIcon"></i>
+                <div class="greeting-text">
+                    <h1 class="greeting-title">
+                        <span id="greetingMessage">Good Morning</span>
+                        <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                    </h1>
+                    <div class="user-welcome">
+                        <span class="user-role">Team Member</span>
+                    </div>
+                </div>
+            </div>
+            <div class="welcome-typewriter">
+                <p class="typewriter-text" id="typewriterText"></p>
+            </div>
+        </div>
+        <div class="welcome-time">
+            <div class="time-display" id="liveTime">00:00:00</div>
+            <div class="date-display" id="liveDate"></div>
         </div>
     </div>
 
