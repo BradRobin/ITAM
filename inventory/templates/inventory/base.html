@@ -6,8 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ itam_product_name }}{% endblock %}</title>
     
-    <!-- Favicon - Using Font Awesome style cube icon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linejoin='round'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>">
+    <!-- Favicon - Using Font Awesome style cube icon (Properly encoded) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E">
+    
+    <!-- Fallback favicon for older browsers -->
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAOFJREFUWEdjYEADjIz//zMw/AcCJgaMAAzGgikA0+AGtI/xPwtDYGBg7D/GFIABAoyB+gMeHh6lYPCfYdCAB29v7+3Ukw7c2nuYdTcGJgY3mFE0Oggp1y4coGME8/1pB+CB2ArC2nHnKAM9A7PidBCSFNoLifS09zTfApDjqQE8PDzuQHYL5imQ7J5sweLrYGpR3TbsLGwmS9k4oGcDJDAdIgCqnCJPEzzk8AyYhRRJ+9O0mI4H0QJ5+MRpP2lNgglNaUHnS1p6Z9H4hS5gXhlfB1D2YKEZPhEApIidXmPRjAEAkKJFe1uLqskAAAAASUVORK5CYII=">
     
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">

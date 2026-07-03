@@ -52,21 +52,21 @@
                 <span class="sidebar-label">My Profile</span>
             </a>
         </li>
+        <li class="sidebar-item">
+            <a class="sidebar-link {% if 'settings' in request.path %}active{% endif %}" 
+               href="{% url 'settings' %}" 
+               data-loader="true"
+               data-loader-message="Loading Settings...">
+                <i class="fas fa-cog sidebar-icon"></i>
+                <span class="sidebar-label">Settings</span>
+            </a>
+        </li>
     </ul>
     
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
         <div class="sidebar-divider"></div>
         <ul class="sidebar-nav-bottom">
-            <li class="sidebar-item">
-                <a class="sidebar-link {% if 'settings' in request.path %}active{% endif %}" 
-                   href="{% url 'settings' %}" 
-                   data-loader="true"
-                   data-loader-message="Loading Settings...">
-                    <i class="fas fa-cog sidebar-icon"></i>
-                    <span class="sidebar-label">Settings</span>
-                </a>
-            </li>
             <li class="sidebar-item">
                 {% include "inventory/includes/logout_form.html" %}
             </li>

@@ -1,7 +1,7 @@
 {% load static %}
-<div class="notification-item {% if not notification.read %}unread{% endif %}" data-id="{{ notification.id }}">
-    <div class="notification-icon notification-{{ notification.type }}">
-        <i class="fas {% if notification.type == 'success' %}fa-check-circle{% elif notification.type == 'warning' %}fa-exclamation-triangle{% elif notification.type == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+<div class="notification-item {% if not notification.is_read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
+    <div class="notification-icon {{ notification.type|default:'info' }}">
+        <i class="fas {% if notification.type == 'success' %}fa-check-circle{% elif notification.type == 'warning' %}fa-exclamation-triangle{% elif notification.type == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
     </div>
     <div class="notification-content">
         <div class="notification-title">{{ notification.title }}</div>
@@ -16,14 +16,14 @@
             {% endif %}
         </div>
     </div>
-    <div class="notification-actions">
-        {% if not notification.read %}
-        <button class="btn btn-sm btn-primary" onclick="markAsRead('{{ notification.id }}')">
+    <div class="notification-actions" style="display:flex; gap:0.3rem; align-items:center;">
+        {% if not notification.is_read %}
+        <button class="btn btn-sm btn-primary" onclick="markAsRead('{{ notification.id }}')" title="Mark as read">
             <i class="fas fa-check"></i>
         </button>
         {% endif %}
         {% if notification.link %}
-        <a href="{{ notification.link }}" class="btn btn-sm btn-secondary">
+        <a href="{{ notification.link }}" class="btn btn-sm btn-secondary" title="View details">
             <i class="fas fa-arrow-right"></i>
         </a>
         {% endif %}

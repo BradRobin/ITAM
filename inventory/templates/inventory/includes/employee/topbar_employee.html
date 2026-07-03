@@ -1,16 +1,14 @@
 {% load static %}
 <header class="topbar">
     <div class="topbar-left">
-        <button type="button" class="sidebar-toggle" id="sidebarToggleEmployee" aria-label="Toggle sidebar">
-            <span class="sidebar-toggle-bars" aria-hidden="true">
-                <span class="sidebar-toggle-line"></span>
-                <span class="sidebar-toggle-line"></span>
-                <span class="sidebar-toggle-line"></span>
+        <!-- Modern Hamburger Menu -->
+        <button class="hamburger-menu" id="sidebarToggleEmployee" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
             </span>
         </button>
-    </div>
-    <div class="topbar-actions">
-        <!-- Notifications Bell -->
+        
+        <!-- Notification Bell - Moved to Left -->
         <div class="notification-container" id="notificationContainer">
             <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
@@ -43,7 +41,9 @@
                 </div>
             </div>
         </div>
-
+    </div>
+    
+    <div class="topbar-actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle theme">
             <i class="fas fa-moon theme-icon"></i>

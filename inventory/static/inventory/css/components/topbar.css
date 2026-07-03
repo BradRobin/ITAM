@@ -15,7 +15,7 @@
     border-bottom: 1px solid var(--border-color, #e2e8f0);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1002; /* Above overlay (1000) and sidebar (1001) */
     transition: all 0.3s ease;
     flex-shrink: 0;
     gap: 1rem;
@@ -31,6 +31,13 @@
     align-items: center;
     gap: 0.75rem;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+/* When sidebar is open on mobile, shift bell to the right */
+.sidebar.open ~ .main-wrapper .topbar-left,
+.sidebar.open .topbar-left {
+    gap: 1rem;
 }
 
 .topbar-actions {
@@ -42,60 +49,114 @@
 }
 
 /* ==========================================
-   SIDEBAR TOGGLE BUTTON (Hamburger)
+   MODERN HAMBURGER MENU
    ========================================== */
-.sidebar-toggle {
+.hamburger-menu {
     display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 24px;
-    height: 18px;
+    padding: 10px 8px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-md, 8px);
+    transition: background var(--transition-fast, 0.2s ease);
+    -webkit-tap-highlight-color: transparent;
     flex-shrink: 0;
 }
 
-.sidebar-toggle span {
+.hamburger-menu:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
+.hamburger-menu:focus-visible {
+    outline: 2px solid var(--primary-500, #3b82f6);
+    outline-offset: 2px;
+}
+
+.hamburger-box {
+    display: inline-block;
+    position: relative;
+    width: 24px;
+    height: 20px;
+}
+
+.hamburger-inner {
     display: block;
+    top: 50%;
+    margin-top: -1.5px;
+    transition-duration: 0.22s;
+    transition-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+    position: absolute;
+    width: 24px;
     height: 2.5px;
-    width: 100%;
-    background: var(--text-primary, #1e293b);
-    border-radius: 2px;
-    transition: all 0.3s ease;
+    background-color: var(--text-primary, #1e293b);
+    border-radius: 4px;
+    transition-property: transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
 }
 
-[data-theme="dark"] .sidebar-toggle span {
-    background: #e2e8f0;
+[data-theme="dark"] .hamburger-inner,
+[data-theme="dark"] .hamburger-inner::before,
+[data-theme="dark"] .hamburger-inner::after {
+    background-color: #e2e8f0;
 }
 
-.sidebar-toggle.open span:nth-child(1) {
-    transform: translateY(7.5px) rotate(45deg);
+.hamburger-inner::before,
+.hamburger-inner::after {
+    content: "";
+    display: block;
 }
 
-.sidebar-toggle.open span:nth-child(2) {
+.hamburger-inner::before {
+    top: -7px;
+    transition: top 0.1s 0.25s ease-in, opacity 0.1s ease-in;
+}
+
+.hamburger-inner::after {
+    bottom: -7px;
+    transition: bottom 0.1s 0.25s ease-in, transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+/* Open state - transforms to X */
+.hamburger-menu.active .hamburger-inner {
+    transform: rotate(45deg);
+    transition-delay: 0.12s;
+    transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.hamburger-menu.active .hamburger-inner::before {
+    top: 0;
     opacity: 0;
-    transform: scaleX(0);
+    transition: top 0.1s ease-out, opacity 0.1s 0.12s ease-out;
 }
 
-.sidebar-toggle.open span:nth-child(3) {
-    transform: translateY(-7.5px) rotate(-45deg);
-}
-
-.sidebar-toggle:hover {
-    opacity: 0.8;
+.hamburger-menu.active .hamburger-inner::after {
+    bottom: 0;
+    transform: rotate(-90deg);
+    transition: bottom 0.1s ease-out, transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
 /* ==========================================
-   NOTIFICATION BELL
+   NOTIFICATION BELL - Mobile Responsive
    ========================================== */
 .notification-container {
     position: relative;
     display: inline-block;
     flex-shrink: 0;
-    order: -1;
+    transition: all 0.3s ease;
+}
+
+/* On mobile, bell moves with sidebar */
+@media (max-width: 768px) {
+    .sidebar.open ~ .main-wrapper .notification-container,
+    .sidebar.open .notification-container {
+        margin-left: auto;
+    }
 }
 
 .notification-bell {
@@ -225,7 +286,7 @@
     visibility: hidden;
     transform: translateY(-10px) scale(0.96);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
+    z-index: 1003; /* Above topbar */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -399,7 +460,7 @@
 }
 
 /* ==========================================
-   THEME TOGGLE BUTTON - With border
+   THEME TOGGLE BUTTON
    ========================================== */
 .theme-toggle-btn {
     display: flex;
@@ -451,7 +512,7 @@
 }
 
 /* ==========================================
-   PROFILE BADGE - With border
+   PROFILE BADGE - Fixed for Both Portals
    ========================================== */
 .profile-badge {
     display: flex;
@@ -460,10 +521,19 @@
     padding: 4px 12px 4px 4px;
     border-radius: 50px;
     background: var(--bg-secondary, #f1f5f9);
-    cursor: default;
     transition: all 0.2s ease;
     flex-shrink: 0;
     border: 1.5px solid var(--border-color, #e2e8f0);
+    cursor: pointer;
+}
+
+.profile-badge a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none !important;
+    color: inherit;
+    width: 100%;
 }
 
 .profile-badge:hover {
@@ -508,6 +578,15 @@
     color: #e2e8f0;
 }
 
+/* Remove default link styles */
+.profile-badge a:hover,
+.profile-badge a:focus,
+.profile-badge a:active,
+.profile-badge a:visited {
+    text-decoration: none !important;
+    color: inherit;
+}
+
 /* ==========================================
    RESPONSIVE
    ========================================== */
@@ -515,10 +594,28 @@
     .topbar {
         padding: 0 1rem;
         height: 56px;
+        z-index: 1002; /* Keep above overlay */
     }
 
-    .sidebar-toggle {
-        display: flex;
+    .hamburger-menu {
+        display: inline-block;
+    }
+
+    .topbar-left {
+        gap: 0.5rem;
+    }
+
+    /* When sidebar is open, shift bell and other items */
+    .sidebar.open ~ .main-wrapper .topbar-left,
+    .sidebar.open .topbar-left {
+        gap: 1rem;
+        flex: 1;
+        justify-content: flex-start;
+    }
+
+    .sidebar.open ~ .main-wrapper .notification-container,
+    .sidebar.open .notification-container {
+        margin-left: auto;
     }
 
     .profile-badge .profile-name {
@@ -555,6 +652,7 @@
     .notification-dropdown {
         width: 340px;
         left: -8px;
+        z-index: 1003; /* Above topbar */
     }
 
     .theme-toggle-btn {
@@ -580,12 +678,14 @@
     .topbar {
         padding: 0 0.75rem;
         height: 52px;
+        z-index: 1002;
     }
 
     .notification-dropdown {
         width: 300px;
         left: -12px;
         max-height: 400px;
+        z-index: 1003;
     }
 
     .notification-dropdown-list {

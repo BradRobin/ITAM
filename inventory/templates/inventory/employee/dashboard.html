@@ -1,7 +1,7 @@
 {% extends 'inventory/base.html' %}
 {% load static %}
 
-{% block title %}Employee Dashboard - {{ itam_product_name }}{% endblock %}
+{% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/employee/dashboard.css' %}">
@@ -19,18 +19,21 @@
     <!-- Stats Cards -->
     <div class="stats-grid">
         <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-boxes"></i></div>
             <div class="stat-info">
                 <span class="stat-value">{{ active_assets|default:"0" }}</span>
                 <span class="stat-label">My Assets</span>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
             <div class="stat-info">
                 <span class="stat-value">{{ pending_assets|default:"0" }}</span>
                 <span class="stat-label">Pending Confirmation</span>
             </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
             <div class="stat-info">
                 <span class="stat-value">{{ due_assets|default:"0" }}</span>
                 <span class="stat-label">Due for Return</span>
@@ -49,7 +52,9 @@
                 {% include 'inventory/includes/employee/asset_card.html' with assignment=assignment %}
             {% empty %}
                 <div class="empty-state">
-                    <p>No assets assigned to you yet.</p>
+                    <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+                    <h3>No Assets Assigned</h3>
+                    <p>You haven't been assigned any assets yet.</p>
                 </div>
             {% endfor %}
         </div>

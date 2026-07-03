@@ -115,15 +115,100 @@
     }
     
     // ============================================
+    // Initialize Notifications
+    // ============================================
+    function initNotifications() {
+        var bell = document.getElementById('notificationBell');
+        var dropdown = document.getElementById('notificationDropdown') || document.getElementById('employeeNotificationDropdown');
+        
+        if (bell && dropdown) {
+            bell.removeEventListener('click', toggleNotificationDropdown);
+            bell.addEventListener('click', toggleNotificationDropdown);
+            
+            document.removeEventListener('click', closeNotificationDropdown);
+            document.addEventListener('click', closeNotificationDropdown);
+        }
+    }
+    
+    function toggleNotificationDropdown(event) {
+        event.stopPropagation();
+        var dropdown = document.getElementById('notificationDropdown') || document.getElementById('employeeNotificationDropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('open');
+        }
+    }
+    
+    function closeNotificationDropdown(event) {
+        var dropdown = document.getElementById('notificationDropdown') || document.getElementById('employeeNotificationDropdown');
+        var bell = document.getElementById('notificationBell');
+        
+        if (dropdown && bell) {
+            if (!dropdown.contains(event.target) && !bell.contains(event.target)) {
+                dropdown.classList.remove('open');
+            }
+        }
+    }
+    
+    // ============================================
+    // Mark all notifications as read
+    // ============================================
+    function initMarkAllRead() {
+        var markAllBtn = document.querySelector('.mark-all-link');
+        if (markAllBtn) {
+            markAllBtn.removeEventListener('click', handleMarkAllRead);
+            markAllBtn.addEventListener('click', handleMarkAllRead);
+        }
+    }
+    
+    function handleMarkAllRead(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        var badge = document.getElementById('notificationBadge');
+        var items = document.querySelectorAll('.notification-item.unread');
+        
+        items.forEach(function(item) {
+            item.classList.remove('unread');
+        });
+        
+        if (badge) {
+            badge.classList.add('hidden');
+            badge.textContent = '';
+        }
+        
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken.value,
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            }).catch(function(error) {
+                console.warn('Error marking all as read:', error);
+            });
+        }
+    }
+    
+    // ============================================
     // Initialize Application
     // ============================================
     function initApp() {
         try {
-            console.log('ITAM V2.0 initializing...');
+            console.log('ITAM System initializing...');
             
             loadCoreModules();
             setupLoader();
             initForms();
+            
+            // Initialize sidebar (handled by sidebar.js)
+            if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.init === 'function') {
+                window.Sidebar.init();
+            }
+            
+            initNotifications();
+            initMarkAllRead();
             
             var page = getCurrentPage();
             loadPageModules(page);
@@ -132,7 +217,7 @@
                 detail: { page: page }
             }));
             
-            console.log('ITAM V2.0 ready. Page:', page);
+            console.log('ITAM System ready. Page:', page);
             
             if (typeof window.Loader !== 'undefined' && window.Loader.hide) {
                 setTimeout(function() {
@@ -153,7 +238,7 @@
     }
     
     // ============================================
-    // Start Application - Only once
+    // Start Application
     // ============================================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
@@ -168,6 +253,25 @@
     }
     
     // ============================================
+    // Handle Turbo/HTMX
+    // ============================================
+    document.addEventListener('turbo:load', function() {
+        if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.init === 'function') {
+            window.Sidebar.init();
+        }
+        initNotifications();
+        initMarkAllRead();
+    });
+    
+    document.addEventListener('htmx:afterSwap', function() {
+        if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.init === 'function') {
+            window.Sidebar.init();
+        }
+        initNotifications();
+        initMarkAllRead();
+    });
+    
+    // ============================================
     // Export
     // ============================================
     window.MainApp = {
@@ -175,9 +279,19 @@
         refresh: function() {
             var page = getCurrentPage();
             loadPageModules(page);
+        },
+        closeSidebar: function() {
+            if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.close === 'function') {
+                window.Sidebar.close();
+            }
+        },
+        openSidebar: function() {
+            if (typeof window.Sidebar !== 'undefined' && typeof window.Sidebar.open === 'function') {
+                window.Sidebar.open();
+            }
         }
     };
     
-    console.log('main.js loaded successfully.');
+    console.log('main.js loaded successfully');
     
 })();

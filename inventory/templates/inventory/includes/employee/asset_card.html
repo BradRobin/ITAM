@@ -1,24 +1,43 @@
 {% load static %}
 <div class="asset-card" data-assignment-id="{{ assignment.id }}">
     <div class="asset-card-header">
-        <span class="asset-type-icon">{{ assignment.asset.type_icon }}</span>
-        <h4>{{ assignment.asset.name }}</h4>
-        <span class="badge badge-{{ assignment.status_class }}">{{ assignment.status_display }}</span>
+        <span class="asset-card-icon">
+            <i class="fas {{ assignment.asset.icon_class|default:'fa-laptop' }}"></i>
+        </span>
+        <div class="asset-card-title">
+            <h4>{{ assignment.asset.name }}</h4>
+            <span class="serial">{{ assignment.asset.serial_number }}</span>
+        </div>
+        <span class="badge badge-{{ assignment.status_class|default:'pending' }}">
+            {{ assignment.status_display|default:'Pending' }}
+        </span>
     </div>
     <div class="asset-card-body">
-        <p class="asset-serial">Serial: {{ assignment.asset.serial_number }}</p>
-        <p class="asset-assigned">Assigned: {{ assignment.date_assigned|date:"M d, Y" }}</p>
+        <div class="detail">
+            <span class="label">Serial</span>
+            <span class="value">{{ assignment.asset.serial_number }}</span>
+        </div>
+        <div class="detail">
+            <span class="label">Assigned</span>
+            <span class="value">{{ assignment.date_assigned|date:"M d, Y" }}</span>
+        </div>
+        <div class="detail">
+            <span class="label">Type</span>
+            <span class="value">{{ assignment.asset.get_type_display|default:'Asset' }}</span>
+        </div>
     </div>
-    <div class="asset-card-footer">
-        <a href="{% url 'employee_asset_detail' assignment.id %}" class="btn btn-sm btn-primary">View Details</a>
+    <div class="asset-card-actions">
+        <a href="{% url 'employee_asset_detail' assignment.id %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-eye"></i> View
+        </a>
         {% if not assignment.confirmed_by_employee %}
         <button class="btn btn-sm btn-success" onclick="confirmAsset('{{ assignment.id }}')">
             <i class="fas fa-check"></i> Confirm
         </button>
         {% endif %}
         {% if not assignment.date_returned %}
-        <button class="btn btn-sm btn-secondary return-btn" data-id="{{ assignment.id }}" onclick="requestReturn('{{ assignment.id }}')">
-            <i class="fas fa-undo"></i> Return
+        <button class="btn btn-sm btn-warning return-btn" data-id="{{ assignment.id }}" onclick="requestReturn('{{ assignment.id }}')">
+            <i class="fas fa-undo-alt"></i> Return
         </button>
         {% endif %}
     </div>

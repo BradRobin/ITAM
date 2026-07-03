@@ -1,13 +1,14 @@
 {% load static %}
-<aside class="sidebar-employee" id="sidebarEmployee" role="navigation">
+<aside class="sidebar" id="sidebarEmployee" role="navigation">
     <div class="sidebar-brand">
-        <i class="fas fa-user-tie brand-icon"></i>
-        <span class="brand-text">{{ itam_product_name }} Employee Portal</span>
+        <i class="fas fa-cubes brand-icon"></i>
+        <span class="brand-text">{{ itam_product_name }}</span>
     </div>
+    
     <!-- Main Navigation -->
     <ul class="sidebar-nav">
         <li class="sidebar-item">
-            <a class="sidebar-link {% if request.path == '/employee/dashboard/' %}active{% endif %}" 
+            <a class="sidebar-link {% if request.path == '/' or 'dashboard' in request.path %}active{% endif %}" 
                href="{% url 'employee_dashboard' %}" 
                data-loader="true"
                data-loader-message="Loading Dashboard...">
@@ -16,19 +17,16 @@
             </a>
         </li>
         <li class="sidebar-item">
-            <a class="sidebar-link {% if 'employee/assets' in request.path %}active{% endif %}" 
+            <a class="sidebar-link {% if 'assets' in request.path %}active{% endif %}" 
                href="{% url 'employee_assets' %}" 
                data-loader="true"
                data-loader-message="Loading Assets...">
                 <i class="fas fa-laptop sidebar-icon"></i>
                 <span class="sidebar-label">My Assets</span>
-                {% if pending_assets > 0 %}
-                <span class="badge badge-pending">{{ pending_assets }}</span>
-                {% endif %}
             </a>
         </li>
         <li class="sidebar-item">
-            <a class="sidebar-link {% if 'employee/settings' in request.path %}active{% endif %}" 
+            <a class="sidebar-link {% if 'settings' in request.path %}active{% endif %}" 
                href="{% url 'employee_settings' %}" 
                data-loader="true"
                data-loader-message="Loading Settings...">
@@ -37,7 +35,7 @@
             </a>
         </li>
     </ul>
-
+    
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
         <div class="sidebar-divider"></div>
