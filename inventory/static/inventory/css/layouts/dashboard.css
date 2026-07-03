@@ -61,17 +61,46 @@
     margin-bottom: 0.25rem;
 }
 
+/* ==========================================
+   GREETING ICON - Dynamic Colors
+   ========================================== */
 .greeting-icon {
     font-size: 1.75rem;
     line-height: 1;
     flex-shrink: 0;
-    color: var(--primary-500, #3b82f6);
+    transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .greeting-icon {
-    color: var(--primary-400, #60a5fa);
+/* Sun icon - Warm yellow/orange */
+.fa-sun.greeting-icon {
+    color: #f59e0b;
 }
 
+[data-theme="dark"] .fa-sun.greeting-icon {
+    color: #fbbf24;
+}
+
+/* Cloud-sun icon - Warm yellow */
+.fa-cloud-sun.greeting-icon {
+    color: #f59e0b;
+}
+
+[data-theme="dark"] .fa-cloud-sun.greeting-icon {
+    color: #fbbf24;
+}
+
+/* Moon icon - Cool purple/blue */
+.fa-moon.greeting-icon {
+    color: #6366f1;
+}
+
+[data-theme="dark"] .fa-moon.greeting-icon {
+    color: #818cf8;
+}
+
+/* ==========================================
+   GREETING TEXT
+   ========================================== */
 .greeting-text {
     display: flex;
     align-items: center;
@@ -192,7 +221,7 @@
 }
 
 /* ==========================================
-   STATS CARDS - Matching Reports Summary
+   STATS CARDS
    ========================================== */
 .dashboard-stats {
     display: grid;
@@ -245,6 +274,11 @@
 .stat-card.stat-available::before { background: var(--success-500, #22c55e); }
 .stat-card.stat-assigned::before { background: var(--primary-500, #3b82f6); }
 .stat-card.stat-maintenance::before { background: var(--warning-500, #f59e0b); }
+
+[data-theme="dark"] .stat-card.stat-total::before { background: var(--gray-400, #94a3b8); }
+[data-theme="dark"] .stat-card.stat-available::before { background: var(--success-400, #4ade80); }
+[data-theme="dark"] .stat-card.stat-assigned::before { background: var(--primary-400, #60a5fa); }
+[data-theme="dark"] .stat-card.stat-maintenance::before { background: var(--warning-400, #fbbf24); }
 
 .stat-icon {
     width: 38px;

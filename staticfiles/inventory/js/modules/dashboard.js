@@ -255,6 +255,146 @@
     }
     
     // ============================================
+    // Async dashboard data
+    // ============================================
+    function renderDashboardStats(stats) {
+        var container = document.getElementById('dashboard-stats');
+        if (!container || !stats || !stats.length) {
+            return;
+        }
+
+        container.innerHTML = stats.map(function(stat) {
+            var animateAttr = stat.animate_count && stat.data_count !== undefined
+                ? ' data-count="' + stat.data_count + '"'
+                : '';
+            return '' +
+                '<a href="' + stat.link + '" class="stat-card stat-card-link ' + stat.css_class + '" data-loader="true" data-loader-message="Loading Assets...">' +
+                    '<i class="fas ' + stat.icon + ' stat-icon"></i>' +
+                    '<div class="stat-content">' +
+                        '<h3>' + stat.label + '</h3>' +
+                        '<p class="stat-number"' + animateAttr + '>' + stat.value + '</p>' +
+                        '<span class="stat-trend">' + stat.trend + '</span>' +
+                    '</div>' +
+                '</a>';
+        }).join('');
+    }
+
+    function renderOverdueSection(data) {
+        var container = document.getElementById('overdue-section-mount');
+        if (!container) {
+            return;
+        }
+
+        var overdueAssets = data.overdue_assets || [];
+        if (!overdueAssets.length) {
+            container.innerHTML = '' +
+                '<div class="overdue-section overdue-clear">' +
+                    '<div class="overdue-header">' +
+                        '<h2><i class="fas fa-check-circle" style="color: var(--success-500, #22c55e);"></i> You\'re all caught up!</h2>' +
+                    '</div>' +
+                    '<p class="overdue-clear-message"><i class="fas fa-check"></i> All assets serviced within 6 months</p>' +
+                '</div>';
+            return;
+        }
+
+        var cards = overdueAssets.slice(0, 6).map(function(asset, index) {
+            return '' +
+                '<div class="overdue-card" data-delay="' + (index + 1) + '">' +
+                    '<div class="overdue-card-header">' +
+                        '<span class="overdue-icon"></span>' +
+                        '<strong>' + asset.name + '</strong>' +
+                    '</div>' +
+                    '<div class="overdue-card-body">' +
+                        '<p><span>Type</span> ' + asset.type + '</p>' +
+                        '<p><span>Serial</span> ' + asset.serial_number + '</p>' +
+                        '<p><span>Status</span> <span class="badge badge-' + String(asset.status).toLowerCase().replace(/\s+/g, '') + '">' + asset.status + '</span></p>' +
+                        '<p><span>Last Service</span> ' + (asset.last_maintenance_date || 'Never') + '</p>' +
+                    '</div>' +
+                    '<div class="overdue-card-footer">' +
+                        '<a href="' + asset.detail_url + '" class="btn-sm"><i class="fas fa-eye"></i> View Details</a>' +
+                    '</div>' +
+                '</div>';
+        }).join('');
+
+        var moreLink = overdueAssets.length > 6
+            ? '<div class="overdue-more"><a href="/assets/?status=overdue" class="btn btn-secondary"><i class="fas fa-list"></i> View All ' + overdueAssets.length + '</a></div>'
+            : '';
+
+        container.innerHTML = '' +
+            '<div class="overdue-section">' +
+                '<div class="overdue-header">' +
+                    '<h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Overdue Service</h2>' +
+                    '<span class="overdue-badge">' + overdueAssets.length + '</span>' +
+                '</div>' +
+                '<p class="overdue-subtitle"><strong>' + overdueAssets.length + '</strong> asset' + (overdueAssets.length > 1 ? 's' : '') + ' overdue since ' + (data.overdue_cutoff || '') + '</p>' +
+                '<div class="overdue-grid">' + cards + '</div>' +
+                moreLink +
+            '</div>';
+    }
+
+    function updateQuickStats(data) {
+        var utilization = document.getElementById('utilization-rate-value');
+        var employees = document.getElementById('employee-count-value');
+        var health = document.getElementById('asset-health-value');
+        var assignments = document.getElementById('total-assignments-value');
+        var overdueCount = document.getElementById('overdue-count-value');
+        if (utilization) {
+            utilization.textContent = data.utilization_rate + '%';
+        }
+        if (employees) {
+            employees.textContent = data.employee_count;
+        }
+        if (health) {
+            health.textContent = data.asset_health_rate + '%';
+            health.classList.toggle('healthy', data.asset_health_rate < 10);
+            health.classList.toggle('warning', data.asset_health_rate >= 10);
+        }
+        if (assignments) {
+            assignments.textContent = data.total_assignments || 0;
+        }
+        if (overdueCount) {
+            overdueCount.textContent = data.overdue_assets_count || 0;
+            var opsItem = overdueCount.closest('.insight-ops-item');
+            if (opsItem) {
+                opsItem.classList.toggle('danger', (data.overdue_assets_count || 0) > 0);
+                opsItem.classList.toggle('success', !(data.overdue_assets_count || 0));
+            }
+        }
+        if (window.DashboardAnalytics) {
+            window.DashboardAnalytics.render(data);
+        }
+    }
+
+    function loadAsyncDashboard() {
+        var mount = document.getElementById('dashboard-stats');
+        var page = document.querySelector('.dashboard-page');
+        if (!mount || !window.BackgroundJobs) {
+            return;
+        }
+
+        mount.classList.add('async-loading');
+        if (window.DashboardAnalytics) {
+            window.DashboardAnalytics.initTabs();
+        }
+        window.BackgroundJobs.run('dashboard').then(function(job) {
+            var data = job.result || {};
+            mount.classList.remove('async-loading');
+            var overdueMount = document.getElementById('overdue-section-mount');
+            if (overdueMount) {
+                overdueMount.classList.remove('async-loading');
+            }
+            renderDashboardStats(data.dashboard_stats || []);
+            renderOverdueSection(data);
+            updateQuickStats(data);
+            isStatsAnimated = false;
+            setupScrollObserver();
+        }).catch(function(error) {
+            mount.classList.remove('async-loading');
+            console.error('Dashboard async load failed:', error);
+        });
+    }
+
+    // ============================================
     // Initialize Dashboard
     // ============================================
     function init() {
@@ -268,9 +408,12 @@
         
         // Typewriter effect
         typewriterEffect();
-        
-        // Setup scroll observer for stats
-        setupScrollObserver();
+
+        if (document.querySelector('.dashboard-page') && document.querySelector('.dashboard-page').dataset.asyncDashboard === 'true') {
+            loadAsyncDashboard();
+        } else {
+            setupScrollObserver();
+        }
         
         // Refresh data every minute (NO page reload)
         setInterval(refreshDashboardData, 60000);

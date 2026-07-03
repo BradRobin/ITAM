@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=8">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=9">
 {% endblock %}
 
 {% block content %}
@@ -197,7 +197,7 @@
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=4"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=5"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

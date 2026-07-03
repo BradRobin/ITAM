@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var charts = {};
+    var chartInstances = {};
     var colorScheme = {
         light: {
             text: '#1e293b',
@@ -26,363 +26,246 @@
         '#6366f1', '#84cc16'
     ];
     
-    // ============================================
-    // Get Current Theme
-    // ============================================
-    function getCurrentTheme() {
-        var theme = document.documentElement.getAttribute('data-theme');
-        return theme === 'dark' ? 'dark' : 'light';
-    }
+    var colorMap = {
+        'Available': '#22c55e',
+        'Assigned': '#3b82f6',
+        'Maintenance': '#f59e0b',
+        'Retired': '#ef4444',
+        'Lost': '#ec4899',
+        'Damaged': '#f97316'
+    };
     
     // ============================================
-    // Get Color Scheme
+    // Helpers
     // ============================================
+    function getTheme() {
+        return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+    
     function getColors() {
-        return colorScheme[getCurrentTheme()] || colorScheme.light;
+        return colorScheme[getTheme()] || colorScheme.light;
+    }
+    
+    function getChartColors(count) {
+        var colors = [];
+        for (var i = 0; i < count; i++) {
+            colors.push(chartColors[i % chartColors.length]);
+        }
+        return colors;
     }
     
     // ============================================
-    // Create Status Chart (Pie)
+    // Chart Creators
     // ============================================
-    function createStatusChart(data) {
-        var ctx = document.getElementById('statusChart');
+    function createDoughnut(id, data, labels, colors, label) {
+        var ctx = document.getElementById(id);
         if (!ctx) return;
         
-        var labels = Object.keys(data);
-        var values = Object.values(data);
-        var colors = ['#22c55e', '#3b82f6', '#f59e0b'];
+        var total = data.reduce(function(a, b) { return a + b; }, 0);
+        var isDark = getTheme() === 'dark';
+        var colorSet = colors || getChartColors(data.length);
         
-        charts.status = new Chart(ctx, {
+        chartInstances[id] = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels,
                 datasets: [{
-                    data: values,
-                    backgroundColor: colors,
+                    data: data,
+                    backgroundColor: colorSet,
                     borderWidth: 2,
-                    borderColor: getColors().grid
+                    borderColor: isDark ? '#1e293b' : '#ffffff',
+                    hoverOffset: 10
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
                             color: getColors().text,
-                            padding: 15,
-                            font: { size: 12 }
+                            padding: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 11 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var value = context.parsed || 0;
+                                var pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return context.label + ': ' + value + ' (' + pct + '%)';
+                            }
                         }
                     }
                 },
-                cutout: '65%'
-            }
+                animation: { duration: 1000 }
+            },
+            plugins: [{
+                id: 'centerText',
+                beforeDraw: function(chart) {
+                    var w = chart.width, h = chart.height;
+                    var ctx = chart.ctx;
+                    var area = chart.chartArea;
+                    var fs = Math.min(w, h) / 5;
+                    
+                    ctx.save();
+                    ctx.font = 'bold ' + fs + 'px "Inter", sans-serif';
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = 'center';
+                    
+                    var cx = (area.left + area.right) / 2;
+                    var cy = (area.top + area.bottom) / 2 - 6;
+                    
+                    ctx.fillStyle = getColors().text;
+                    ctx.fillText(total, cx, cy);
+                    
+                    ctx.font = (fs / 2.5) + 'px "Inter", sans-serif';
+                    ctx.globalAlpha = 0.6;
+                    ctx.fillText(label || '', cx, cy + fs / 1.8);
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                }
+            }]
         });
     }
     
-    // ============================================
-    // Create Type Chart (Bar)
-    // ============================================
-    function createTypeChart(data) {
-        var ctx = document.getElementById('typeChart');
+    function createBar(id, data, labels, horizontal) {
+        var ctx = document.getElementById(id);
         if (!ctx) return;
         
-        var labels = Object.keys(data);
-        var values = Object.values(data);
+        var isDark = getTheme() === 'dark';
+        var colors = getChartColors(data.length);
         
-        charts.type = new Chart(ctx, {
+        chartInstances[id] = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Assets by Type',
-                    data: values,
-                    backgroundColor: chartColors.slice(0, labels.length),
+                    data: data,
+                    backgroundColor: colors.map(function(c) { return c + '80'; }),
+                    borderColor: colors,
+                    borderWidth: 1.5,
                     borderRadius: 6,
-                    borderSkipped: false
+                    maxBarThickness: 50
                 }]
             },
             options: {
+                indexAxis: horizontal ? 'y' : 'x',
                 responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
+                        ticks: { color: getColors().text, font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: getColors().text, font: { size: 10 }, maxRotation: 0 }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 }
-                        },
-                        grid: {
-                            color: getColors().grid
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 }
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+                animation: { duration: 800 }
             }
         });
     }
     
-    // ============================================
-    // Create Monthly Chart (Line)
-    // ============================================
-    function createMonthlyChart(data) {
-        var ctx = document.getElementById('monthlyChart');
+    function createLine(id, data, labels, color, fill) {
+        var ctx = document.getElementById(id);
         if (!ctx) return;
         
-        var labels = data.map(function(d) { return d.month; });
-        var values = data.map(function(d) { return d.count; });
+        var isDark = getTheme() === 'dark';
+        var baseColor = color || '#3b82f6';
+        var grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, baseColor + '40');
+        grad.addColorStop(1, baseColor + '00');
         
-        charts.monthly = new Chart(ctx, {
+        chartInstances[id] = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Assets Created',
-                    data: values,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
+                    data: data,
+                    borderColor: baseColor,
+                    backgroundColor: fill !== false ? grad : 'transparent',
+                    fill: fill !== false,
                     tension: 0.4,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: getColors().grid,
+                    pointBackgroundColor: baseColor,
+                    pointBorderColor: isDark ? '#1e293b' : '#ffffff',
                     pointBorderWidth: 2,
-                    pointRadius: 4
+                    pointRadius: 4,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: getColors().text,
-                            font: { size: 12 }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 },
-                            stepSize: 1
-                        },
-                        grid: {
-                            color: getColors().grid
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 }
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // ============================================
-    // Create Maintenance Chart (Bar)
-    // ============================================
-    function createMaintenanceChart(data) {
-        var ctx = document.getElementById('maintenanceChart');
-        if (!ctx) return;
-        
-        var labels = data.map(function(d) { return d.month; });
-        var values = data.map(function(d) { return d.count; });
-        
-        charts.maintenance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Maintenance Logs',
-                    data: values,
-                    backgroundColor: '#f59e0b',
-                    borderRadius: 6,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: getColors().text,
-                            font: { size: 12 }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 },
-                            stepSize: 1
-                        },
-                        grid: {
-                            color: getColors().grid
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 }
-                        },
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // ============================================
-    // Create Top Assets Chart (Horizontal Bar)
-    // ============================================
-    function createTopAssetsChart(data) {
-        var ctx = document.getElementById('topAssetsChart');
-        if (!ctx) return;
-        
-        var labels = data.map(function(d) { return d.name; });
-        var values = data.map(function(d) { return d.assignments; });
-        
-        // Reverse for horizontal bar (top at top)
-        labels.reverse();
-        values.reverse();
-        
-        charts.topAssets = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Assignments',
-                    data: values,
-                    backgroundColor: '#8b5cf6',
-                    borderRadius: 6,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: getColors().text,
-                            font: { size: 12 }
-                        }
-                    }
+                    legend: { display: false },
+                    tooltip: { intersect: false, mode: 'index' }
                 },
                 scales: {
                     x: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 },
-                            stepSize: 1
-                        },
-                        grid: {
-                            color: getColors().grid
-                        }
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
+                        ticks: { color: getColors().text, font: { size: 10 } }
                     },
                     y: {
-                        ticks: {
-                            color: getColors().text,
-                            font: { size: 11 }
-                        },
-                        grid: {
-                            display: false
-                        }
+                        beginAtZero: true,
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
+                        ticks: { color: getColors().text, font: { size: 10 }, stepSize: 1 }
                     }
-                }
+                },
+                interaction: { intersect: false, mode: 'index' },
+                animation: { duration: 1000 }
             }
         });
     }
     
     // ============================================
-    // Create Department Chart (Pie)
+    // Destroy Charts
     // ============================================
-    function createDepartmentChart(data) {
-        var ctx = document.getElementById('departmentChart');
-        if (!ctx) return;
-        
-        var labels = Object.keys(data);
-        var values = Object.values(data);
-        
-        charts.department = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: chartColors.slice(0, labels.length),
-                    borderWidth: 2,
-                    borderColor: getColors().grid
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: getColors().text,
-                            padding: 15,
-                            font: { size: 12 }
-                        }
-                    }
-                }
+    function destroyCharts() {
+        Object.keys(chartInstances).forEach(function(key) {
+            if (chartInstances[key] && typeof chartInstances[key].destroy === 'function') {
+                chartInstances[key].destroy();
+                delete chartInstances[key];
             }
         });
     }
     
     // ============================================
-    // Update All Charts on Theme Change
+    // Update Charts on Theme Change
     // ============================================
-    function updateChartsOnThemeChange() {
+    function updateCharts() {
         var colors = getColors();
+        var isDark = getTheme() === 'dark';
         
-        Object.keys(charts).forEach(function(key) {
-            var chart = charts[key];
+        Object.keys(chartInstances).forEach(function(key) {
+            var chart = chartInstances[key];
             if (!chart) return;
             
-            // Update colors based on chart type
-            if (chart.config.type === 'doughnut' || chart.config.type === 'pie') {
+            if (chart.options && chart.options.plugins && chart.options.plugins.legend) {
                 chart.options.plugins.legend.labels.color = colors.text;
-            } else if (chart.config.type === 'line' || chart.config.type === 'bar') {
-                chart.options.plugins.legend.labels.color = colors.text;
-                chart.options.scales.x.ticks.color = colors.text;
-                chart.options.scales.y.ticks.color = colors.text;
-                chart.options.scales.y.grid.color = colors.grid;
-                chart.options.scales.x.grid.color = colors.grid;
+            }
+            
+            if (chart.options && chart.options.scales) {
+                ['x', 'y'].forEach(function(axis) {
+                    if (chart.options.scales[axis]) {
+                        chart.options.scales[axis].ticks.color = colors.text;
+                        if (chart.options.scales[axis].grid) {
+                            chart.options.scales[axis].grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+                        }
+                    }
+                });
+            }
+            
+            if (chart.config && (chart.config.type === 'doughnut' || chart.config.type === 'pie')) {
+                chart.data.datasets.forEach(function(ds) {
+                    ds.borderColor = isDark ? '#1e293b' : '#ffffff';
+                });
             }
             
             chart.update();
@@ -390,33 +273,144 @@
     }
     
     // ============================================
+    // Parse JSON
+    // ============================================
+    function parseJson(value, fallback) {
+        if (typeof value === 'object') return value;
+        try { return JSON.parse(value); } catch (e) { return fallback; }
+    }
+    
+    // ============================================
     // Initialize Reports
     // ============================================
     function init(data) {
-        console.log('Reports module initializing...');
+        if (!data) return;
         
-        // Create charts
-        createStatusChart(data.assetByStatus);
-        createTypeChart(data.assetByType);
-        createMonthlyChart(data.monthlyAssets);
-        createMaintenanceChart(data.maintenanceByMonth);
-        createTopAssetsChart(data.topAssets);
-        createDepartmentChart(data.departmentData);
+        destroyCharts();
         
-        // Listen for theme changes
-        document.addEventListener('theme-changed', function() {
-            setTimeout(updateChartsOnThemeChange, 100);
-        });
-        
-        // Refresh button
-        var refreshBtn = document.getElementById('refreshReports');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                location.reload();
-            });
+        // Status Chart
+        if (data.assetByStatus && Object.keys(data.assetByStatus).length > 0) {
+            var sLabels = Object.keys(data.assetByStatus);
+            var sData = Object.values(data.assetByStatus);
+            var sColors = sLabels.map(function(l) { return colorMap[l] || chartColors[Math.floor(Math.random() * chartColors.length)]; });
+            createDoughnut('statusChart', sData, sLabels, sColors, '');
         }
         
-        console.log('Reports module initialized.');
+        // Type Chart
+        if (data.assetByType && Object.keys(data.assetByType).length > 0) {
+            createBar('typeChart', Object.values(data.assetByType), Object.keys(data.assetByType), true);
+        }
+        
+        // Monthly Chart
+        if (data.monthlyAssets && data.monthlyAssets.length > 0) {
+            var mData = data.monthlyAssets.map(function(d) { return d.count || d.value || 0; });
+            var mLabels = data.monthlyAssets.map(function(d) { return d.month || d.label || ''; });
+            createLine('monthlyChart', mData, mLabels, '#3b82f6', true);
+        }
+        
+        // Maintenance Chart
+        if (data.maintenanceByMonth && data.maintenanceByMonth.length > 0) {
+            var mtData = data.maintenanceByMonth.map(function(d) { return d.count || d.value || 0; });
+            var mtLabels = data.maintenanceByMonth.map(function(d) { return d.month || d.label || ''; });
+            createLine('maintenanceChart', mtData, mtLabels, '#f59e0b', false);
+        }
+        
+        // Top Assets Chart
+        if (data.topAssets && data.topAssets.length > 0) {
+            var tData = data.topAssets.map(function(d) { return d.assignments || d.count || d.value || 0; });
+            var tLabels = data.topAssets.map(function(d) { return d.name || d.label || ''; });
+            createBar('topAssetsChart', tData, tLabels, true);
+        }
+        
+        // Department Chart
+        if (data.departmentData && Object.keys(data.departmentData).length > 0) {
+            var dLabels = Object.keys(data.departmentData);
+            var dData = Object.values(data.departmentData);
+            createDoughnut('departmentChart', dData, dLabels, null, '');
+        }
+        
+        document.addEventListener('theme-changed', function() {
+            setTimeout(updateCharts, 150);
+        });
+    }
+    
+    // ============================================
+    // Update Summary Cards
+    // ============================================
+    function updateSummaryCards(data) {
+        var map = {
+            total_assets: data.total_assets,
+            assigned_assets: data.assigned_assets,
+            available_assets: data.available_assets,
+            maintenance_assets: data.maintenance_assets,
+            total_employees: data.total_employees,
+            utilization_rate: data.utilization_rate + '%'
+        };
+        
+        Object.keys(map).forEach(function(key) {
+            var el = document.querySelector('[data-summary-key="' + key + '"]');
+            if (el) el.textContent = map[key];
+        });
+    }
+    
+    // ============================================
+    // Update Additional Stats
+    // ============================================
+    function updateAdditionalStats(data) {
+        var stats = {
+            overdue_count: data.overdue_count || 0,
+            asset_health_rate: (data.asset_health_rate || 0) + '%',
+            total_assignments: data.total_assignments || 0
+        };
+        
+        Object.keys(stats).forEach(function(key) {
+            var el = document.querySelector('[data-stat-key="' + key + '"]');
+            if (el) {
+                el.textContent = stats[key];
+                if (key === 'overdue_count') {
+                    el.classList.toggle('danger', data.overdue_count > 0);
+                    el.classList.toggle('success', data.overdue_count === 0);
+                }
+            }
+        });
+    }
+    
+    // ============================================
+    // Load Async Reports
+    // ============================================
+    function loadAsync() {
+        var container = document.querySelector('.reports-container');
+        if (!container || !window.BackgroundJobs) return;
+        
+        container.classList.add('async-loading');
+        window.BackgroundJobs.run('reports', { force: false })
+            .then(function(job) {
+                var data = job.result || {};
+                container.classList.remove('async-loading');
+                updateSummaryCards(data);
+                updateAdditionalStats(data);
+                init({
+                    assetByStatus: parseJson(data.asset_by_status, {}),
+                    assetByType: parseJson(data.asset_by_type, {}),
+                    monthlyAssets: parseJson(data.monthly_assets, []),
+                    maintenanceByMonth: parseJson(data.maintenance_by_month, []),
+                    topAssets: parseJson(data.top_assets_data, []),
+                    departmentData: parseJson(data.department_counts, {})
+                });
+            })
+            .catch(function() {
+                container.classList.remove('async-loading');
+            });
+    }
+    
+    // ============================================
+    // Bootstrap
+    // ============================================
+    function bootstrap() {
+        var container = document.querySelector('.reports-container');
+        if (container && container.dataset.asyncReports === 'true') {
+            loadAsync();
+        }
     }
     
     // ============================================
@@ -424,9 +418,10 @@
     // ============================================
     window.Reports = {
         init: init,
-        updateCharts: updateChartsOnThemeChange
+        bootstrap: bootstrap,
+        refresh: loadAsync,
+        updateCharts: updateCharts,
+        destroy: destroyCharts
     };
-    
-    console.log('Reports module loaded.');
     
 })();

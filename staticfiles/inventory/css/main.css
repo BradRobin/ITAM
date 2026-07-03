@@ -17,6 +17,7 @@
 @import url('components/cards.css');
 @import url('components/sidebar.css');
 @import url('components/topbar.css');
+@import url('components/footer.css');
 @import url('components/spinner.css');
 @import url('components/notifications.css');
 
@@ -93,7 +94,8 @@ body {
    MAIN CONTENT
    ========================================== */
 main {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 1.5rem 2rem 2rem;
@@ -318,4 +320,33 @@ main {
 [data-theme="dark"] .sidebar-nav-bottom .logout-form.sidebar-link:hover {
     background: rgba(239, 68, 68, 0.12) !important;
     color: #fca5a5;
+}
+
+/* Async background job UI */
+.async-loading {
+    opacity: 0.85;
+}
+
+.async-job-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    color: var(--text-muted, #64748b);
+    font-size: 0.9rem;
+}
+
+.async-job-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 8px;
+}
+
+.reports-container.async-loading .chart-body canvas {
+    opacity: 0.35;
 }

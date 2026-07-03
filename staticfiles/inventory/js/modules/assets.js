@@ -11,6 +11,8 @@
     // ============================================
     let elements = {};
     let isInitialized = false;
+    let assetCache = new Map();
+    let activeAssetId = null;
     
     // ============================================
     // Initialize Asset Module
@@ -25,6 +27,7 @@
             assetTable: document.querySelector('.asset-table'),
             assetTableBody: document.querySelector('#asset-table-body'),
             filterForm: document.querySelector('.filter-form'),
+            detailCard: document.getElementById('asset-detail-card'),
             assignButtons: document.querySelectorAll('.action-assign'),
             returnButtons: document.querySelectorAll('.action-return'),
             deleteButtons: document.querySelectorAll('.action-delete')
@@ -33,6 +36,8 @@
         // Setup event listeners
         setupFilterForm();
         setupActionButtons();
+        setupRowInteractions();
+        setupDetailCard();
         loadAssetTable();
         
         console.log('Asset module initialized.');
@@ -50,6 +55,7 @@
 
         try {
             const assets = await window.Utils.apiRequest(getAssetListUrl());
+            cacheAssets(assets);
             renderAssetRows(assets);
         } catch (error) {
             console.error('Failed to load assets:', error);
@@ -99,6 +105,16 @@
         elements.assetTableBody.innerHTML = rows.join('');
     }
 
+    function cacheAssets(assets) {
+        assetCache = new Map();
+        if (!Array.isArray(assets)) {
+            return;
+        }
+        assets.forEach(function(asset) {
+            assetCache.set(String(asset.id), asset);
+        });
+    }
+
     function renderAssetRows(assets) {
         if (!Array.isArray(assets) || assets.length === 0) {
             renderTableMessage('No assets found.');
@@ -114,8 +130,8 @@
         const assignee = formatAssignee(asset.assigned_employee);
 
         return (
-            '<tr>' +
-                '<td><a href="/assets/' + encodeURIComponent(asset.id) + '/" class="asset-name-link">' + escapeHtml(asset.name) + '</a></td>' +
+            '<tr class="asset-table-row" data-asset-id="' + encodeURIComponent(asset.id) + '" tabindex="0" role="button" aria-label="View details for ' + escapeHtml(asset.name) + '">' +
+                '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
                 '<td>' + escapeHtml(asset.type) + '</td>' +
                 '<td>' + escapeHtml(asset.serial_number) + '</td>' +
                 '<td><span class="badge badge-' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
@@ -124,9 +140,8 @@
                 '<td class="date-cell">' + formatDate(asset.date_assigned) + '</td>' +
                 '<td class="date-cell">' + formatDate(asset.date_returned) + '</td>' +
                 '<td class="actions-cell">' +
-                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/" class="btn btn-sm btn-primary">View</a>' +
-                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/edit/" class="btn btn-sm btn-secondary">Edit</a>' +
-                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/delete/" class="btn btn-sm btn-danger">Delete</a>' +
+                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/edit/" class="btn btn-sm btn-secondary" data-row-action="true">Edit</a>' +
+                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/delete/" class="btn btn-sm btn-danger" data-row-action="true">Delete</a>' +
                 '</td>' +
             '</tr>'
         );
@@ -205,6 +220,185 @@
             .replace(/'/g, '&#039;');
     }
     
+    function setupRowInteractions() {
+        if (!elements.assetTableBody) {
+            return;
+        }
+
+        elements.assetTableBody.addEventListener('click', function(event) {
+            if (event.target.closest('[data-row-action="true"]')) {
+                return;
+            }
+
+            const row = event.target.closest('.asset-table-row');
+            if (!row) {
+                return;
+            }
+
+            openAssetDetailCard(row.dataset.assetId);
+        });
+
+        elements.assetTableBody.addEventListener('keydown', function(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            const row = event.target.closest('.asset-table-row');
+            if (!row) {
+                return;
+            }
+
+            event.preventDefault();
+            openAssetDetailCard(row.dataset.assetId);
+        });
+    }
+
+    function setupDetailCard() {
+        if (!elements.detailCard) {
+            return;
+        }
+
+        elements.detailCard.querySelectorAll('[data-close-card]').forEach(function(node) {
+            node.addEventListener('click', closeAssetDetailCard);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && activeAssetId !== null) {
+                closeAssetDetailCard();
+            }
+        });
+    }
+
+    function openAssetDetailCard(assetId) {
+        const asset = assetCache.get(String(assetId));
+        if (!asset || !elements.detailCard) {
+            return;
+        }
+
+        activeAssetId = String(assetId);
+        renderAssetDetailCard(asset);
+
+        elements.detailCard.classList.add('open');
+        elements.detailCard.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('asset-detail-card-open');
+
+        const rows = elements.assetTableBody.querySelectorAll('.asset-table-row');
+        rows.forEach(function(row) {
+            row.classList.toggle('selected', row.dataset.assetId === activeAssetId);
+        });
+
+        const closeButton = elements.detailCard.querySelector('.asset-detail-card-close');
+        if (closeButton) {
+            closeButton.focus();
+        }
+    }
+
+    function closeAssetDetailCard() {
+        if (!elements.detailCard) {
+            return;
+        }
+
+        activeAssetId = null;
+        elements.detailCard.classList.remove('open');
+        elements.detailCard.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('asset-detail-card-open');
+
+        if (elements.assetTableBody) {
+            elements.assetTableBody.querySelectorAll('.asset-table-row.selected').forEach(function(row) {
+                row.classList.remove('selected');
+            });
+        }
+    }
+
+    function renderAssetDetailCard(asset) {
+        const statusLabel = asset.status_label || asset.status || '';
+        const statusClass = String(statusLabel).toLowerCase().replace(/\s+/g, '');
+        const employee = asset.assigned_employee;
+        const title = elements.detailCard.querySelector('#asset-detail-card-title');
+        const subtitle = elements.detailCard.querySelector('.asset-detail-card-subtitle');
+        const body = elements.detailCard.querySelector('.asset-detail-card-body');
+        const footer = elements.detailCard.querySelector('.asset-detail-card-footer');
+
+        if (title) {
+            title.textContent = asset.name || 'Asset';
+        }
+        if (subtitle) {
+            subtitle.innerHTML = '<span class="badge badge-' + escapeHtml(statusClass) + '">' +
+                escapeHtml(statusLabel) + '</span>';
+        }
+
+        if (body) {
+            body.innerHTML =
+                '<div class="asset-detail-grid">' +
+                    detailField('Type', asset.type) +
+                    detailField('Serial Number', asset.serial_number, true) +
+                    detailField('Status', statusLabel) +
+                    detailField('Created', formatDateTime(asset.date_created)) +
+                    detailField('Last Assigned', formatDateTime(asset.date_assigned)) +
+                    detailField('Last Returned', formatDateTime(asset.date_returned)) +
+                '</div>' +
+                renderAssignmentSection(employee);
+        }
+
+        if (footer) {
+            footer.innerHTML =
+                '<a href="/assets/' + encodeURIComponent(asset.id) + '/edit/" class="btn btn-secondary">Edit</a>' +
+                '<a href="/assets/' + encodeURIComponent(asset.id) + '/delete/" class="btn btn-danger">Delete</a>';
+        }
+    }
+
+    function detailField(label, value, emphasize) {
+        const displayValue = value ? escapeHtml(value) : '—';
+        const valueClass = emphasize ? 'asset-detail-value asset-detail-value-strong' : 'asset-detail-value';
+        return '' +
+            '<div class="asset-detail-field">' +
+                '<span class="asset-detail-label">' + escapeHtml(label) + '</span>' +
+                '<span class="' + valueClass + '">' + displayValue + '</span>' +
+            '</div>';
+    }
+
+    function renderAssignmentSection(employee) {
+        if (!employee) {
+            return '' +
+                '<section class="asset-detail-section">' +
+                    '<h4>Assignment</h4>' +
+                    '<p class="asset-detail-empty">This asset is not currently assigned.</p>' +
+                '</section>';
+        }
+
+        const abbreviation = employee.department_abbreviation || abbreviateDepartment(employee.department);
+
+        return '' +
+            '<section class="asset-detail-section">' +
+                '<h4>Current Assignee</h4>' +
+                '<div class="asset-detail-grid">' +
+                    detailField('Name', employee.name) +
+                    detailField('Department', employee.department) +
+                    detailField('Department Code', abbreviation) +
+                    detailField('Email', employee.email) +
+                '</div>' +
+            '</section>';
+    }
+
+    function formatDateTime(value) {
+        if (!value) {
+            return '—';
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '—';
+        }
+
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        }).format(date);
+    }
+
     // ============================================
     // Setup Filter Form
     // ============================================
@@ -351,7 +545,9 @@
     window.AssetManager = {
         init: init,
         handleAssign: handleAssign,
-        handleReturn: handleReturn
+        handleReturn: handleReturn,
+        openAssetDetailCard: openAssetDetailCard,
+        closeAssetDetailCard: closeAssetDetailCard
     };
     
 })();

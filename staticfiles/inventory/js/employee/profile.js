@@ -3,25 +3,10 @@
 (function() {
     'use strict';
 
-    async function fetchProfile() {
-        const response = await fetch('/api/profile/');
-        if (!response.ok) throw new Error('Failed to load profile');
-        return response.json();
-    }
-
-    async function updateProfile(data) {
-        const response = await fetch('/api/profile/', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
-            credentials: 'same-origin',
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('Update failed');
-        return response.json();
-    }
-
+    // ============================================
+    // CSRF Token Helper
+    // ============================================
     function getCSRFToken() {
-        // same as before
         const name = 'csrftoken';
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -37,9 +22,36 @@
         return cookieValue;
     }
 
+    // ============================================
+    // API Functions
+    // ============================================
+    async function fetchProfile() {
+        const response = await fetch('/api/profile/');
+        if (!response.ok) throw new Error('Failed to load profile');
+        return response.json();
+    }
+
+    async function updateProfile(data) {
+        const response = await fetch('/api/profile/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Update failed');
+        return response.json();
+    }
+
+    // ============================================
+    // Render Profile Form
+    // ============================================
     function renderProfileForm(data, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+
         container.innerHTML = `
             <form id="profile-form">
                 <div class="mb-3">
@@ -57,12 +69,15 @@
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </form>
         `;
-        container.querySelector('#profile-form').addEventListener('submit', async (e) => {
+
+        const form = container.querySelector('#profile-form');
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
+
             try {
-                const result = await updateProfile(payload);
+                await updateProfile(payload);
                 if (window.showToast) {
                     window.showToast('✅ Profile updated!', 'success');
                 }
@@ -74,10 +89,66 @@
         });
     }
 
+    // ============================================
+    // Toast Helper (fallback if not available)
+    // ============================================
+    function showToast(message, type) {
+        if (window.showToast) {
+            window.showToast(message, type);
+            return;
+        }
+        // Fallback alert if toast function doesn't exist
+        alert(message);
+    }
+
+    // ============================================
+    // Load and Render Profile on Page
+    // ============================================
+    async function loadProfile(containerId) {
+        try {
+            const data = await fetchProfile();
+            renderProfileForm(data, containerId);
+        } catch (error) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // ============================================
+    // Auto-init if container exists
+    // ============================================
+    function init() {
+        const container = document.getElementById('profile-container');
+        if (container) {
+            loadProfile('profile-container');
+        }
+    }
+
+    // ============================================
+    // Export
+    // ============================================
     window.ProfileModule = {
         fetchProfile,
         updateProfile,
         renderProfileForm,
+        loadProfile,
+        init,
     };
+
+    // ============================================
+    // Auto-init on DOM ready
+    // ============================================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
