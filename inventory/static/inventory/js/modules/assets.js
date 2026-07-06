@@ -31,7 +31,7 @@
 
     function refreshTableHelpers(root) {
         if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
-            window.AssetTableExpand.refresh(root || document.getElementById('all-assets'));
+            window.AssetTableExpand.refresh(root || document);
         }
         if (window.AssetBulkSelect && typeof window.AssetBulkSelect.refresh === 'function') {
             window.AssetBulkSelect.refresh(root || document);

@@ -120,10 +120,20 @@
         host.appendChild(footer);
     }
 
+    function getSections(scope) {
+        var root = scope || document;
+
+        if (root !== document && root.matches
+            && root.matches('.asset-section, .asset-catalog-section, #all-assets')) {
+            return [root];
+        }
+
+        return Array.from(root.querySelectorAll('.asset-section, .asset-catalog-section, #all-assets'));
+    }
+
     function init(root, options) {
         options = options || {};
-        var scope = root || document;
-        var sections = scope.querySelectorAll('.asset-section, .asset-catalog-section, #all-assets');
+        var sections = getSections(root);
 
         sections.forEach(function(section) {
             setupSection(section, { preserveLevel: options.preserveLevel });
