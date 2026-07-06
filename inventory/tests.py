@@ -1507,6 +1507,19 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertContains(response, 'class="actions-col"')
         self.assertContains(response, 'data-action="view"')
 
+    def test_employee_list_shows_row_actions_menu(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("employee_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "employee-row-menu.js")
+        self.assertContains(response, "fa-ellipsis-v")
+        self.assertContains(response, 'class="employee-row-menu"')
+        self.assertContains(response, 'data-action="edit"')
+        self.assertContains(response, 'data-action="delete"')
+        self.assertNotContains(response, 'btn btn-sm btn-danger">Delete</a>')
+
     def test_employee_api_list_returns_assigned_asset_counts(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
         self.client.force_login(self.user)

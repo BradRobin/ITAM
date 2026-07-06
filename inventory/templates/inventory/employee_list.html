@@ -4,7 +4,7 @@
 {% block title %}Employees - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=15">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=16">
 {% endblock %}
 
 {% block content %}
@@ -22,7 +22,7 @@
                     <th>Name</th>
                     <th>Department</th>
                     <th>Email</th>
-                    <th>Actions</th>
+                    <th scope="col" class="actions-col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,10 +31,7 @@
                         <td><strong>{{ employee.name }}</strong></td>
                         <td>{{ employee.department }}</td>
                         <td><a href="mailto:{{ employee.email }}">{{ employee.email }}</a></td>
-                        <td class="actions-cell">
-                            <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-sm btn-secondary">Edit</a>
-                            <a href="{% url 'employee_delete' employee.pk %}" class="btn btn-sm btn-danger">Delete</a>
-                        </td>
+                        {% include 'inventory/includes/employee_row_actions.html' with employee_id=employee.pk employee_name=employee.name %}
                     </tr>
                 {% empty %}
                     <tr>
@@ -73,5 +70,6 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/modules/employees.js' %}"></script>
+    <script src="{% static 'inventory/js/modules/employee-row-menu.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/employees.js' %}?v=2"></script>
 {% endblock %}
