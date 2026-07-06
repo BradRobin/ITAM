@@ -51,6 +51,7 @@ from .services.asset_import import (
     parse_csv_upload,
     serialize_catalog,
     serialize_import_rows,
+    validate_csv_upload,
 )
 from .services.metrics import (
     get_overdue_assets_queryset,
@@ -1031,17 +1032,26 @@ class ImportAssetCSVValidateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 status=400,
             )
         try:
-            rows = parse_csv_upload(uploaded)
-            conflicts = detect_serial_conflicts(rows)
-            valid_count = sum(1 for row in rows if "error" not in row)
+            column_mapping = None
+            mapping_raw = request.POST.get("column_mapping")
+            if mapping_raw:
+                column_mapping = json.loads(mapping_raw)
+
+            result = validate_csv_upload(uploaded, column_mapping)
+            if result.get("needs_column_mapping"):
+                return JsonResponse(result)
+
             return JsonResponse(
                 {
-                    "rows": serialize_import_rows(rows),
-                    "conflicts": conflicts,
-                    "valid_count": valid_count,
-                    "error_count": sum(1 for row in rows if "error" in row),
+                    "rows": serialize_import_rows(result["rows"]),
+                    "conflicts": result["conflicts"],
+                    "valid_count": result["valid_count"],
+                    "error_count": result["error_count"],
+                    "column_mapping": result.get("column_mapping", {}),
                 }
             )
+        except json.JSONDecodeError:
+            return JsonResponse({"detail": "Invalid column mapping."}, status=400)
         except CSVImportError as exc:
             return JsonResponse({"detail": str(exc), "code": exc.code}, status=400)
 

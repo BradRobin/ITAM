@@ -85,7 +85,7 @@ def _normalize_status(value: str) -> str:
     return normalized
 
 
-def parse_csv_upload(uploaded_file) -> list[dict]:
+def _read_csv_text(uploaded_file) -> tuple[str, csv.Dialect]:
     if not is_csv_upload(uploaded_file):
         raise CSVImportError(
             "The chosen file was not a CSV, Try again.",
@@ -94,12 +94,13 @@ def parse_csv_upload(uploaded_file) -> list[dict]:
 
     raw = uploaded_file.read()
     if isinstance(raw, bytes):
+        text = None
         for encoding in ("utf-8-sig", "utf-8", "latin-1"):
             try:
                 text = raw.decode(encoding)
                 break
             except UnicodeDecodeError:
-                text = None
+                continue
         if text is None:
             raise CSVImportError("Unable to read the CSV file encoding.")
     else:
@@ -114,24 +115,71 @@ def parse_csv_upload(uploaded_file) -> list[dict]:
     except csv.Error:
         dialect = csv.excel
 
-    reader = csv.reader(io.StringIO(text), dialect)
-    try:
-        header_row = next(reader)
-    except StopIteration:
-        raise CSVImportError("The CSV file is empty.")
+    return text, dialect
 
+
+def _auto_column_map(headers: list[str]) -> dict[str, int]:
     column_map = {}
-    for index, header in enumerate(header_row):
+    for index, header in enumerate(headers):
         key = HEADER_ALIASES.get(_normalize_header(header))
-        if key:
+        if key and key not in column_map:
             column_map[key] = index
+    return column_map
 
-    required = {"name", "type", "serial_number"}
-    if not required.issubset(column_map):
-        raise CSVImportError(
-            "CSV must include columns: Name, Type, and Serial Number "
-            "(matching the export format)."
-        )
+
+def _fuzzy_suggest_mapping(headers: list[str], column_map: dict[str, int]) -> dict[str, str | None]:
+    suggested = {
+        "name": None,
+        "type": None,
+        "serial_number": None,
+        "status": None,
+        "last_maintenance_date": None,
+    }
+    for field, index in column_map.items():
+        if field in suggested and index < len(headers):
+            suggested[field] = headers[index]
+
+    fuzzy_rules = {
+        "name": ("asset name", "device name", "equipment name", "product name", "item name"),
+        "type": ("asset type", "device type", "category", "equipment type"),
+        "serial_number": ("serial no", "serial #", "sn", "serial number", "asset tag", "tag"),
+        "status": ("asset status", "state", "condition"),
+        "last_maintenance_date": ("last service", "service date", "maintenance date"),
+    }
+    for header in headers:
+        normalized = _normalize_header(header)
+        for field, aliases in fuzzy_rules.items():
+            if suggested[field]:
+                continue
+            if normalized == field.replace("_", " ") or normalized in aliases:
+                suggested[field] = header
+    return suggested
+
+
+def _column_map_from_user_mapping(headers: list[str], mapping: dict) -> dict[str, int]:
+    header_to_index = {header: index for index, header in enumerate(headers)}
+    column_map: dict[str, int] = {}
+    for field, header_name in mapping.items():
+        if field not in HEADER_ALIASES.values() and field not in {
+            "name",
+            "type",
+            "serial_number",
+            "status",
+            "last_maintenance_date",
+        }:
+            continue
+        if not header_name or not str(header_name).strip():
+            continue
+        header_label = str(header_name).strip()
+        if header_label not in header_to_index:
+            raise CSVImportError(f'Column "{header_label}" was not found in the CSV.')
+        column_map[field] = header_to_index[header_label]
+    return column_map
+
+
+def _parse_csv_rows(text: str, dialect: csv.Dialect, column_map: dict[str, int]) -> list[dict]:
+    reader = csv.reader(io.StringIO(text), dialect)
+    next(reader, None)
 
     rows = []
     for line_number, cells in enumerate(reader, start=2):
@@ -175,11 +223,75 @@ def parse_csv_upload(uploaded_file) -> list[dict]:
             }
         )
 
+    return rows
+
+
+def validate_csv_upload(uploaded_file, column_mapping: dict | None = None) -> dict:
+    text, dialect = _read_csv_text(uploaded_file)
+    reader = csv.reader(io.StringIO(text), dialect)
+    try:
+        header_row = next(reader)
+    except StopIteration:
+        raise CSVImportError("The CSV file is empty.")
+
+    headers = [str(header).strip() for header in header_row]
+    if not headers or not any(headers):
+        raise CSVImportError("The CSV file has no column headers.")
+
+    if column_mapping:
+        column_map = _column_map_from_user_mapping(headers, column_mapping)
+        missing = [
+            label
+            for field, label in (
+                ("name", "Name"),
+                ("type", "Type"),
+                ("serial_number", "Serial Number"),
+            )
+            if field not in column_map
+        ]
+        if missing:
+            raise CSVImportError(
+                "Please map the required columns: " + ", ".join(missing) + "."
+            )
+    else:
+        column_map = _auto_column_map(headers)
+        required = {"name", "type", "serial_number"}
+        if not required.issubset(column_map):
+            return {
+                "needs_column_mapping": True,
+                "headers": headers,
+                "suggested_mapping": _fuzzy_suggest_mapping(headers, column_map),
+            }
+
+    rows = _parse_csv_rows(text, dialect, column_map)
     valid_rows = [row for row in rows if "error" not in row]
     if not valid_rows:
         raise CSVImportError("No valid asset rows were found in the CSV.")
 
-    return rows
+    applied_mapping = {
+        field: headers[index]
+        for field, index in column_map.items()
+        if index < len(headers)
+    }
+    conflicts = detect_serial_conflicts(rows)
+    return {
+        "ready": True,
+        "rows": rows,
+        "conflicts": conflicts,
+        "valid_count": len(valid_rows),
+        "error_count": sum(1 for row in rows if "error" in row),
+        "column_mapping": applied_mapping,
+    }
+
+
+def parse_csv_upload(uploaded_file, column_mapping: dict | None = None) -> list[dict]:
+    result = validate_csv_upload(uploaded_file, column_mapping)
+    if result.get("needs_column_mapping"):
+        raise CSVImportError(
+            "Column mapping is required before this CSV can be imported.",
+            code="needs_column_mapping",
+        )
+    return result["rows"]
 
 
 def _coerce_row(row: dict) -> dict:

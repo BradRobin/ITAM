@@ -4,12 +4,24 @@
 (function() {
     'use strict';
 
+    var MAPPING_FIELDS = [
+        { key: 'name', selectId: 'import-map-name', required: true },
+        { key: 'type', selectId: 'import-map-type', required: true },
+        { key: 'serial_number', selectId: 'import-map-serial', required: true },
+        { key: 'status', selectId: 'import-map-status', required: false },
+        { key: 'last_maintenance_date', selectId: 'import-map-maintenance', required: false }
+    ];
+
     var state = {
         rows: [],
         conflicts: [],
         resolutions: {},
         mode: 'merge',
-        catalogName: ''
+        catalogName: '',
+        pendingFile: null,
+        headers: [],
+        columnMapping: {},
+        suggestedMapping: {}
     };
 
     var els = {};
@@ -37,6 +49,8 @@
         els.fileInput = document.getElementById('import-file-input');
         els.chooseBtn = document.getElementById('import-choose-file-btn');
         els.uploadError = document.getElementById('import-upload-error');
+        els.columnList = document.getElementById('import-column-list');
+        els.columnError = document.getElementById('import-column-error');
         els.conflictList = document.getElementById('import-conflict-list');
         els.catalogNameWrap = document.getElementById('import-catalog-name-wrap');
         els.catalogNameInput = document.getElementById('import-catalog-name');
@@ -49,11 +63,16 @@
         els.modal.querySelectorAll('.import-step').forEach(function(step) {
             step.classList.toggle('active', step.id === stepId);
         });
-        els.nextBtn.hidden = stepId === 'import-step-upload' || stepId === 'import-step-processing' || stepId === 'import-step-success';
+        els.nextBtn.hidden = stepId === 'import-step-upload' ||
+            stepId === 'import-step-processing' ||
+            stepId === 'import-step-success';
+
         els.doneBtn.hidden = stepId !== 'import-step-success';
 
-        if (stepId === 'import-step-conflicts') {
-            els.nextBtn.textContent = state.conflicts.length ? 'Continue' : 'Continue';
+        if (stepId === 'import-step-columns') {
+            els.nextBtn.textContent = 'Continue';
+        } else if (stepId === 'import-step-conflicts') {
+            els.nextBtn.textContent = 'Continue';
         } else if (stepId === 'import-step-destination') {
             els.nextBtn.textContent = 'Import Assets';
         } else {
@@ -81,7 +100,12 @@
         state.resolutions = {};
         state.mode = 'merge';
         state.catalogName = '';
+        state.pendingFile = null;
+        state.headers = [];
+        state.columnMapping = {};
+        state.suggestedMapping = {};
         if (els.uploadError) els.uploadError.hidden = true;
+        if (els.columnError) els.columnError.hidden = true;
         if (els.fileInput) els.fileInput.value = '';
         if (els.catalogNameInput) els.catalogNameInput.value = '';
         if (els.catalogNameWrap) els.catalogNameWrap.classList.remove('visible');
@@ -95,22 +119,61 @@
         els.uploadError.hidden = false;
     }
 
+    function showColumnError(message) {
+        els.columnError.textContent = message;
+        els.columnError.hidden = false;
+    }
+
     function validateFile(file) {
         if (!file) return;
         if (!file.name.toLowerCase().endsWith('.csv')) {
             showUploadError('The chosen file was not a CSV, Try again.');
             return;
         }
+        state.pendingFile = file;
         uploadFile(file);
     }
 
-    function uploadFile(file) {
+    function handleValidateResponse(result) {
+        if (!result.ok) {
+            showStep('import-step-upload');
+            showUploadError(result.data.detail || 'Unable to read CSV file.');
+            return;
+        }
+
+        if (result.data.needs_column_mapping) {
+            state.headers = result.data.headers || [];
+            state.suggestedMapping = result.data.suggested_mapping || {};
+            renderColumnMapping();
+            showStep('import-step-columns');
+            return;
+        }
+
+        state.rows = result.data.rows || [];
+        state.conflicts = result.data.conflicts || [];
+        state.resolutions = {};
+        state.columnMapping = result.data.column_mapping || {};
+        updateSummary(result.data);
+        if (state.conflicts.length) {
+            renderConflicts();
+            showStep('import-step-conflicts');
+        } else {
+            showStep('import-step-destination');
+        }
+    }
+
+    function uploadFile(file, columnMapping) {
         els.uploadError.hidden = true;
+        if (els.columnError) els.columnError.hidden = true;
         showStep('import-step-processing');
-        els.modal.querySelector('#import-processing-label').textContent = 'Validating CSV...';
+        els.modal.querySelector('#import-processing-label').textContent =
+            columnMapping ? 'Applying column mapping...' : 'Validating CSV...';
 
         var formData = new FormData();
         formData.append('file', file);
+        if (columnMapping) {
+            formData.append('column_mapping', JSON.stringify(columnMapping));
+        }
 
         fetch(els.modal.dataset.validateUrl, {
             method: 'POST',
@@ -123,27 +186,77 @@
                     return { ok: response.ok, data: data };
                 });
             })
-            .then(function(result) {
-                if (!result.ok) {
-                    showStep('import-step-upload');
-                    showUploadError(result.data.detail || 'Unable to read CSV file.');
-                    return;
-                }
-                state.rows = result.data.rows || [];
-                state.conflicts = result.data.conflicts || [];
-                state.resolutions = {};
-                updateSummary(result.data);
-                if (state.conflicts.length) {
-                    renderConflicts();
-                    showStep('import-step-conflicts');
-                } else {
-                    showStep('import-step-destination');
-                }
-            })
+            .then(handleValidateResponse)
             .catch(function() {
-                showStep('import-step-upload');
-                showUploadError('Upload failed. Please try again.');
+                if (columnMapping) {
+                    showStep('import-step-columns');
+                    showColumnError('Validation failed. Please try again.');
+                } else {
+                    showStep('import-step-upload');
+                    showUploadError('Upload failed. Please try again.');
+                }
             });
+    }
+
+    function populateMappingSelect(select, headers, selectedValue, includeEmpty) {
+        if (!select) return;
+        var emptyLabel = includeEmpty ? 'Not mapped' : 'Select column';
+        var options = ['<option value="">' + emptyLabel + '</option>'];
+        headers.forEach(function(header) {
+            var selected = header === selectedValue ? ' selected' : '';
+            options.push(
+                '<option value="' + escapeHtml(header) + '"' + selected + '>' +
+                escapeHtml(header) +
+                '</option>'
+            );
+        });
+        select.innerHTML = options.join('');
+    }
+
+    function renderColumnMapping() {
+        if (els.columnList) {
+            els.columnList.innerHTML = state.headers.map(function(header) {
+                return '<li>' + escapeHtml(header) + '</li>';
+            }).join('');
+        }
+
+        MAPPING_FIELDS.forEach(function(field) {
+            var select = document.getElementById(field.selectId);
+            var suggested = state.suggestedMapping[field.key] || '';
+            populateMappingSelect(select, state.headers, suggested, !field.required);
+        });
+    }
+
+    function readColumnMappingFromForm() {
+        var mapping = {};
+        MAPPING_FIELDS.forEach(function(field) {
+            var select = document.getElementById(field.selectId);
+            if (!select) return;
+            var value = select.value.trim();
+            if (value) {
+                mapping[field.key] = value;
+            }
+        });
+        return mapping;
+    }
+
+    function mappingIsComplete(mapping) {
+        return Boolean(mapping.name && mapping.type && mapping.serial_number);
+    }
+
+    function submitColumnMapping() {
+        var mapping = readColumnMappingFromForm();
+        if (!mappingIsComplete(mapping)) {
+            showColumnError('Please map Asset name, Type, and Serial number before continuing.');
+            return;
+        }
+        state.columnMapping = mapping;
+        if (!state.pendingFile) {
+            showColumnError('The uploaded file is no longer available. Please choose the file again.');
+            showStep('import-step-upload');
+            return;
+        }
+        uploadFile(state.pendingFile, mapping);
     }
 
     function updateSummary(data) {
@@ -384,6 +497,14 @@
             els.fileInput.click();
         });
 
+        MAPPING_FIELDS.forEach(function(field) {
+            var select = document.getElementById(field.selectId);
+            if (!select) return;
+            select.addEventListener('change', function() {
+                if (els.columnError) els.columnError.hidden = true;
+            });
+        });
+
         els.modal.querySelectorAll('input[name="import-mode"]').forEach(function(radio) {
             radio.addEventListener('change', function() {
                 state.mode = radio.value;
@@ -407,7 +528,9 @@
         els.nextBtn.addEventListener('click', function() {
             var active = els.modal.querySelector('.import-step.active');
             if (!active) return;
-            if (active.id === 'import-step-conflicts') {
+            if (active.id === 'import-step-columns') {
+                submitColumnMapping();
+            } else if (active.id === 'import-step-conflicts') {
                 if (!allConflictsResolved()) {
                     toast('Please resolve all serial conflicts before continuing.', 'warning');
                     return;

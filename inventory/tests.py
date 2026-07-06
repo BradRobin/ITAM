@@ -878,6 +878,53 @@ class AssetCSVImportTests(TestCase):
         self.assertEqual(len(payload["conflicts"]), 1)
         self.assertEqual(payload["conflicts"][0]["existing_name"], "Existing Laptop")
 
+    def test_validate_requests_column_mapping_for_nonstandard_headers(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Asset Name,Category,SN,State\n"
+            "Uploaded Laptop,Laptop,IMPORT-002,Available\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["needs_column_mapping"])
+        self.assertEqual(
+            payload["headers"],
+            ["Asset Name", "Category", "SN", "State"],
+        )
+        self.assertEqual(payload["suggested_mapping"]["name"], "Asset Name")
+        self.assertEqual(payload["suggested_mapping"]["serial_number"], "SN")
+
+    def test_validate_accepts_user_column_mapping(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Asset Name,Category,SN,State\n"
+            "Uploaded Laptop,Laptop,IMPORT-002,Available\n"
+        )
+        mapping = json.dumps(
+            {
+                "name": "Asset Name",
+                "type": "Category",
+                "serial_number": "SN",
+                "status": "State",
+            }
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {
+                "file": self._csv_file(csv_content),
+                "column_mapping": mapping,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["valid_count"], 1)
+        self.assertEqual(payload["rows"][0]["name"], "Uploaded Laptop")
+        self.assertEqual(payload["rows"][0]["serial_number"], "IMPORT-002")
+
     def test_execute_merge_replace_updates_existing_asset(self):
         self.client.force_login(self.admin)
         rows = [
