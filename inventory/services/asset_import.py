@@ -201,6 +201,32 @@ def serialize_import_rows(rows: list[dict]) -> list[dict]:
     return serialized
 
 
+def serialize_catalog_asset(asset: CatalogAsset) -> dict:
+    return {
+        "name": asset.name,
+        "type": asset.type,
+        "serial_number": asset.serial_number,
+        "status": asset.status,
+        "last_maintenance_date": (
+            asset.last_maintenance_date.isoformat()
+            if asset.last_maintenance_date
+            else None
+        ),
+        "imported_at": asset.imported_at.isoformat() if asset.imported_at else None,
+    }
+
+
+def serialize_catalog(catalog: AssetCatalog) -> dict:
+    assets = list(catalog.assets.all().order_by("name", "serial_number"))
+    return {
+        "id": catalog.pk,
+        "name": catalog.name,
+        "created_at": catalog.created_at.isoformat() if catalog.created_at else None,
+        "asset_count": len(assets),
+        "assets": [serialize_catalog_asset(asset) for asset in assets],
+    }
+
+
 def detect_serial_conflicts(rows: list[dict]) -> list[dict]:
     conflicts = []
     seen: dict[str, dict] = {}
@@ -312,6 +338,7 @@ def execute_import(
             "mode": "catalog",
             "catalog_id": catalog.pk,
             "catalog_name": catalog.name,
+            "catalog": serialize_catalog(catalog),
             "created": created,
             "updated": 0,
             "skipped": skipped,

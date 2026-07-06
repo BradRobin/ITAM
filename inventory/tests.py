@@ -931,10 +931,33 @@ class AssetCSVImportTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
+        payload = response.json()
         catalog = AssetCatalog.objects.get(name="Legacy Spreadsheet")
         self.assertEqual(catalog.assets.count(), 1)
         self.assertEqual(CatalogAsset.objects.filter(catalog=catalog).first().name, "Catalog Laptop")
         self.assertEqual(Asset.objects.count(), 1)
+        self.assertEqual(payload["catalog"]["name"], "Legacy Spreadsheet")
+        self.assertEqual(payload["catalog"]["assets"][0]["name"], "Catalog Laptop")
+
+    def test_asset_list_renders_catalog_tables_above_all_assets(self):
+        catalog = AssetCatalog.objects.create(name="Legacy Spreadsheet", created_by=self.admin)
+        CatalogAsset.objects.create(
+            catalog=catalog,
+            name="Catalog Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="CAT-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('id="asset-catalog-sections"', content)
+        self.assertIn("Legacy Spreadsheet", content)
+        self.assertIn("Catalog Laptop", content)
+        self.assertLess(content.index("Legacy Spreadsheet"), content.index("All Assets"))
 
     def test_import_endpoints_reject_non_admin(self):
         self.client.force_login(self.user)

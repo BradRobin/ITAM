@@ -251,6 +251,9 @@
                     return;
                 }
                 renderSuccess(result.data);
+                if (result.data.mode === 'catalog' && result.data.catalog) {
+                    renderCatalogSection(result.data.catalog);
+                }
                 showStep('import-step-success');
                 if (state.mode === 'merge' && window.AssetManager && typeof window.AssetManager.loadAssetTable === 'function') {
                     window.AssetManager.loadAssetTable();
@@ -279,6 +282,72 @@
                 '<p>' + data.created + ' created · ' + data.updated + ' updated' +
                 (data.skipped ? ' · ' + data.skipped + ' skipped' : '') + '.</p>';
         }
+    }
+
+    function formatDate(value) {
+        if (!value) return '—';
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function renderCatalogSection(catalog) {
+        var mount = document.getElementById('asset-catalog-sections');
+        var allAssets = document.getElementById('all-assets');
+        if (!mount || !allAssets || !catalog) return;
+
+        var sectionId = 'asset-catalog-' + catalog.id;
+        var existing = document.getElementById(sectionId);
+        if (existing) existing.remove();
+
+        var rows = (catalog.assets || []).map(function(asset) {
+            var badgeClass = String(asset.status || '').toLowerCase().replace(/\s+/g, '');
+            return '<tr>' +
+                '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
+                '<td>' + escapeHtml(asset.type) + '</td>' +
+                '<td>' + escapeHtml(asset.serial_number) + '</td>' +
+                '<td><span class="badge badge-' + badgeClass + '">' + escapeHtml(asset.status) + '</span></td>' +
+                '<td class="date-cell">' + escapeHtml(formatDate(asset.last_maintenance_date)) + '</td>' +
+                '<td class="date-cell">' + escapeHtml(formatDate(asset.imported_at)) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        if (!rows) {
+            rows = '<tr><td colspan="6" class="empty-state">No assets in this directory.</td></tr>';
+        }
+
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML =
+            '<section class="asset-section asset-catalog-section" id="' + sectionId + '">' +
+                '<div class="asset-section-header">' +
+                    '<div class="asset-section-title">' +
+                        '<i class="fas fa-table"></i>' +
+                        '<h2>' + escapeHtml(catalog.name) + '</h2>' +
+                    '</div>' +
+                    '<span class="asset-section-count">' + (catalog.asset_count || 0) + ' item' + ((catalog.asset_count || 0) === 1 ? '' : 's') + '</span>' +
+                '</div>' +
+                '<div class="table-wrapper asset-section-table">' +
+                    '<table class="asset-table">' +
+                        '<thead>' +
+                            '<tr>' +
+                                '<th>Name</th>' +
+                                '<th>Type</th>' +
+                                '<th>Serial Number</th>' +
+                                '<th>Status</th>' +
+                                '<th>Last Maintenance</th>' +
+                                '<th>Imported</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody>' + rows + '</tbody>' +
+                    '</table>' +
+                '</div>' +
+            '</section>';
+
+        mount.prepend(wrapper.firstElementChild);
     }
 
     function bindEvents() {

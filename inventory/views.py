@@ -40,7 +40,7 @@ from .forms import (
     EmployeeForm,
     MaintenanceLogForm,
 )
-from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, AssetCatalog, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
 from .services.assets import get_asset_list_sections
 from .services.background_jobs import enqueue_job, serialize_job
 from .services.asset_import import (
@@ -49,6 +49,7 @@ from .services.asset_import import (
     execute_import,
     is_csv_upload,
     parse_csv_upload,
+    serialize_catalog,
     serialize_import_rows,
 )
 from .services.metrics import (
@@ -480,6 +481,11 @@ class AssetListView(LoginRequiredMixin, ListView):
                 "selected_type": self.request.GET.get("type", ""),
                 "selected_status": self.request.GET.get("status", ""),
                 "overdue_cutoff": get_service_overdue_cutoff().date(),
+                "asset_catalogs": [
+                    serialize_catalog(catalog)
+                    for catalog in AssetCatalog.objects.prefetch_related("assets")
+                    .order_by("-created_at", "name")
+                ],
                 "async_asset_sections": True,
                 "assigned_asset_rows": [],
                 "available_asset_rows": [],

@@ -364,3 +364,14 @@
 body.import-modal-open {
     overflow: hidden;
 }
+
+#asset-catalog-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.asset-catalog-section {
+    border-color: rgba(59, 130, 246, 0.25);
+}

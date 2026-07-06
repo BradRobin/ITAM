@@ -6,7 +6,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=3">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -39,6 +39,54 @@
             </select>
             <a href="{% url 'asset_list' %}" class="btn btn-secondary">Clear</a>
         </form>
+    </div>
+
+    <div id="asset-catalog-sections">
+        {% for catalog in asset_catalogs %}
+            <section class="asset-section asset-catalog-section" id="asset-catalog-{{ catalog.id }}">
+                <div class="asset-section-header">
+                    <div class="asset-section-title">
+                        <i class="fas fa-table"></i>
+                        <h2>{{ catalog.name }}</h2>
+                    </div>
+                    <span class="asset-section-count">{{ catalog.asset_count }} item{{ catalog.asset_count|pluralize }}</span>
+                </div>
+                <div class="table-wrapper asset-section-table">
+                    <table class="asset-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Serial Number</th>
+                                <th>Status</th>
+                                <th>Last Maintenance</th>
+                                <th>Imported</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset in catalog.assets %}
+                                <tr>
+                                    <td><span class="asset-name-text">{{ asset.name }}</span></td>
+                                    <td>{{ asset.type }}</td>
+                                    <td>{{ asset.serial_number }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                            {{ asset.status }}
+                                        </span>
+                                    </td>
+                                    <td class="date-cell">{{ asset.last_maintenance_date|default:"—" }}</td>
+                                    <td class="date-cell">{{ asset.imported_at|default:"—" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="empty-state">No assets in this directory.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endfor %}
     </div>
 
     <section class="asset-section" id="all-assets">
@@ -250,7 +298,7 @@
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
     <script>
