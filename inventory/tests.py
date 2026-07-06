@@ -12,6 +12,7 @@ from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
 from .models import Asset, AssetCatalog, Assignment, BackgroundJob, CatalogAsset, Employee, EmployeeNotification, MaintenanceLog
 from .services.background_jobs import enqueue_job
 from .services.dates import format_duration_since, format_duration_until
+from .services.ecosystem_map import build_ecosystem_map
 from .services.serial_numbers import build_serial_suggestion_payload, generate_unique_serial_numbers
 
 
@@ -489,6 +490,7 @@ class BackgroundJobTests(TestCase):
         self.assertEqual(detail.status_code, 200)
         self.assertEqual(detail.json()["status"], "completed")
         self.assertIn("total_assets", detail.json()["result"])
+        self.assertIn("ecosystem_map", detail.json()["result"])
 
     def test_csv_export_job_writes_downloadable_file(self):
         job = enqueue_job(self.user, BackgroundJob.JobType.CSV_EXPORT, force=True)
@@ -528,6 +530,71 @@ class BackgroundJobTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Background Laptop", response.content)
+
+
+class EcosystemMapTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="map-admin",
+            email="map-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.employee = Employee.objects.create(
+            name="Map Employee",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="map.employee@example.com",
+        )
+        self.asset = Asset.objects.create(
+            name="Map Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="MAP-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+    def test_build_ecosystem_map_includes_core_nodes(self):
+        graph = build_ecosystem_map(self.admin)
+
+        node_ids = {node["id"] for node in graph["nodes"]}
+        self.assertIn("hub-itam", node_ids)
+        self.assertIn("admin-user", node_ids)
+        self.assertIn("view-assets", node_ids)
+        self.assertIn("table-asset", node_ids)
+        self.assertGreaterEqual(len(graph["edges"]), 10)
+
+    def test_build_ecosystem_map_includes_assignment_relationships(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.asset.status = Asset.AssetStatus.ASSIGNED
+        self.asset.save(update_fields=["status"])
+
+        graph = build_ecosystem_map(self.admin)
+        labels = {edge["label"] for edge in graph["edges"]}
+
+        self.assertIn("assigned to", labels)
+        self.assertTrue(any(node["id"] == f"employee-{self.employee.pk}" for node in graph["nodes"]))
+        self.assertTrue(any(node["id"] == f"asset-{self.asset.pk}" for node in graph["nodes"]))
+
+    def test_reports_job_returns_ecosystem_map(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse("background_job_create"),
+            data=json.dumps({"job_type": "reports"}),
+            content_type="application/json",
+        )
+        job_id = response.json()["id"]
+        detail = self.client.get(reverse("background_job_detail", kwargs={"job_id": job_id}))
+        payload = detail.json()["result"]
+        self.assertIn("ecosystem_map", payload)
+        graph = json.loads(payload["ecosystem_map"])
+        self.assertIn("nodes", graph)
+        self.assertIn("edges", graph)
+
+    def test_reports_page_embeds_ecosystem_map(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse("reports"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "ecosystem-map-root")
+        self.assertContains(response, "report-ecosystem-map.js")
 
 
 class InventoryAdminConfigurationTests(TestCase):
@@ -1372,6 +1439,73 @@ class FrontendAPIBridgeTests(TestCase):
         payload = response.json()
         self.assertGreaterEqual(payload["unread_count"], 1)
         self.assertTrue(any(item["title"] == "Asset Assigned" for item in payload["notifications"]))
+
+    def test_bulk_delete_api_deletes_assets(self):
+        second_asset = Asset.objects.create(
+            name="Bulk Delete Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="BULK-DEL-1",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk, second_asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertEqual(set(payload["deleted"]), {self.asset.pk, second_asset.pk})
+        self.assertEqual(payload["failed"], [])
+        self.assertFalse(Asset.objects.filter(pk__in=[self.asset.pk, second_asset.pk]).exists())
+
+    def test_bulk_delete_api_rejects_non_admin(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Asset.objects.filter(pk=self.asset.pk).exists())
+
+    def test_bulk_delete_api_reports_protected_assets(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertEqual(payload["deleted"], [])
+        self.assertEqual(len(payload["failed"]), 1)
+        self.assertEqual(payload["failed"][0]["id"], self.asset.pk)
+        self.assertIn("assignment history", payload["failed"][0]["detail"])
+        self.assertTrue(Asset.objects.filter(pk=self.asset.pk).exists())
+
+    def test_asset_list_shows_bulk_select_for_admin(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="asset-bulk-checkbox"')
+        self.assertContains(response, 'id="asset-bulk-action-bar"', count=0)
+        self.assertContains(response, "asset-bulk-select.js")
+        self.assertContains(response, "asset-row-menu.js")
+        self.assertContains(response, "fa-ellipsis-v")
+        self.assertContains(response, 'class="actions-col"')
+        self.assertContains(response, 'data-action="view"')
 
     def test_employee_api_list_returns_assigned_asset_counts(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)

@@ -115,7 +115,7 @@ def handle_dashboard_job(job: BackgroundJob) -> dict:
 
 @register_handler(BackgroundJob.JobType.REPORTS)
 def handle_reports_job(job: BackgroundJob) -> dict:
-    return get_reports_context()
+    return get_reports_context(job.user)
 
 
 @register_handler(BackgroundJob.JobType.ASSET_SECTIONS)

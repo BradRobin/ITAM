@@ -1327,6 +1327,80 @@ class AssetReturnAPIView(LoginRequiredMixin, View):
         return JsonResponse(serialize_asset(asset))
 
 
+class AssetBulkDeleteAPIView(LoginRequiredMixin, View):
+    def post(self, request):
+        if not user_has_admin_access(request.user):
+            return json_permission_denied()
+
+        payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
+        raw_ids = payload.get("ids") or []
+        if not isinstance(raw_ids, list) or not raw_ids:
+            return JsonResponse(
+                {"detail": "Provide at least one asset id in ids."},
+                status=400,
+            )
+
+        deleted = []
+        failed = []
+        seen = set()
+
+        for raw_id in raw_ids:
+            try:
+                asset_id = int(raw_id)
+            except (TypeError, ValueError):
+                failed.append({"id": raw_id, "detail": "Invalid asset id."})
+                continue
+
+            if asset_id in seen:
+                continue
+            seen.add(asset_id)
+
+            asset = Asset.objects.filter(pk=asset_id).first()
+            if asset is None:
+                failed.append({"id": asset_id, "detail": "Asset not found."})
+                continue
+
+            try:
+                asset.delete()
+            except ProtectedError:
+                failed.append(
+                    {
+                        "id": asset_id,
+                        "detail": (
+                            "This asset cannot be deleted because it has "
+                            "assignment history."
+                        ),
+                    }
+                )
+                continue
+
+            deleted.append(asset_id)
+
+        if deleted:
+            add_session_notification(
+                request,
+                notification_type="info",
+                title="Assets Deleted",
+                message=(
+                    f"{len(deleted)} asset{'s' if len(deleted) != 1 else ''} "
+                    "removed from inventory."
+                ),
+                link=reverse("asset_list"),
+                source="asset_bulk_delete",
+            )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "deleted": deleted,
+                "failed": failed,
+            }
+        )
+
+
 class EmployeeAPIListView(LoginRequiredMixin, View):
     def get(self, request):
         queryset = Employee.objects.all().order_by("name")

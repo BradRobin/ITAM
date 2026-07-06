@@ -4,7 +4,7 @@
 {% block title %}Assets - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=15">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=5">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=6">
 {% endblock %}
@@ -55,12 +55,18 @@
                     <table class="asset-table">
                         <thead>
                             <tr>
+                                {% if user_is_admin %}
+                                <th class="asset-bulk-select-col" scope="col">
+                                    <input type="checkbox" class="asset-bulk-checkbox-all" data-bulk-select="true" aria-label="Select all assets in this table">
+                                </th>
+                                {% endif %}
                                 <th>Name</th>
                                 <th>Type</th>
                                 <th>Serial Number</th>
                                 <th>Status</th>
                                 <th>Last Maintenance</th>
                                 <th>Imported</th>
+                                <th scope="col" class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,6 +80,15 @@
                                     tabindex="0"
                                     role="button"
                                     aria-label="View details for {{ asset.name }}">
+                                    {% if user_is_admin %}
+                                        {% if asset.linked_asset_id %}
+                                        <td class="asset-bulk-select-col" data-row-action="true">
+                                            <input type="checkbox" class="asset-bulk-checkbox" data-bulk-select="true" data-asset-id="{{ asset.linked_asset_id }}" aria-label="Select {{ asset.name }}">
+                                        </td>
+                                        {% else %}
+                                        <td class="asset-bulk-select-col asset-bulk-select-empty" data-row-action="true" aria-hidden="true"></td>
+                                        {% endif %}
+                                    {% endif %}
                                     <td><span class="asset-name-text">{{ asset.name }}</span></td>
                                     <td>{{ asset.type }}</td>
                                     <td>{{ asset.serial_number }}</td>
@@ -84,10 +99,11 @@
                                     </td>
                                     <td class="date-cell">{{ asset.last_maintenance_date|default:"—" }}</td>
                                     <td class="date-cell">{{ asset.imported_at|default:"—" }}</td>
+                                    {% include "inventory/includes/asset_row_actions.html" with asset_id=asset.linked_asset_id asset_name=asset.name asset_status=asset.status %}
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="6" class="empty-state">No assets in this directory.</td>
+                                    <td colspan="{% if user_is_admin %}8{% else %}7{% endif %}" class="empty-state">No assets in this directory.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -109,6 +125,11 @@
             <table class="asset-table">
                 <thead>
                     <tr>
+                        {% if user_is_admin %}
+                        <th class="asset-bulk-select-col" scope="col">
+                            <input type="checkbox" class="asset-bulk-checkbox-all" data-bulk-select="true" aria-label="Select all assets in this table">
+                        </th>
+                        {% endif %}
                         <th>Name</th>
                         <th>Type</th>
                         <th>Serial Number</th>
@@ -117,12 +138,17 @@
                         <th>Created</th>
                         <th>Assigned</th>
                         <th>Returned</th>
-                        <th>Actions</th>
+                        <th scope="col" class="actions-col">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
                     {% for asset in assets %}
                         <tr class="asset-table-row" data-asset-id="{{ asset.pk }}" tabindex="0" role="button" aria-label="View details for {{ asset.name }}">
+                            {% if user_is_admin %}
+                            <td class="asset-bulk-select-col" data-row-action="true">
+                                <input type="checkbox" class="asset-bulk-checkbox" data-bulk-select="true" data-asset-id="{{ asset.pk }}" aria-label="Select {{ asset.name }}">
+                            </td>
+                            {% endif %}
                             <td><span class="asset-name-text">{{ asset.name }}</span></td>
                             <td>{{ asset.type }}</td>
                             <td>{{ asset.serial_number }}</td>
@@ -154,14 +180,11 @@
                             <td class="date-cell">{{ asset.date_created|date:"M d, Y" }}</td>
                             <td class="date-cell">{{ asset.last_assigned_date|date:"M d, Y"|default:"—" }}</td>
                             <td class="date-cell">{{ asset.last_returned_date|date:"M d, Y"|default:"—" }}</td>
-                            <td class="actions-cell">
-                                <a href="{% url 'asset_edit' asset.pk %}" class="btn btn-sm btn-secondary" data-row-action="true">Edit</a>
-                                <a href="{% url 'asset_delete' asset.pk %}" class="btn btn-sm btn-danger" data-row-action="true">Delete</a>
-                            </td>
+                            {% include "inventory/includes/asset_row_actions.html" with asset_id=asset.pk asset_name=asset.name asset_status=asset.status %}
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="empty-state">
+                            <td colspan="{% if user_is_admin %}10{% else %}9{% endif %}" class="empty-state">
                                 <div class="empty-state-content">
                                     <h3>No assets found</h3>
                                     <p>Start by adding your first asset.</p>
@@ -367,11 +390,16 @@
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/modules/asset-bulk-select.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/asset-table-expand.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=4"></script>
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=19"></script>
+    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=6"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=22"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            if (window.AssetBulkSelect && typeof window.AssetBulkSelect.init === 'function') {
+                window.AssetBulkSelect.init();
+            }
             if (window.AssetImport && typeof window.AssetImport.init === 'function') {
                 window.AssetImport.init();
             }

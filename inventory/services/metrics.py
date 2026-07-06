@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
+from inventory.services.ecosystem_map import build_ecosystem_map
 
 
 def calculate_percentage(value: int, total: int, *, digits: int = 0):
@@ -221,7 +222,7 @@ def _serialize_month_counts(queryset, date_field: str, month_starts: list):
     ]
 
 
-def get_reports_context() -> dict:
+def get_reports_context(user=None) -> dict:
     counts = get_asset_counts()
     total_assets = counts["total_assets"]
     assigned_assets = counts["assigned_assets"]
@@ -240,6 +241,7 @@ def get_reports_context() -> dict:
         "maintenance_by_month": json.dumps(analytics["maintenance_by_month"]),
         "top_assets_data": json.dumps(analytics["top_assets"]),
         "department_counts": json.dumps(analytics["department_counts"]),
+        "ecosystem_map": json.dumps(build_ecosystem_map(user) if user else {"nodes": [], "edges": [], "meta": {}}),
         "utilization_rate": utilization_rate,
         "asset_health_rate": asset_health_rate,
         "overdue_count": get_overdue_assets_queryset().count(),
