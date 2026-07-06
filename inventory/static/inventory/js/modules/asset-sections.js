@@ -150,14 +150,13 @@
             return html + '<div class="asset-section-empty">No ' + title.toLowerCase() + ' found.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Serial Number</th><th>Status</th>') +
+            tableHead('<th>Asset Name</th><th>Type</th><th>Status</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
                 '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
                     '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.serial_number) + '</td>' +
                     '<td>' + statusBadge(row.status) + '</td>',
                 row.name,
                 row.status

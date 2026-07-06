@@ -138,7 +138,6 @@
                     (isAdmin ? '<td><span class="skeleton skeleton-text"></span></td>' : '') +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-text"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-badge"></span></td>' +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
@@ -182,7 +181,6 @@
                 bulkRowHtml(asset.id, asset.name) +
                 '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
                 '<td>' + escapeHtml(asset.type) + '</td>' +
-                '<td>' + escapeHtml(asset.serial_number) + '</td>' +
                 '<td><span class="badge badge-' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
                 '<td>' + assignee + '</td>' +
                 '<td class="date-cell">' + formatDate(asset.date_created) + '</td>' +
@@ -236,7 +234,7 @@
     function renderTableMessage(message) {
         elements.assetTableBody.innerHTML =
             '<tr>' +
-                '<td colspan="' + tableColspan(9) + '" class="empty-state">' +
+                '<td colspan="' + tableColspan(8) + '" class="empty-state">' +
                     '<div class="empty-state-content">' +
                         '<h3>' + escapeHtml(message) + '</h3>' +
                     '</div>' +

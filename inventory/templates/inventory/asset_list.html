@@ -62,7 +62,6 @@
                                 {% endif %}
                                 <th>Name</th>
                                 <th>Type</th>
-                                <th>Serial Number</th>
                                 <th>Status</th>
                                 <th>Last Maintenance</th>
                                 <th>Imported</th>
@@ -91,7 +90,6 @@
                                     {% endif %}
                                     <td><span class="asset-name-text">{{ asset.name }}</span></td>
                                     <td>{{ asset.type }}</td>
-                                    <td>{{ asset.serial_number }}</td>
                                     <td>
                                         <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
                                             {{ asset.status }}
@@ -103,7 +101,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="{% if user_is_admin %}8{% else %}7{% endif %}" class="empty-state">No assets in this directory.</td>
+                                    <td colspan="{% if user_is_admin %}7{% else %}6{% endif %}" class="empty-state">No assets in this directory.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -132,7 +130,6 @@
                         {% endif %}
                         <th>Name</th>
                         <th>Type</th>
-                        <th>Serial Number</th>
                         <th>Status</th>
                         <th>Assignee</th>
                         <th>Created</th>
@@ -151,7 +148,6 @@
                             {% endif %}
                             <td><span class="asset-name-text">{{ asset.name }}</span></td>
                             <td>{{ asset.type }}</td>
-                            <td>{{ asset.serial_number }}</td>
                             <td>
                                 <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
                                     {{ asset.status }}
@@ -184,7 +180,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="{% if user_is_admin %}10{% else %}9{% endif %}" class="empty-state">
+                            <td colspan="{% if user_is_admin %}9{% else %}8{% endif %}" class="empty-state">
                                 <div class="empty-state-content">
                                     <h3>No assets found</h3>
                                     <p>Start by adding your first asset.</p>
@@ -393,8 +389,8 @@
     <script src="{% static 'inventory/js/modules/asset-bulk-select.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/asset-table-expand.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=6"></script>
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=22"></script>
+    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=23"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.AssetBulkSelect && typeof window.AssetBulkSelect.init === 'function') {
