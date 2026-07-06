@@ -35,21 +35,34 @@
         return '<span class="badge badge-' + escapeHtml(css) + '">' + escapeHtml(status) + '</span>';
     }
 
-    function clickableRow(assetPk, cells, label) {
+    function tableHead(columns) {
+        var bulkHead = window.AssetBulkSelect
+            ? window.AssetBulkSelect.headerCellHtml()
+            : '';
+        var actionsHead = window.AssetRowMenu
+            ? window.AssetRowMenu.headerCellHtml()
+            : '';
+        return bulkHead + columns + actionsHead;
+    }
+
+    function rowMenuCell(assetPk, label, status) {
+        if (!window.AssetRowMenu) {
+            return '';
+        }
+        return window.AssetRowMenu.cellHtml(assetPk, label, {
+            canAssign: window.AssetRowMenu.canAssignFromStatus(status)
+        });
+    }
+
+    function clickableRow(assetPk, cells, label, status) {
         var bulkCell = window.AssetBulkSelect
             ? window.AssetBulkSelect.rowCellHtml(assetPk, label)
             : '';
         return '<tr class="asset-table-row" data-asset-id="' + encodeURIComponent(assetPk) + '" tabindex="0" role="button" aria-label="View details for ' + escapeHtml(label) + '">' +
             bulkCell +
             cells +
+            rowMenuCell(assetPk, label, status) +
             '</tr>';
-    }
-
-    function tableHead(columns) {
-        var bulkHead = window.AssetBulkSelect
-            ? window.AssetBulkSelect.headerCellHtml()
-            : '';
-        return bulkHead + columns;
     }
 
     function sectionHeader(id, icon, title, count) {
@@ -80,7 +93,8 @@
                     '<td>' + escapeHtml(row.assignee) + '</td>' +
                     '<td>' + formatDate(row.date_assigned) + '</td>' +
                     '<td>' + formatDate(row.expected_return_date) + '</td>',
-                row.name
+                row.name,
+                'Assigned'
             );
         });
         return html + '</tbody></table></div></section>';
@@ -100,7 +114,8 @@
                 '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
                     '<td>' + escapeHtml(row.type) + '</td>' +
                     '<td>' + escapeHtml(row.available_since) + '</td>',
-                row.name
+                row.name,
+                'Available'
             );
         });
         return html + '</tbody></table></div></section>';
@@ -122,7 +137,8 @@
                     '<td>' + escapeHtml(row.repair_shop) + '</td>' +
                     '<td>' + escapeHtml(row.worker_contact) + '</td>' +
                     '<td>' + escapeHtml(row.repair_period) + '</td>',
-                row.name
+                row.name,
+                'Under Maintenance'
             );
         });
         return html + '</tbody></table></div></section>';
@@ -143,7 +159,8 @@
                     '<td>' + escapeHtml(row.type) + '</td>' +
                     '<td>' + escapeHtml(row.serial_number) + '</td>' +
                     '<td>' + statusBadge(row.status) + '</td>',
-                row.name
+                row.name,
+                row.status
             );
         });
         return html + '</tbody></table></div></section>';

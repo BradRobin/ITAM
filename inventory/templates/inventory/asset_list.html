@@ -66,6 +66,7 @@
                                 <th>Status</th>
                                 <th>Last Maintenance</th>
                                 <th>Imported</th>
+                                <th scope="col" class="actions-col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,10 +99,11 @@
                                     </td>
                                     <td class="date-cell">{{ asset.last_maintenance_date|default:"—" }}</td>
                                     <td class="date-cell">{{ asset.imported_at|default:"—" }}</td>
+                                    {% include "inventory/includes/asset_row_actions.html" with asset_id=asset.linked_asset_id asset_name=asset.name asset_status=asset.status %}
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="{% if user_is_admin %}7{% else %}6{% endif %}" class="empty-state">No assets in this directory.</td>
+                                    <td colspan="{% if user_is_admin %}8{% else %}7{% endif %}" class="empty-state">No assets in this directory.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -136,7 +138,7 @@
                         <th>Created</th>
                         <th>Assigned</th>
                         <th>Returned</th>
-                        <th>Actions</th>
+                        <th scope="col" class="actions-col">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="asset-table-body" data-api-url="{% url 'api_asset_list' %}">
@@ -178,7 +180,7 @@
                             <td class="date-cell">{{ asset.date_created|date:"M d, Y" }}</td>
                             <td class="date-cell">{{ asset.last_assigned_date|date:"M d, Y"|default:"—" }}</td>
                             <td class="date-cell">{{ asset.last_returned_date|date:"M d, Y"|default:"—" }}</td>
-                            {% include "inventory/includes/asset_row_actions.html" with asset=asset %}
+                            {% include "inventory/includes/asset_row_actions.html" with asset_id=asset.pk asset_name=asset.name asset_status=asset.status %}
                         </tr>
                     {% empty %}
                         <tr>
@@ -389,10 +391,10 @@
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=7"></script>
     <script src="{% static 'inventory/js/modules/asset-bulk-select.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/asset-table-expand.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=5"></script>
-    <script src="{% static 'inventory/js/modules/assets.js' %}?v=21"></script>
+    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=6"></script>
+    <script src="{% static 'inventory/js/modules/assets.js' %}?v=22"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.AssetBulkSelect && typeof window.AssetBulkSelect.init === 'function') {

@@ -20,6 +20,14 @@
         return host && host.getAttribute('data-user-is-admin') === 'true';
     }
 
+    function canAssignFromStatus(status) {
+        if (!isAdminHost()) {
+            return false;
+        }
+        var normalized = String(status || '').toLowerCase().trim();
+        return normalized === 'available';
+    }
+
     function canAssignAsset(asset) {
         if (!asset || !isAdminHost()) {
             return false;
@@ -27,8 +35,7 @@
         if (asset.assigned_employee) {
             return false;
         }
-        var status = String(asset.status_label || asset.status || '').toLowerCase();
-        return status === 'available' || status === '';
+        return canAssignFromStatus(asset.status_label || asset.status);
     }
 
     function closeOpenMenu() {
@@ -96,19 +103,22 @@
         options = options || {};
         var id = String(assetId || '');
         var name = String(assetName || 'asset');
+        var catalogOnly = !id;
         var showAdmin = options.showAdminActions !== false && isAdminHost();
-        var canAssign = !!options.canAssign && showAdmin;
+        var canAssign = !!options.canAssign && showAdmin && !catalogOnly;
 
         var items = menuItemHtml('view', 'View', 'fa-eye');
         if (canAssign) {
             items += menuItemHtml('assign', 'Assign', 'fa-user-plus');
         }
-        if (showAdmin) {
+        if (showAdmin && !catalogOnly) {
             items += menuItemHtml('delete', 'Delete', 'fa-trash-alt', 'asset-row-menu-item-danger');
         }
 
         return '<td class="actions-cell" data-row-action="true">' +
-            '<div class="asset-row-menu" data-asset-id="' + escapeHtml(id) + '" data-asset-name="' + escapeHtml(name) + '">' +
+            '<div class="asset-row-menu"' +
+                (id ? ' data-asset-id="' + escapeHtml(id) + '"' : ' data-catalog-only="true"') +
+                ' data-asset-name="' + escapeHtml(name) + '">' +
                 '<button type="button" class="asset-row-menu-trigger" data-row-action="true" aria-label="Actions for ' + escapeHtml(name) + '" aria-haspopup="true" aria-expanded="false">' +
                     '<i class="fas fa-ellipsis-v" aria-hidden="true"></i>' +
                 '</button>' +
@@ -117,15 +127,28 @@
         '</td>';
     }
 
-    function handleAction(action, assetId, assetName) {
-        if (!assetId) {
+    function headerCellHtml() {
+        return '<th scope="col" class="actions-col">Actions</th>';
+    }
+
+    function handleAction(action, assetId, assetName, wrapper) {
+        if (action === 'view') {
+            if (assetId) {
+                if (window.AssetManager && typeof window.AssetManager.openAssetDetailCard === 'function') {
+                    window.AssetManager.openAssetDetailCard(assetId);
+                }
+                return;
+            }
+            if (wrapper && window.AssetManager && typeof window.AssetManager.activateRow === 'function') {
+                var row = wrapper.closest('.asset-table-row');
+                if (row) {
+                    window.AssetManager.activateRow(row);
+                }
+            }
             return;
         }
 
-        if (action === 'view') {
-            if (window.AssetManager && typeof window.AssetManager.openAssetDetailCard === 'function') {
-                window.AssetManager.openAssetDetailCard(assetId);
-            }
+        if (!assetId) {
             return;
         }
 
@@ -165,7 +188,8 @@
                 handleAction(
                     item.dataset.action,
                     wrapper.dataset.assetId,
-                    wrapper.dataset.assetName || 'asset'
+                    wrapper.dataset.assetName || 'asset',
+                    wrapper
                 );
                 closeOpenMenu();
                 return;
@@ -209,7 +233,9 @@
     window.AssetRowMenu = {
         init: init,
         cellHtml: cellHtml,
+        headerCellHtml: headerCellHtml,
         canAssignAsset: canAssignAsset,
+        canAssignFromStatus: canAssignFromStatus,
         close: closeOpenMenu
     };
 

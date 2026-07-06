@@ -752,6 +752,7 @@
         openAssetDetailCard: openAssetDetailCard,
         openAssetDetailCardForAssign: openAssetDetailCardForAssign,
         closeAssetDetailCard: closeAssetDetailCard,
-        refreshAllTables: refreshAllTables
+        refreshAllTables: refreshAllTables,
+        activateRow: handleRowActivation
     };
 })();
