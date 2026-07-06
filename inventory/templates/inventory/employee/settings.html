@@ -4,7 +4,7 @@
 {% block title %}Settings - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/employee/settings.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory/css/employee/settings.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -55,6 +55,7 @@
             </div>
             <div class="card-body">
                 <div class="setting-group">
+                    <p class="form-hint">Update the password you use to sign in to the employee portal.</p>
                     <button class="btn btn-primary" id="openPasswordModal" type="button">
                         <i class="fas fa-key"></i> Change Password
                     </button>
@@ -74,21 +75,34 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="passwordChangeForm" class="employee-modal-body">
+        <form id="passwordChangeForm" class="employee-modal-body" novalidate>
             {% csrf_token %}
+            <p class="form-hint">Enter a new password, confirm it, then save. You will use this password the next time you sign in.</p>
             <div class="form-group">
                 <label for="id_new_password" class="form-label">New Password</label>
-                <input type="password" id="id_new_password" name="new_password" required autocomplete="new-password">
+                <input type="password"
+                       id="id_new_password"
+                       name="new_password"
+                       required
+                       minlength="8"
+                       autocomplete="new-password"
+                       placeholder="Enter new password">
             </div>
             <div class="form-group">
                 <label for="id_confirm_password" class="form-label">Confirm Password</label>
-                <input type="password" id="id_confirm_password" name="confirm_password" required autocomplete="new-password">
+                <input type="password"
+                       id="id_confirm_password"
+                       name="confirm_password"
+                       required
+                       minlength="8"
+                       autocomplete="new-password"
+                       placeholder="Re-enter new password">
             </div>
             <div class="modal-error" id="passwordModalError" role="alert"></div>
             <div class="employee-modal-actions">
                 <button type="button" class="btn btn-secondary" data-close-password-modal>Cancel</button>
                 <button type="submit" class="btn btn-primary" id="submitPasswordChange">
-                    Change Password
+                    Save New Password
                 </button>
             </div>
         </form>
@@ -97,5 +111,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/employee/settings.js' %}?v=15"></script>
+    <script src="{% static 'inventory/js/employee/settings.js' %}?v=16"></script>
 {% endblock %}
