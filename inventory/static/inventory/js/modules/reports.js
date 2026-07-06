@@ -119,8 +119,19 @@
                     departmentData: parseJson(data.department_counts, {})
                 });
             })
-            .catch(function() {
+            .catch(function(error) {
                 container.classList.remove('async-loading');
+                console.error('Reports async load failed:', error);
+                if (window.Utils && typeof window.Utils.showAsyncError === 'function') {
+                    window.Utils.showAsyncError(
+                        container,
+                        window.Utils.getUserFacingError(
+                            error,
+                            'Unable to load report data. Refresh the page to try again.'
+                        ),
+                        { onRetry: loadAsync }
+                    );
+                }
             });
     }
 

@@ -115,7 +115,11 @@
                 setStatus('Suggested serial applied.');
                 setButtonState(true, '<i class="fas fa-magic"></i> Suggest');
             }).catch(function(error) {
-                setStatus(error.message || 'Suggestion failed.');
+                setStatus(
+                    window.Utils
+                        ? window.Utils.getUserFacingError(error, 'Suggestion failed.')
+                        : 'Suggestion failed.'
+                );
                 setButtonState(true, '<i class="fas fa-magic"></i> Suggest');
             });
             return;

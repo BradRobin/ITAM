@@ -188,10 +188,11 @@
     {% endif %}
 
     {% if async_asset_sections %}
-    <div id="asset-sections-mount" class="async-loading">
+    {{ asset_sections_payload|json_script:"asset-sections-data" }}
+    <div id="asset-sections-mount" class="async-loading" data-server-sections="true">
         <div class="async-job-panel">
             <i class="fas fa-spinner fa-spin"></i>
-            <span>Loading asset sections in the background...</span>
+            <span>Loading asset sections...</span>
         </div>
     </div>
     {% endif %}
@@ -356,9 +357,9 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=6"></script>
-    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

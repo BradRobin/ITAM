@@ -363,7 +363,21 @@
             setupScrollObserver();
         }).catch(function(error) {
             mount.classList.remove('async-loading');
+            var overdueMount = document.getElementById('overdue-section-mount');
+            if (overdueMount) {
+                overdueMount.classList.remove('async-loading');
+            }
             console.error('Dashboard async load failed:', error);
+            if (window.Utils && typeof window.Utils.showAsyncError === 'function') {
+                window.Utils.showAsyncError(
+                    mount,
+                    window.Utils.getUserFacingError(
+                        error,
+                        'Unable to load dashboard metrics. Refresh the page to try again.'
+                    ),
+                    { onRetry: loadAsyncDashboard }
+                );
+            }
         });
     }
 

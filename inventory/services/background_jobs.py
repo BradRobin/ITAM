@@ -298,10 +298,12 @@ def process_job(job_id: str) -> BackgroundJob | None:
         if job.result_file:
             update_fields.append("result_file")
         job.save(update_fields=update_fields)
-    except Exception as exc:
+    except Exception:
         logger.exception("Background job %s failed", job_id)
         job.status = BackgroundJob.Status.FAILED
-        job.error_message = str(exc)
+        job.error_message = (
+            "This task could not be completed. Please refresh the page and try again."
+        )
         job.completed_at = timezone.now()
         job.save(update_fields=["status", "error_message", "completed_at"])
 

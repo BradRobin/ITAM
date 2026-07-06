@@ -131,9 +131,42 @@
             '</div></div>';
     }
 
+    function scrollToHashTarget() {
+        if (!window.location.hash) {
+            return;
+        }
+        var target = document.querySelector(window.location.hash);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
     function init() {
         var mount = document.getElementById('asset-sections-mount');
-        if (!mount || !window.BackgroundJobs) {
+        if (!mount) {
+            return;
+        }
+
+        var dataEl = document.getElementById('asset-sections-data');
+        if (dataEl && dataEl.textContent) {
+            try {
+                mount.classList.remove('async-loading');
+                mount.innerHTML = renderAll(JSON.parse(dataEl.textContent));
+                scrollToHashTarget();
+                return;
+            } catch (error) {
+                console.error('Failed to render server asset sections:', error);
+            }
+        }
+
+        if (!window.BackgroundJobs) {
+            mount.classList.remove('async-loading');
+            if (window.Utils && typeof window.Utils.showAsyncError === 'function') {
+                window.Utils.showAsyncError(
+                    mount,
+                    'Unable to load asset sections. Refresh the page to try again.'
+                );
+            }
             return;
         }
 
@@ -146,16 +179,19 @@
         }).then(function(job) {
             mount.classList.remove('async-loading');
             mount.innerHTML = renderAll(job.result || {});
-            if (window.location.hash) {
-                var target = document.querySelector(window.location.hash);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }
+            scrollToHashTarget();
         }).catch(function(error) {
-            mount.classList.remove('async-loading');
-            mount.innerHTML = '<div class="async-job-error"><i class="fas fa-exclamation-circle"></i> ' +
-                escapeHtml(error.message || 'Failed to load asset sections') + '</div>';
+            console.error('Asset sections async load failed:', error);
+            if (window.Utils && typeof window.Utils.showAsyncError === 'function') {
+                window.Utils.showAsyncError(
+                    mount,
+                    window.Utils.getUserFacingError(
+                        error,
+                        'Unable to load asset sections. Refresh the page to try again.'
+                    ),
+                    { onRetry: init }
+                );
+            }
         });
     }
 

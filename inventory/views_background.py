@@ -28,7 +28,10 @@ class BackgroundJobCreateView(LoginRequiredMixin, View):
         if job_type == BackgroundJob.JobType.CSV_EXPORT and not user_has_admin_access(
             request.user
         ):
-            raise PermissionDenied
+            return JsonResponse(
+                {"detail": "You do not have permission to perform this action."},
+                status=403,
+            )
 
         force = bool(data.get("force"))
         params = data.get("params") or {}

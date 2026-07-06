@@ -220,7 +220,10 @@
             headers: { 'X-CSRFToken': getCsrf() }
         })
             .then(function(response) {
-                return response.json().then(function(data) {
+                var parser = window.Utils && window.Utils.parseJsonResponse
+                    ? window.Utils.parseJsonResponse(response)
+                    : response.json();
+                return parser.then(function(data) {
                     return { ok: response.ok, data: data };
                 });
             })
@@ -480,7 +483,10 @@
             body: JSON.stringify(payload)
         })
             .then(function(response) {
-                return response.json().then(function(data) {
+                var parser = window.Utils && window.Utils.parseJsonResponse
+                    ? window.Utils.parseJsonResponse(response)
+                    : response.json();
+                return parser.then(function(data) {
                     return { ok: response.ok, data: data };
                 });
             })

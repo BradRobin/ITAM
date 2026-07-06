@@ -42,6 +42,7 @@ from .forms import (
 )
 from .models import Asset, AssetCatalog, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
 from .services.assets import get_asset_list_sections
+from .services.background_jobs import _serialize_asset_sections
 from .services.background_jobs import enqueue_job, serialize_job
 from .services.asset_import import (
     CSVImportError,
@@ -168,9 +169,12 @@ TYPE_TO_MODEL = {
 }
 
 
-def parse_request_data(request) -> dict:
+def parse_request_data(request) -> dict | None:
     if request.content_type.startswith("application/json") and request.body:
-        return json.loads(request.body.decode("utf-8"))
+        try:
+            return json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return None
     return request.POST.dict()
 
 
@@ -268,6 +272,10 @@ def json_permission_denied() -> JsonResponse:
         {"detail": "You do not have permission to perform this action."},
         status=403,
     )
+
+
+def json_invalid_body() -> JsonResponse:
+    return JsonResponse({"detail": "Invalid JSON."}, status=400)
 
 
 class CSVBuffer:
@@ -488,13 +496,9 @@ class AssetListView(LoginRequiredMixin, ListView):
                     .order_by("-created_at", "name")
                 ],
                 "async_asset_sections": True,
-                "assigned_asset_rows": [],
-                "available_asset_rows": [],
-                "maintenance_asset_rows": [],
-                "laptop_rows": [],
-                "monitor_rows": [],
-                "printer_rows": [],
-                "router_rows": [],
+                "asset_sections_payload": _serialize_asset_sections(
+                    get_asset_list_sections()
+                ),
             }
         )
         return context
@@ -1123,7 +1127,11 @@ class AssetAPIListView(LoginRequiredMixin, View):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
 
-        form = AssetForm(data=normalize_asset_payload(parse_request_data(request)))
+        payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
+        form = AssetForm(data=normalize_asset_payload(payload))
         if not form.is_valid():
             return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
@@ -1141,8 +1149,12 @@ class AssetAPIDetailView(LoginRequiredMixin, View):
             return json_permission_denied()
 
         asset = get_object_or_404(Asset, pk=pk)
+        payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
         form = AssetForm(
-            data=normalize_asset_payload(parse_request_data(request)),
+            data=normalize_asset_payload(payload),
             instance=asset,
         )
         if not form.is_valid():
@@ -1177,6 +1189,9 @@ class AssetAssignAPIView(LoginRequiredMixin, View):
             return json_permission_denied()
 
         payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
         employee_id = payload.get("employee_id") or payload.get("employee")
         if not employee_id:
             return JsonResponse({"employee_id": ["This field is required."]}, status=400)
@@ -1285,7 +1300,11 @@ class EmployeeAPIListView(LoginRequiredMixin, View):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
 
-        form = EmployeeCreateForm(data=parse_request_data(request))
+        payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
+        form = EmployeeCreateForm(data=payload)
         if not form.is_valid():
             return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
@@ -1311,6 +1330,9 @@ class EmployeeAPIDetailView(LoginRequiredMixin, View):
             return json_permission_denied()
 
         payload = parse_request_data(request)
+        if payload is None:
+            return json_invalid_body()
+
         employee = get_object_or_404(Employee, pk=pk)
         user_value = payload.get("user", employee.user_id or "")
         form = EmployeeForm(
@@ -1641,12 +1663,11 @@ class EmployeeMaintenanceRequestView(EmployeePortalJSONAccessMixin, View):
             Assignment.objects.filter(employee=employee),
             pk=pk
         )
-        
-        maintenance_type = request.POST.get('maintenance_type')
-        description = request.POST.get('description')
-        preferred_date = request.POST.get('preferred_date')
-        
-        # Create a maintenance log entry
+
+        payload = parse_request_data(request) or {}
+        maintenance_type = payload.get("maintenance_type") or "General"
+        description = payload.get("description") or "Maintenance requested via employee portal"
+
         MaintenanceLog.objects.create(
             asset=assignment.asset,
             issue_description=f"[Maintenance Request] {maintenance_type}: {description}",
@@ -1654,9 +1675,17 @@ class EmployeeMaintenanceRequestView(EmployeePortalJSONAccessMixin, View):
             date=timezone.localdate(),
             resolved=False,
         )
-        
-        messages.success(request, 'Maintenance request submitted successfully.')
-        return redirect('employee_asset_detail', pk=assignment.pk)
+
+        if request.content_type.startswith("application/json"):
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Maintenance request submitted successfully.",
+                }
+            )
+
+        messages.success(request, "Maintenance request submitted successfully.")
+        return redirect("employee_asset_detail", pk=assignment.pk)
 
 
 class EmployeeReturnRequestView(EmployeePortalJSONAccessMixin, View):
