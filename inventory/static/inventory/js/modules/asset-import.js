@@ -40,7 +40,6 @@
         els.conflictList = document.getElementById('import-conflict-list');
         els.catalogNameWrap = document.getElementById('import-catalog-name-wrap');
         els.catalogNameInput = document.getElementById('import-catalog-name');
-        els.backBtn = document.getElementById('import-back-btn');
         els.nextBtn = document.getElementById('import-next-btn');
         els.doneBtn = document.getElementById('import-done-btn');
         return true;
@@ -50,7 +49,6 @@
         els.modal.querySelectorAll('.import-step').forEach(function(step) {
             step.classList.toggle('active', step.id === stepId);
         });
-        els.backBtn.hidden = stepId === 'import-step-upload' || stepId === 'import-step-success';
         els.nextBtn.hidden = stepId === 'import-step-upload' || stepId === 'import-step-processing' || stepId === 'import-step-success';
         els.doneBtn.hidden = stepId !== 'import-step-success';
 
@@ -404,16 +402,6 @@
                     input.dispatchEvent(new Event('change'));
                 }
             });
-        });
-
-        els.backBtn.addEventListener('click', function() {
-            var active = els.modal.querySelector('.import-step.active');
-            if (!active) return;
-            if (active.id === 'import-step-destination') {
-                showStep(state.conflicts.length ? 'import-step-conflicts' : 'import-step-upload');
-            } else if (active.id === 'import-step-conflicts') {
-                showStep('import-step-upload');
-            }
         });
 
         els.nextBtn.addEventListener('click', function() {
