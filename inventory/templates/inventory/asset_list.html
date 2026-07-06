@@ -6,7 +6,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=3">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
@@ -288,7 +288,6 @@
                 </div>
             </div>
             <footer class="import-modal-footer">
-                <button type="button" class="btn btn-secondary" id="import-back-btn" hidden>Back</button>
                 <button type="button" class="btn btn-primary" id="import-next-btn" hidden>Continue</button>
                 <button type="button" class="btn btn-primary" id="import-done-btn" hidden>Done</button>
             </footer>
