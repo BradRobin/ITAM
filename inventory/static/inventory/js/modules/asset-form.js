@@ -155,7 +155,11 @@
             setStatus('Suggestions ready.');
         }).catch(function(error) {
             setButtonState(true, '<i class="fas fa-magic"></i> Suggest');
-            setStatus(error.message || 'Could not preload suggestions.');
+            setStatus(
+                window.Utils
+                    ? window.Utils.getUserFacingError(error, 'Could not preload suggestions.')
+                    : 'Could not preload suggestions.'
+            );
         });
 
         var button = getSuggestButton();

@@ -228,14 +228,13 @@
                 });
             })
             .then(handleValidateResponse)
-            .catch(function() {
-                if (columnMapping) {
-                    showStep('import-step-columns');
-                    showColumnError('Validation failed. Please try again.');
-                } else {
-                    showStep('import-step-upload');
-                    showUploadError('Upload failed. Please try again.');
-                }
+            .catch(function(error) {
+                showStep('import-step-upload');
+                showUploadError(
+                    window.Utils
+                        ? window.Utils.getUserFacingError(error, 'Upload failed. Please try again.')
+                        : 'Upload failed. Please try again.'
+                );
             });
     }
 

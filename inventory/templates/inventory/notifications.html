@@ -88,10 +88,22 @@
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': getCSRFToken(),
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(function(response) { return response.json(); })
+                .then(function(response) {
+                    var parser = window.Utils && window.Utils.parseJsonResponse
+                        ? window.Utils.parseJsonResponse(response)
+                        : response.json();
+                    return parser.then(function(data) {
+                        if (!response.ok) {
+                            throw new Error('Unable to mark notification as read.');
+                        }
+                        return data;
+                    });
+                })
                 .then(function(data) {
                     if (data.success) {
                         item.classList.remove('unread');
@@ -105,7 +117,12 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error('Error:', error);
+                    if (window.Utils && window.Utils.showToast) {
+                        window.Utils.showToast(
+                            window.Utils.getUserFacingError(error, 'Unable to mark notification as read.'),
+                            'error'
+                        );
+                    }
                 });
             });
         });
@@ -120,10 +137,22 @@
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': getCSRFToken(),
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(function(response) { return response.json(); })
+                .then(function(response) {
+                    var parser = window.Utils && window.Utils.parseJsonResponse
+                        ? window.Utils.parseJsonResponse(response)
+                        : response.json();
+                    return parser.then(function(data) {
+                        if (!response.ok) {
+                            throw new Error('Unable to mark all notifications as read.');
+                        }
+                        return data;
+                    });
+                })
                 .then(function(data) {
                     if (data.success) {
                         sessionStorage.setItem('notifications_viewed', 'true');
@@ -139,7 +168,12 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error('Error:', error);
+                    if (window.Utils && window.Utils.showToast) {
+                        window.Utils.showToast(
+                            window.Utils.getUserFacingError(error, 'Unable to mark all notifications as read.'),
+                            'error'
+                        );
+                    }
                     markAllBtn.disabled = false;
                 });
             });

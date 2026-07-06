@@ -46,7 +46,12 @@
         }).then(function(response) {
             return parseResponse(response).then(function(data) {
                 if (!response.ok) {
-                    throw new Error(data.detail || 'Failed to start background job');
+                    var fallback = 'Failed to start background job';
+                    throw new Error(
+                        window.Utils
+                            ? window.Utils.extractApiError(data, fallback)
+                            : (data.detail || fallback)
+                    );
                 }
                 return data;
             });
@@ -60,7 +65,12 @@
         }).then(function(response) {
             return parseResponse(response).then(function(data) {
                 if (!response.ok) {
-                    throw new Error(data.detail || 'Failed to fetch job status');
+                    var fallback = 'Failed to fetch job status';
+                    throw new Error(
+                        window.Utils
+                            ? window.Utils.extractApiError(data, fallback)
+                            : (data.detail || fallback)
+                    );
                 }
                 return data;
             });
@@ -82,7 +92,14 @@
                     return job;
                 }
                 if (job.status === 'failed') {
-                    throw new Error(job.error_message || 'Background job failed');
+                    throw new Error(
+                        window.Utils
+                            ? window.Utils.getUserFacingError(
+                                { message: job.error_message },
+                                'Background job failed. Please try again.'
+                            )
+                            : (job.error_message || 'Background job failed')
+                    );
                 }
                 await sleep(POLL_MS);
             }

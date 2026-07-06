@@ -357,7 +357,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=7"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
@@ -387,7 +387,12 @@
                         .catch(function(error) {
                             exportBtn.disabled = false;
                             exportBtn.innerHTML = 'Export CSV';
-                            alert(error.message || 'Export failed');
+                            if (window.Utils && typeof window.Utils.showToast === 'function') {
+                                window.Utils.showToast(
+                                    window.Utils.getUserFacingError(error, 'Export failed. Please try again.'),
+                                    'error'
+                                );
+                            }
                         });
                 });
             }

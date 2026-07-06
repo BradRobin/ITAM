@@ -102,13 +102,22 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRFToken': getCsrfToken(),
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            credentials: 'same-origin'
         })
         .then(function(response) {
-            if (!response.ok) throw new Error('Failed to mark as read');
-            return response.json();
+            var parser = window.Utils && window.Utils.parseJsonResponse
+                ? window.Utils.parseJsonResponse(response)
+                : response.json();
+            return parser.then(function(data) {
+                if (!response.ok) {
+                    throw new Error('Failed to mark as read');
+                }
+                return data;
+            });
         })
         .then(function(data) {
             updateBadgeCount();
@@ -135,13 +144,22 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRFToken': getCsrfToken(),
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                credentials: 'same-origin'
             })
             .then(function(response) {
-                if (!response.ok) throw new Error('Failed to mark as read');
-                return response.json();
+                var parser = window.Utils && window.Utils.parseJsonResponse
+                    ? window.Utils.parseJsonResponse(response)
+                    : response.json();
+                return parser.then(function(data) {
+                    if (!response.ok) {
+                        throw new Error('Failed to mark as read');
+                    }
+                    return data;
+                });
             })
             .then(function(data) {
                 updateBadgeCount();
@@ -188,13 +206,22 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRFToken': getCsrfToken(),
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            credentials: 'same-origin'
         })
         .then(function(response) {
-            if (!response.ok) throw new Error('Failed to mark all as read');
-            return response.json();
+            var parser = window.Utils && window.Utils.parseJsonResponse
+                ? window.Utils.parseJsonResponse(response)
+                : response.json();
+            return parser.then(function(data) {
+                if (!response.ok) {
+                    throw new Error('Failed to mark all as read');
+                }
+                return data;
+            });
         })
         .then(function(data) {
             updateBadgeCount();
@@ -210,7 +237,12 @@
             items.forEach(function(item) {
                 item.classList.add('unread');
             });
-            showToast('Error marking all as read', 'error');
+            showToast(
+                window.Utils
+                    ? window.Utils.getUserFacingError(error, 'Error marking all as read')
+                    : 'Error marking all as read',
+                'error'
+            );
             if (btn) {
                 btn.disabled = false;
                 btn.textContent = 'Mark all read';

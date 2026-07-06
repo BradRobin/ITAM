@@ -108,15 +108,21 @@
         fetch(CONFIG.BADGE_UPDATE_URL, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            credentials: 'same-origin'
         })
         .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
+            var parser = window.Utils && window.Utils.parseJsonResponse
+                ? window.Utils.parseJsonResponse(response)
+                : response.json();
+            return parser.then(function(data) {
+                if (!response.ok) {
+                    throw new Error('Unable to refresh notifications.');
+                }
+                return data;
+            });
         })
         .then(function(data) {
             if (data && typeof data.unread_count !== 'undefined') {
@@ -178,14 +184,21 @@
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCSRFToken(),
+                'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            credentials: 'same-origin'
         })
         .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
+            var parser = window.Utils && window.Utils.parseJsonResponse
+                ? window.Utils.parseJsonResponse(response)
+                : response.json();
+            return parser.then(function(data) {
+                if (!response.ok) {
+                    throw new Error('Unable to mark notifications as read.');
+                }
+                return data;
+            });
         })
         .then(function(data) {
             if (data.success) {

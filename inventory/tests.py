@@ -1285,6 +1285,18 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.json()["status_label"], "Available")
         self.assertTrue(response.json()["date_created"].startswith(timezone.localdate().isoformat()))
 
+    def test_asset_api_rejects_invalid_json_body(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_list"),
+            data="{not valid json",
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Invalid JSON.")
+
     @override_settings(TIME_ZONE="Africa/Nairobi")
     def test_asset_api_serializes_created_timestamp_in_local_timezone(self):
         self.client.force_login(self.user)
@@ -1719,3 +1731,23 @@ class EmployeePortalTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assignment.refresh_from_db()
         self.assertFalse(self.assignment.confirmed_by_employee)
+
+    def test_employee_maintenance_request_returns_json(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_maintenance_request", kwargs={"pk": self.assignment.pk}),
+            data=json.dumps(
+                {
+                    "maintenance_type": "Hardware",
+                    "description": "Keyboard is sticking.",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertIn("submitted", payload["message"].lower())
+        self.assertEqual(MaintenanceLog.objects.filter(asset=self.asset).count(), 1)

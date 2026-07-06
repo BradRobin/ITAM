@@ -126,15 +126,23 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRFToken': getCSRFToken(),
                     },
                     credentials: 'same-origin',
                     body: JSON.stringify(payload),
                 });
-                const data = await response.json();
+                const parser = window.Utils && window.Utils.parseJsonResponse
+                    ? window.Utils.parseJsonResponse(response)
+                    : response.json();
+                const data = await parser;
 
                 if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Unable to change password.');
+                    throw new Error(
+                        window.Utils
+                            ? window.Utils.extractApiError(data, 'Unable to change password.')
+                            : (data.message || 'Unable to change password.')
+                    );
                 }
 
                 updateNotificationBadge(data.unread_count || 1);
@@ -143,7 +151,9 @@
                 showToast('Password changed successfully.', 'success');
             } catch (error) {
                 if (errorBox) {
-                    errorBox.textContent = error.message;
+                    errorBox.textContent = window.Utils
+                        ? window.Utils.getUserFacingError(error, 'Unable to change password.')
+                        : 'Unable to change password.';
                     errorBox.classList.add('visible');
                 }
             } finally {
