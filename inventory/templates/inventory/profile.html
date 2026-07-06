@@ -30,17 +30,6 @@
             </div>
             <h2>{{ user.get_full_name|default:user.username }}</h2>
             <p class="profile-role">{% if user.is_staff %}Administrator{% else %}Team Member{% endif %}</p>
-            <div class="profile-actions">
-                <a href="{% url 'settings' %}" class="btn btn-secondary">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
-                <form method="post" action="{% url 'logout' %}" class="logout-form logout-form-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </form>
-            </div>
         </div>
 
         <!-- Personal Information -->
@@ -154,17 +143,14 @@
                         <i class="fas fa-user-plus"></i>
                         <span>Add Employee</span>
                     </a>
-                    <a href="{% url 'settings' %}" class="quick-action">
-                        <i class="fas fa-sliders-h"></i>
-                        <span>Settings</span>
+                    <a href="{% url 'asset_list' %}" class="quick-action">
+                        <i class="fas fa-list"></i>
+                        <span>View Assets</span>
                     </a>
-                    <form method="post" action="{% url 'logout' %}" class="logout-form">
-                        {% csrf_token %}
-                        <button type="submit" class="quick-action quick-action-danger">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </button>
-                    </form>
+                    <a href="{% url 'employee_list' %}" class="quick-action">
+                        <i class="fas fa-users"></i>
+                        <span>View Employees</span>
+                    </a>
                 </div>
             </div>
         </div>

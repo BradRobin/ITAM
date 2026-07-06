@@ -36,7 +36,7 @@
             <span class="stat-label">Active</span>
             <span class="stat-number">{{ active_assets|default:"0" }}</span>
         </div>
-        <div class="stat-item">
+        <div class="stat-item warning">
             <span class="stat-label">Pending Confirmation</span>
             <span class="stat-number">{{ pending_assets|default:"0" }}</span>
         </div>
@@ -52,7 +52,7 @@
             {% include 'inventory/includes/employee/asset_card.html' with assignment=assignment %}
         {% empty %}
             <div class="empty-state">
-                <div class="empty-icon">📦</div>
+                <div class="empty-icon"><i class="fas fa-box-open"></i></div>
                 <h3>No Assets Assigned</h3>
                 <p>You haven't been assigned any assets yet.</p>
             </div>

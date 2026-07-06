@@ -4,7 +4,8 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=8">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=1">
 {% endblock %}
 
 {% block content %}
@@ -70,18 +71,15 @@
             </div>
             <div class="insight-spotlight" id="insight-spotlight">
                 <div class="insight-card insight-utilization">
-                    <div class="insight-ring-wrap">
-                        <div class="insight-ring" id="utilization-ring" style="--progress: {{ utilization_rate|default:0 }}%">
-                            <div class="insight-ring-inner">
-                                <span class="insight-ring-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
-                                <span class="insight-ring-label">Utilization</span>
-                            </div>
-                        </div>
+                    <div class="insight-metric">
+                        <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
+                        <span class="insight-metric-unit">utilized</span>
                     </div>
                     <div class="insight-meta">
                         <h3>Asset Utilization</h3>
                         <p>Share of fleet currently assigned to employees</p>
                     </div>
+                    <i class="fas fa-chart-pie insight-card-icon"></i>
                 </div>
 
                 <a href="{% url 'employee_list' %}" class="insight-card insight-employees insight-card-link">
@@ -127,7 +125,7 @@
             </div>
         </section>
 
-        <!-- Analytics bento -->
+        <!-- Analytics canvas -->
         <section class="dash-section" id="analytics-section">
             <div class="dash-section-head">
                 <div>
@@ -140,7 +138,6 @@
                     <button type="button" class="dash-tab" data-tab="people">People</button>
                 </div>
             </div>
-
             <div class="analytics-bento" id="analytics-bento">
                 <div class="bento-panel active" data-panel="composition">
                     <div class="bento-card bento-wide">
@@ -148,12 +145,8 @@
                             <h3>Fleet by Status</h3>
                             <span class="bento-badge">Live</span>
                         </div>
-                        <div class="bento-chart-wrap bento-chart-donut">
+                        <div class="bento-chart-wrap">
                             <canvas id="dashStatusChart"></canvas>
-                            <div class="bento-donut-center" id="dashStatusCenter">
-                                <span class="bento-donut-total" id="dashStatusTotal">—</span>
-                                <span class="bento-donut-label">assets</span>
-                            </div>
                         </div>
                     </div>
                     <div class="bento-card">
@@ -165,7 +158,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bento-panel" data-panel="trends">
                     <div class="bento-card bento-wide">
                         <div class="bento-card-head">
@@ -186,7 +178,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="bento-panel" data-panel="people">
                     <div class="bento-card">
                         <div class="bento-card-head">
@@ -206,7 +197,6 @@
                         <div class="dept-legend" id="dashDeptLegend"></div>
                     </div>
                 </div>
-
                 <div class="bento-loading" id="analytics-loading">
                     <i class="fas fa-circle-notch fa-spin"></i>
                     <span>Loading analytics...</span>
@@ -285,8 +275,9 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=4"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=3"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

@@ -1,51 +1,59 @@
 {% load static %}
-<header class="topbar-employee">
+<header class="topbar">
     <div class="topbar-left">
-        <button type="button" class="sidebar-toggle" id="sidebarToggleEmployee" aria-label="Toggle sidebar">
-            <span class="sidebar-toggle-bars" aria-hidden="true">
-                <span class="sidebar-toggle-line"></span>
-                <span class="sidebar-toggle-line"></span>
-                <span class="sidebar-toggle-line"></span>
+        <!-- Modern Hamburger Menu -->
+        <button class="hamburger-menu" id="sidebarToggleEmployee" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger-box">
+                <span class="hamburger-inner"></span>
             </span>
         </button>
-    </div>
-    <div class="topbar-actions">
-        <!-- Notifications Bell -->
+        
+        <!-- Notification Bell -->
         <div class="notification-container" id="notificationContainer">
             <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge notification-dot {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge"></span>
+                <span class="notification-badge {% if unread_notifications == 0 %}hidden{% endif %}" id="notificationBadge">
+                    {% if unread_notifications > 0 %}{{ unread_notifications }}{% endif %}
+                </span>
             </button>
-            <div class="employee-notification-dropdown" id="employeeNotificationDropdown">
+            <div class="notification-dropdown" id="employeeNotificationDropdown">
                 <div class="notification-dropdown-header">
                     <strong>Notifications</strong>
                     {% if unread_notifications > 0 %}
                         <button type="button" class="mark-all-link" onclick="markAllRead()">Mark all read</button>
                     {% endif %}
                 </div>
-                <div class="notification-dropdown-list">
-                    {% for notification in recent_notifications %}
+                <div class="notification-dropdown-list" id="notificationList">
+                    {% for notification in recent_notifications|slice:":5" %}
                         {% include 'inventory/includes/employee/notification_item.html' with notification=notification %}
                     {% empty %}
                         <div class="notification-empty">No notifications yet.</div>
                     {% endfor %}
                 </div>
+                <div class="notification-dropdown-footer">
+                    <a href="{% url 'employee_notifications' %}" class="notification-view-all-link">
+                        <i class="fas fa-arrow-right"></i> View All Notifications
+                    </a>
+                </div>
             </div>
         </div>
-
+    </div>
+    
+    <div class="topbar-actions">
         <!-- Theme Toggle -->
         <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle theme">
             <i class="fas fa-moon theme-icon"></i>
         </button>
 
-        <!-- Profile Dropdown -->
-        <div class="profile-dropdown">
-            <a class="profile-btn" id="profileToggle" href="{% url 'employee_settings' %}" aria-label="Open settings">
+        <!-- Profile Badge -->
+        <div class="profile-badge">
+            <a href="{% url 'employee_settings' %}" aria-label="Open settings">
                 <img class="profile-avatar" 
                      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
                      alt="{{ user.username }}"
                      width="32"
                      height="32">
+                <span class="profile-name">{{ user.get_full_name|default:user.username }}</span>
             </a>
         </div>
     </div>

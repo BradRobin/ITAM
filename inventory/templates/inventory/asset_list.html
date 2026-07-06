@@ -6,6 +6,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=5">
 {% endblock %}
 
 {% block content %}
@@ -13,6 +14,9 @@
         <h1>Assets</h1>
         <div class="actions">
             <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+            <button type="button" class="btn btn-secondary" id="import-csv-btn">
+                <i class="fas fa-file-import"></i> Import CSV
+            </button>
             <button type="button" class="btn btn-success" id="export-csv-btn" data-export-url="{% url 'asset_export' %}?async=1">Export CSV</button>
         </div>
     </div>
@@ -35,6 +39,54 @@
             </select>
             <a href="{% url 'asset_list' %}" class="btn btn-secondary">Clear</a>
         </form>
+    </div>
+
+    <div id="asset-catalog-sections">
+        {% for catalog in asset_catalogs %}
+            <section class="asset-section asset-catalog-section" id="asset-catalog-{{ catalog.id }}">
+                <div class="asset-section-header">
+                    <div class="asset-section-title">
+                        <i class="fas fa-table"></i>
+                        <h2>{{ catalog.name }}</h2>
+                    </div>
+                    <span class="asset-section-count">{{ catalog.asset_count }} item{{ catalog.asset_count|pluralize }}</span>
+                </div>
+                <div class="table-wrapper asset-section-table">
+                    <table class="asset-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Serial Number</th>
+                                <th>Status</th>
+                                <th>Last Maintenance</th>
+                                <th>Imported</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset in catalog.assets %}
+                                <tr>
+                                    <td><span class="asset-name-text">{{ asset.name }}</span></td>
+                                    <td>{{ asset.type }}</td>
+                                    <td>{{ asset.serial_number }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ asset.status|lower|cut:' ' }}">
+                                            {{ asset.status }}
+                                        </span>
+                                    </td>
+                                    <td class="date-cell">{{ asset.last_maintenance_date|default:"—" }}</td>
+                                    <td class="date-cell">{{ asset.imported_at|default:"—" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="empty-state">No assets in this directory.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endfor %}
     </div>
 
     <section class="asset-section" id="all-assets">
@@ -160,14 +212,155 @@
             <footer class="asset-detail-card-footer"></footer>
         </article>
     </div>
+
+    <div id="import-csv-modal" class="import-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="import-csv-title"
+         data-validate-url="{% url 'import_asset_csv_validate' %}"
+         data-execute-url="{% url 'import_asset_csv_execute' %}">
+        <div class="import-modal-backdrop" data-import-close></div>
+        <div class="import-modal-panel">
+            <header class="import-modal-header">
+                <div>
+                    <h2 id="import-csv-title">Import Assets from CSV</h2>
+                    <p class="import-modal-subtitle">Upload a CSV matching the export format to migrate your inventory</p>
+                </div>
+                <button type="button" class="import-modal-close" aria-label="Close import dialog" data-import-close>
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="import-modal-body">
+                <div id="import-step-upload" class="import-step active">
+                    <div id="import-dropzone" class="import-dropzone">
+                        <div class="import-dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <p><strong>Drag and drop your CSV here</strong></p>
+                        <p>or use Choose File below</p>
+                    </div>
+                    <div class="import-actions-row">
+                        <button type="button" class="btn btn-primary" id="import-choose-file-btn">
+                            <i class="fas fa-folder-open"></i> Choose File
+                        </button>
+                    </div>
+                    <input type="file" id="import-file-input" class="import-file-input" accept=".csv,text/csv">
+                    <div id="import-upload-error" class="import-error" hidden></div>
+                </div>
+
+                <div id="import-step-processing" class="import-step">
+                    <div class="import-status">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <p id="import-processing-label">Processing...</p>
+                    </div>
+                </div>
+
+                <div id="import-step-columns" class="import-step">
+                    <p class="import-summary" id="import-columns-intro">
+                        This file uses different column names than the export format. Review the columns below and map them to the required asset fields.
+                    </p>
+                    <div class="import-column-detected">
+                        <span class="import-column-detected-label">Columns in this file</span>
+                        <ul id="import-column-list" class="import-column-tags" aria-label="Detected CSV columns"></ul>
+                    </div>
+                    <form id="import-column-mapping-form" class="import-column-mapping-form" novalidate>
+                        <div class="import-map-row">
+                            <label for="import-map-name">Asset name <span class="import-required">*</span></label>
+                            <select id="import-map-name" required>
+                                <option value="">Select column</option>
+                            </select>
+                        </div>
+                        <div class="import-map-row">
+                            <label for="import-map-type">Type <span class="import-required">*</span></label>
+                            <select id="import-map-type" required>
+                                <option value="">Select column</option>
+                            </select>
+                        </div>
+                        <div class="import-map-row">
+                            <label for="import-map-serial">Serial number <span class="import-required">*</span></label>
+                            <select id="import-map-serial" required>
+                                <option value="">Select column</option>
+                            </select>
+                        </div>
+                        <div class="import-map-row import-map-row-optional">
+                            <label for="import-map-status">Status <span class="import-optional">(optional)</span></label>
+                            <select id="import-map-status">
+                                <option value="">Not mapped</option>
+                            </select>
+                        </div>
+                        <div class="import-map-row import-map-row-optional">
+                            <label for="import-map-employee">Employee <span class="import-optional">(optional)</span></label>
+                            <select id="import-map-employee">
+                                <option value="">Not mapped</option>
+                            </select>
+                        </div>
+                        <div class="import-map-row import-map-row-optional">
+                            <label for="import-map-maintenance">Last maintenance date <span class="import-optional">(optional)</span></label>
+                            <select id="import-map-maintenance">
+                                <option value="">Not mapped</option>
+                            </select>
+                        </div>
+                    </form>
+                    <div id="import-column-error" class="import-error" hidden></div>
+                </div>
+
+                <div id="import-step-assignments" class="import-step">
+                    <p class="import-summary" id="import-assignment-intro">
+                        These assets are marked as assigned. Confirm who each asset belongs to before continuing.
+                    </p>
+                    <div id="import-assignment-list" class="import-assignment-list"></div>
+                </div>
+
+                <div id="import-step-conflicts" class="import-step">
+                    <p class="import-summary" id="import-parse-summary"></p>
+                    <p class="import-summary">Resolve serial number conflicts before continuing.</p>
+                    <div id="import-conflict-list" class="import-conflict-list"></div>
+                </div>
+
+                <div id="import-step-destination" class="import-step">
+                    <p class="import-summary" id="import-destination-summary">Choose how to save these assets.</p>
+                    <div class="import-destination-options">
+                        <label class="import-destination-option selected">
+                            <input type="radio" name="import-mode" value="merge" checked>
+                            <div>
+                                <strong>Merge with existing table</strong>
+                                <span>Import into the main asset inventory. Resolved conflicts apply here.</span>
+                            </div>
+                        </label>
+                        <label class="import-destination-option">
+                            <input type="radio" name="import-mode" value="catalog">
+                            <div>
+                                <strong>Create new directory</strong>
+                                <span>Save as a separate named table without changing the main inventory.</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="import-catalog-name-wrap" class="import-catalog-name">
+                        <label for="import-catalog-name">Directory name</label>
+                        <input type="text" id="import-catalog-name" placeholder="e.g. Legacy Inventory 2024" maxlength="255">
+                    </div>
+                </div>
+
+                <div id="import-step-success" class="import-step">
+                    <div class="import-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div id="import-success-body"></div>
+                    </div>
+                </div>
+            </div>
+            <footer class="import-modal-footer">
+                <button type="button" class="btn btn-primary" id="import-next-btn" hidden>Continue</button>
+                <button type="button" class="btn btn-primary" id="import-done-btn" hidden>Done</button>
+            </footer>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=5"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            if (window.AssetImport && typeof window.AssetImport.init === 'function') {
+                window.AssetImport.init();
+            }
             if (window.AssetManager && typeof window.AssetManager.init === 'function') {
                 window.AssetManager.init();
             }

@@ -79,6 +79,7 @@ def _serialize_dashboard_result(context: dict) -> dict:
         "overdue_assets_count": context.get("overdue_assets_count", 0),
         "overdue_cutoff": _serialize_date(context.get("overdue_cutoff")),
         "total_assignments": context.get("total_assignments", 0),
+        "overdue_list_url": f"{reverse('asset_list')}?status=overdue",
         "dashboard_stats": dashboard_stats,
         "overdue_assets": overdue_assets,
         "analytics": context.get("analytics", {}),

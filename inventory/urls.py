@@ -17,25 +17,25 @@ urlpatterns = [
              template_name='inventory/auth.html',
              email_template_name='inventory/password_reset_email.html',
              subject_template_name='inventory/password_reset_subject.txt',
-             extra_context={'page': 'password_reset'}  # <-- ADD THIS
+             extra_context={'page': 'password_reset'}
          ), 
          name='password_reset'),
     path('password-reset/done/', 
          auth_views.PasswordResetDoneView.as_view(
              template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_done'}  # <-- ADD THIS
+             extra_context={'page': 'password_reset_done'}
          ), 
          name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', 
          auth_views.PasswordResetConfirmView.as_view(
              template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_confirm'}  # <-- ADD THIS
+             extra_context={'page': 'password_reset_confirm'}
          ), 
          name='password_reset_confirm'),
     path('password-reset-complete/', 
          auth_views.PasswordResetCompleteView.as_view(
              template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_complete'}  # <-- ADD THIS
+             extra_context={'page': 'password_reset_complete'}
          ), 
          name='password_reset_complete'),
     
@@ -49,7 +49,7 @@ urlpatterns = [
     # Settings
     path("settings/", views.SettingsView.as_view(), name="settings"),
     
-    # Notifications
+    # Admin Notifications
     path("notifications/", views.NotificationListView.as_view(), name="notifications"),
     path("api/notifications/", views.NotificationAPIView.as_view(), name="api_notifications"),
     path("api/notifications/<int:pk>/read/", views.NotificationMarkReadView.as_view(), name="api_notification_read"),
@@ -109,6 +109,16 @@ urlpatterns = [
         name="export_asset_csv",
     ),
     path("assets/export.csv", views.ExportAssetCSVView.as_view(), name="asset_export"),
+    path(
+        "assets/import/csv/validate/",
+        views.ImportAssetCSVValidateView.as_view(),
+        name="import_asset_csv_validate",
+    ),
+    path(
+        "assets/import/csv/execute/",
+        views.ImportAssetCSVExecuteView.as_view(),
+        name="import_asset_csv_execute",
+    ),
     path("assets/add/", views.AssetCreateView.as_view(), name="asset_add"),
     path("assets/<int:pk>/", views.AssetDetailView.as_view(), name="asset_detail"),
     path("assets/<int:pk>/edit/", views.AssetUpdateView.as_view(), name="asset_edit"),
@@ -156,18 +166,32 @@ urlpatterns = [
     # Dashboard
     path('employee/', views.EmployeeDashboardView.as_view(), name='employee_portal'),
     path('employee/dashboard/', views.EmployeeDashboardView.as_view(), name='employee_dashboard'),
+    
+    # Assets
     path('employee/assets/', views.EmployeeAssetsView.as_view(), name='employee_assets'),
     path('employee/assets/<int:pk>/', views.EmployeeAssetDetailView.as_view(), name='employee_asset_detail'),
     path('employee/asset/<int:pk>/confirm/', views.EmployeeConfirmAssetView.as_view(), name='employee_confirm_asset'),
     path('employee/asset/<int:pk>/report-issue/', views.EmployeeReportIssueView.as_view(), name='employee_report_issue'),
     path('employee/asset/<int:pk>/maintenance/', views.EmployeeMaintenanceRequestView.as_view(), name='employee_maintenance_request'),
     path('employee/asset/<int:pk>/return/', views.EmployeeReturnRequestView.as_view(), name='employee_return_request'),
-    path('employee/notifications/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_notifications'),
-    path('employee/notifications/mark-read/<int:pk>/', views.EmployeeMarkNotificationReadView.as_view(), name='employee_mark_notification_read'),
+    
+    # ==========================================
+    # EMPLOYEE NOTIFICATIONS - FIXED
+    # ==========================================
+    path('employee/notifications/', views.EmployeeNotificationsView.as_view(), name='employee_notifications'),
+    path('employee/notifications/<int:pk>/mark-read/', views.EmployeeMarkNotificationReadView.as_view(), name='employee_mark_notification_read'),
     path('employee/notifications/mark-all-read/', views.EmployeeMarkAllNotificationsReadView.as_view(), name='employee_mark_all_notifications_read'),
-    path('employee/profile/', RedirectView.as_view(pattern_name='employee_settings', permanent=False), name='employee_profile'),
+    
+    # ==========================================
+    # EMPLOYEE PROFILE & SETTINGS
+    # ==========================================
+    path('employee/profile/', views.EmployeeProfileView.as_view(), name='employee_profile'),
     path('employee/settings/', views.EmployeeSettingsView.as_view(), name='employee_settings'),
     path('employee/settings/password/', views.EmployeePasswordChangeView.as_view(), name='employee_password_change'),
-    path('employee/history/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_history'),
-    path('employee/returns/', RedirectView.as_view(pattern_name='employee_dashboard', permanent=False), name='employee_returns'),
+    
+    # ==========================================
+    # EMPLOYEE HISTORY & RETURNS
+    # ==========================================
+    path('employee/history/', views.EmployeeHistoryView.as_view(), name='employee_history'),
+    path('employee/returns/', views.EmployeeReturnsView.as_view(), name='employee_returns'),
 ]

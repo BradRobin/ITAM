@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
-from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, AssetCatalog, Assignment, BackgroundJob, CatalogAsset, Employee, EmployeeNotification, MaintenanceLog
 from .services.background_jobs import enqueue_job
 from .services.dates import format_duration_since, format_duration_until
 from .services.serial_numbers import build_serial_suggestion_payload, generate_unique_serial_numbers
@@ -355,6 +355,7 @@ class DashboardContextTests(TestCase):
         self.assertIn("analytics", data)
         self.assertIn("asset_by_status", data["analytics"])
         self.assertIn("total_assignments", data)
+        self.assertIn("overdue_list_url", data)
 
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "Fleet Intelligence")
@@ -826,6 +827,327 @@ class AssetCSVExportTests(TestCase):
 
         response = self.client.get(reverse("export_asset_csv"))
 
+        self.assertEqual(response.status_code, 403)
+
+
+class AssetCSVImportTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="import-admin",
+            email="import-admin@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.user = get_user_model().objects.create_user(
+            username="import-user",
+            email="import-user@example.com",
+            password="test-pass-12345",
+        )
+        self.existing = Asset.objects.create(
+            name="Existing Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="IMPORT-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+
+    def _csv_file(self, content: str, name: str = "assets.csv"):
+        return SimpleUploadedFile(name, content.encode("utf-8"), content_type="text/csv")
+
+    def test_validate_rejects_non_csv_file(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file("Name\nTest", name="notes.txt")},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not a CSV", response.json()["detail"])
+
+    def test_validate_detects_serial_conflicts(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Name,Type,Serial Number,Status,Last Maintenance Date\n"
+            "Uploaded Laptop,Laptop,IMPORT-001,Available,\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["valid_count"], 1)
+        self.assertEqual(len(payload["conflicts"]), 1)
+        self.assertEqual(payload["conflicts"][0]["existing_name"], "Existing Laptop")
+
+    def test_validate_respects_status_column_when_present(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Name,Type,Serial Number,Status\n"
+            "Uploaded Laptop,Laptop,IMPORT-NEW,Assigned\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["valid_count"], 1)
+        self.assertEqual(payload["rows"][0]["status"], Asset.AssetStatus.ASSIGNED)
+
+    def test_validate_builds_assignment_reviews_from_csv_employee_column(self):
+        employee = Employee.objects.create(
+            name="Jane Doe",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="jane@example.com",
+        )
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Name,Type,Serial Number,Status,Employee\n"
+            f"Uploaded Laptop,Laptop,IMPORT-ASSIGN,Assigned,{employee.name}\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["has_employee_column"])
+        self.assertEqual(len(payload["assignment_reviews"]), 1)
+        review = payload["assignment_reviews"][0]
+        self.assertEqual(review["suggested_employee_id"], employee.pk)
+        self.assertEqual(review["source"], "csv")
+
+    def test_validate_builds_assignment_reviews_from_system_assignment(self):
+        employee = Employee.objects.create(
+            name="System Assignee",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="system@example.com",
+        )
+        asset = Asset.objects.create(
+            name="Assigned Asset",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="SYS-ASSIGN-001",
+            status=Asset.AssetStatus.ASSIGNED,
+        )
+        Assignment.objects.create(asset=asset, employee=employee)
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Name,Type,Serial Number,Status\n"
+            "Assigned Asset,Laptop,SYS-ASSIGN-001,Assigned\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload["has_employee_column"])
+        self.assertEqual(len(payload["assignment_reviews"]), 1)
+        self.assertEqual(
+            payload["assignment_reviews"][0]["suggested_employee_id"],
+            employee.pk,
+        )
+        self.assertEqual(payload["assignment_reviews"][0]["source"], "system")
+
+    def test_execute_merge_creates_assignment_from_confirmation(self):
+        employee = Employee.objects.create(
+            name="Import Assignee",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="import-assignee@example.com",
+        )
+        self.client.force_login(self.admin)
+        rows = [
+            {
+                "row": 2,
+                "name": "New Assigned Laptop",
+                "type": Asset.AssetType.LAPTOP,
+                "serial_number": "IMPORT-ASSIGN-EXEC",
+                "status": Asset.AssetStatus.ASSIGNED,
+                "employee_name": "",
+                "last_maintenance_date": None,
+            }
+        ]
+        response = self.client.post(
+            reverse("import_asset_csv_execute"),
+            data=json.dumps(
+                {
+                    "rows": rows,
+                    "mode": "merge",
+                    "assignment_confirmations": {
+                        "IMPORT-ASSIGN-EXEC": employee.pk,
+                    },
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        asset = Asset.objects.get(serial_number="IMPORT-ASSIGN-EXEC")
+        self.assertEqual(asset.status, Asset.AssetStatus.ASSIGNED)
+        assignment = Assignment.objects.filter(
+            asset=asset,
+            employee=employee,
+            date_returned__isnull=True,
+        )
+        self.assertTrue(assignment.exists())
+
+    def test_validate_honors_status_when_user_maps_status_column(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Name,Type,Serial Number,Status\n"
+            "Uploaded Laptop,Laptop,IMPORT-NEW,Assigned\n"
+        )
+        mapping = json.dumps(
+            {
+                "name": "Name",
+                "type": "Type",
+                "serial_number": "Serial Number",
+                "status": "Status",
+            }
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {
+                "file": self._csv_file(csv_content),
+                "column_mapping": mapping,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["rows"][0]["status"], Asset.AssetStatus.ASSIGNED)
+
+    def test_validate_requests_column_mapping_for_nonstandard_headers(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Asset Name,Category,SN,State\n"
+            "Uploaded Laptop,Laptop,IMPORT-002,Available\n"
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file(csv_content)},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["needs_column_mapping"])
+        self.assertEqual(
+            payload["headers"],
+            ["Asset Name", "Category", "SN", "State"],
+        )
+        self.assertEqual(payload["suggested_mapping"]["name"], "Asset Name")
+        self.assertEqual(payload["suggested_mapping"]["serial_number"], "SN")
+
+    def test_validate_accepts_user_column_mapping(self):
+        self.client.force_login(self.admin)
+        csv_content = (
+            "Asset Name,Category,SN,State\n"
+            "Uploaded Laptop,Laptop,IMPORT-002,Available\n"
+        )
+        mapping = json.dumps(
+            {
+                "name": "Asset Name",
+                "type": "Category",
+                "serial_number": "SN",
+                "status": "State",
+            }
+        )
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {
+                "file": self._csv_file(csv_content),
+                "column_mapping": mapping,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["valid_count"], 1)
+        self.assertEqual(payload["rows"][0]["name"], "Uploaded Laptop")
+        self.assertEqual(payload["rows"][0]["serial_number"], "IMPORT-002")
+
+    def test_execute_merge_replace_updates_existing_asset(self):
+        self.client.force_login(self.admin)
+        rows = [
+            {
+                "row": 2,
+                "name": "Renamed Laptop",
+                "type": Asset.AssetType.LAPTOP,
+                "serial_number": "IMPORT-001",
+                "status": Asset.AssetStatus.ASSIGNED,
+                "last_maintenance_date": None,
+            }
+        ]
+        response = self.client.post(
+            reverse("import_asset_csv_execute"),
+            data=json.dumps(
+                {
+                    "rows": rows,
+                    "mode": "merge",
+                    "resolutions": {"IMPORT-001": "replace"},
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.existing.refresh_from_db()
+        self.assertEqual(self.existing.name, "Renamed Laptop")
+        self.assertEqual(self.existing.status, Asset.AssetStatus.ASSIGNED)
+        self.assertEqual(response.json()["updated"], 1)
+
+    def test_execute_catalog_creates_named_directory(self):
+        self.client.force_login(self.admin)
+        rows = [
+            {
+                "row": 2,
+                "name": "Catalog Laptop",
+                "type": Asset.AssetType.LAPTOP,
+                "serial_number": "CAT-001",
+                "status": Asset.AssetStatus.AVAILABLE,
+                "last_maintenance_date": None,
+            }
+        ]
+        response = self.client.post(
+            reverse("import_asset_csv_execute"),
+            data=json.dumps(
+                {
+                    "rows": rows,
+                    "mode": "catalog",
+                    "catalog_name": "Legacy Spreadsheet",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        catalog = AssetCatalog.objects.get(name="Legacy Spreadsheet")
+        self.assertEqual(catalog.assets.count(), 1)
+        self.assertEqual(CatalogAsset.objects.filter(catalog=catalog).first().name, "Catalog Laptop")
+        self.assertEqual(Asset.objects.count(), 1)
+        self.assertEqual(payload["catalog"]["name"], "Legacy Spreadsheet")
+        self.assertEqual(payload["catalog"]["assets"][0]["name"], "Catalog Laptop")
+
+    def test_asset_list_renders_catalog_tables_above_all_assets(self):
+        catalog = AssetCatalog.objects.create(name="Legacy Spreadsheet", created_by=self.admin)
+        CatalogAsset.objects.create(
+            catalog=catalog,
+            name="Catalog Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="CAT-001",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('id="asset-catalog-sections"', content)
+        self.assertIn("Legacy Spreadsheet", content)
+        self.assertIn("Catalog Laptop", content)
+        self.assertLess(content.index("Legacy Spreadsheet"), content.index("All Assets"))
+
+    def test_import_endpoints_reject_non_admin(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("import_asset_csv_validate"),
+            {"file": self._csv_file("Name,Type,Serial Number\nA,Laptop,S1\n")},
+        )
         self.assertEqual(response.status_code, 403)
 
 

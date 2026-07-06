@@ -16,23 +16,23 @@
 }
 
 .profile-header h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: var(--font-size-2xl, 1.5rem);
+    font-weight: var(--font-weight-bold, 700);
     color: var(--text-primary, #1e293b);
     margin-bottom: 0.15rem;
 }
 
-.profile-header .profile-subtitle {
-    color: var(--text-secondary, #64748b);
-    font-size: 0.85rem;
+[data-theme="dark"] .profile-header h1 {
+    color: var(--text-primary, #f1f5f9);
 }
 
-[data-theme="dark"] .profile-header h1 {
-    color: #f0f0f0;
+.profile-header .profile-subtitle {
+    color: var(--text-secondary, #64748b);
+    font-size: var(--font-size-sm, 0.85rem);
 }
 
 [data-theme="dark"] .profile-header .profile-subtitle {
-    color: #94a3b8;
+    color: var(--text-secondary, #94a3b8);
 }
 
 /* ==========================================
@@ -49,15 +49,15 @@
    ========================================== */
 .profile-card {
     background: var(--bg-card, #ffffff);
-    border-radius: 10px;
+    border-radius: var(--radius-lg, 10px);
     border: 1px solid var(--border-color, #e2e8f0);
     padding: 1.25rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all var(--transition-base, 0.3s ease);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.04));
 }
 
 .profile-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06));
 }
 
 [data-theme="dark"] .profile-card {
@@ -80,107 +80,69 @@
 }
 
 .profile-avatar-large {
-    border-radius: 50%;
-    border: 3px solid var(--primary-color, #3b82f6);
-    width: 100px;
-    height: 100px;
+    border-radius: var(--radius-full, 50%);
+    border: 3px solid var(--primary-500, #3b82f6);
+    width: 128px;
+    height: 128px;
     object-fit: cover;
+}
+
+[data-theme="dark"] .profile-avatar-large {
+    border-color: var(--primary-400, #60a5fa);
 }
 
 .profile-avatar-badge {
     position: absolute;
     bottom: 2px;
     right: 2px;
-    background: var(--primary-color, #3b82f6);
-    color: white;
+    background: var(--primary-500, #3b82f6);
+    color: #ffffff;
     width: 28px;
     height: 28px;
-    border-radius: 50%;
+    border-radius: var(--radius-full, 50%);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast, 0.2s ease);
     border: 2px solid var(--bg-card, #ffffff);
     font-size: 0.7rem;
 }
 
+[data-theme="dark"] .profile-avatar-badge {
+    border-color: var(--bg-card, #1e293b);
+}
+
 .profile-avatar-badge:hover {
     transform: scale(1.1);
-    background: var(--primary-hover, #2563eb);
+    background: var(--primary-600, #2563eb);
 }
 
 .profile-avatar-card h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: var(--font-size-lg, 1.1rem);
+    font-weight: var(--font-weight-semibold, 600);
     color: var(--text-primary, #1e293b);
     margin-bottom: 0.15rem;
 }
 
+[data-theme="dark"] .profile-avatar-card h2 {
+    color: var(--text-primary, #f1f5f9);
+}
+
 .profile-avatar-card .profile-role {
     color: var(--text-secondary, #64748b);
-    font-size: 0.8rem;
+    font-size: var(--font-size-sm, 0.8rem);
     margin-bottom: 0.75rem;
 }
 
-[data-theme="dark"] .profile-avatar-card h2 {
-    color: #f0f0f0;
-}
-
 [data-theme="dark"] .profile-avatar-card .profile-role {
-    color: #94a3b8;
+    color: var(--text-secondary, #94a3b8);
 }
 
 /* ==========================================
-   PROFILE ACTIONS BUTTONS
+   PROFILE ACTIONS BUTTONS - REMOVED (Settings & Logout moved to sidebar)
    ========================================== */
-.profile-actions {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.profile-actions .btn {
-    padding: 0.4rem 0.85rem;
-    font-size: 0.8rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-decoration: none !important;
-    font-weight: 500;
-}
-
-.profile-actions .btn-secondary {
-    background: var(--bg-secondary, #f1f5f9);
-    color: var(--text-primary, #1e293b);
-}
-
-.profile-actions .btn-secondary:hover {
-    background: var(--bg-hover, #e2e8f0);
-}
-
-.profile-actions .btn-danger {
-    background: var(--danger-color, #ef4444);
-    color: white;
-}
-
-.profile-actions .btn-danger:hover {
-    background: var(--danger-hover, #dc2626);
-}
-
-[data-theme="dark"] .profile-actions .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: #f0f0f0;
-}
-
-[data-theme="dark"] .profile-actions .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.16);
-}
+/* These styles are kept for compatibility but not used in the new template */
 
 /* ==========================================
    CARD HEADER
@@ -193,19 +155,29 @@
 }
 
 .profile-card-header h3 {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: var(--font-size-sm, 0.9rem);
+    font-weight: var(--font-weight-semibold, 600);
     color: var(--text-primary, #1e293b);
     margin: 0;
 }
 
-.profile-card-icon {
-    color: var(--text-secondary, #64748b);
-    font-size: 1rem;
+[data-theme="dark"] .profile-card-header h3 {
+    color: var(--text-primary, #f1f5f9);
 }
 
-[data-theme="dark"] .profile-card-header h3 {
-    color: #f0f0f0;
+.profile-card-icon {
+    color: var(--text-secondary, #64748b);
+    font-size: var(--font-size-base, 1rem);
+}
+
+[data-theme="dark"] .profile-card-icon {
+    color: var(--text-secondary, #94a3b8);
+}
+
+.edit-profile-btn {
+    font-size: var(--font-size-xs, 0.75rem);
+    padding: 0.25rem 0.6rem;
+    min-height: 28px;
 }
 
 /* ==========================================
@@ -223,58 +195,73 @@
     border-bottom: none;
 }
 
+[data-theme="dark"] .profile-field {
+    border-bottom-color: var(--border-color, #334155);
+}
+
 .field-label {
     color: var(--text-secondary, #64748b);
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: var(--font-size-sm, 0.8rem);
+    font-weight: var(--font-weight-medium, 500);
+}
+
+[data-theme="dark"] .field-label {
+    color: var(--text-secondary, #94a3b8);
 }
 
 .field-value {
     color: var(--text-primary, #1e293b);
-    font-weight: 500;
-    font-size: 0.8rem;
+    font-weight: var(--font-weight-medium, 500);
+    font-size: var(--font-size-sm, 0.8rem);
     text-align: right;
     word-break: break-word;
     max-width: 60%;
 }
 
-[data-theme="dark"] .field-label {
-    color: #94a3b8;
-}
-
 [data-theme="dark"] .field-value {
-    color: #f0f0f0;
+    color: var(--text-primary, #f1f5f9);
 }
 
 /* ==========================================
-   BADGES
+   BADGES - Reusing from components
    ========================================== */
 .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     padding: 0.2rem 0.6rem;
-    border-radius: 50px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    border-radius: var(--radius-full, 9999px);
+    font-size: var(--font-size-xs, 0.7rem);
+    font-weight: var(--font-weight-semibold, 600);
 }
 
 .badge-assigned {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.badge-available {
-    background: #d1fae5;
-    color: #059669;
+    background: var(--primary-50, #dbeafe);
+    color: var(--primary-700, #1d4ed8);
 }
 
 [data-theme="dark"] .badge-assigned {
     background: rgba(59, 130, 246, 0.2);
-    color: #60a5fa;
+    color: var(--primary-400, #60a5fa);
+}
+
+.badge-available {
+    background: var(--success-50, #d1fae5);
+    color: var(--success-700, #059669);
 }
 
 [data-theme="dark"] .badge-available {
     background: rgba(16, 185, 129, 0.2);
-    color: #34d399;
+    color: var(--success-400, #34d399);
+}
+
+.badge-pending {
+    background: var(--warning-50, #fef3c7);
+    color: var(--warning-700, #92400e);
+}
+
+[data-theme="dark"] .badge-pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning-400, #fbbf24);
 }
 
 /* ==========================================
@@ -292,28 +279,32 @@
     border-bottom: none;
 }
 
+[data-theme="dark"] .stat-item {
+    border-bottom-color: var(--border-color, #334155);
+}
+
 .stat-label {
     color: var(--text-secondary, #64748b);
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: var(--font-size-sm, 0.8rem);
+    font-weight: var(--font-weight-medium, 500);
+}
+
+[data-theme="dark"] .stat-label {
+    color: var(--text-secondary, #94a3b8);
 }
 
 .stat-value {
     color: var(--text-primary, #1e293b);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-[data-theme="dark"] .stat-label {
-    color: #94a3b8;
+    font-weight: var(--font-weight-semibold, 600);
+    font-size: var(--font-size-sm, 0.9rem);
 }
 
 [data-theme="dark"] .stat-value {
-    color: #f0f0f0;
+    color: var(--text-primary, #f1f5f9);
 }
 
 /* ==========================================
-   QUICK ACTIONS
+   QUICK ACTIONS - Using button styles from components
    ========================================== */
 .profile-actions-card {
     grid-column: 1 / -1;
@@ -333,41 +324,121 @@
     gap: 0.35rem;
     padding: 0.85rem 0.5rem;
     background: var(--bg-secondary, #f8fafc);
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     border: 1px solid var(--border-color, #e2e8f0);
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast, 0.2s ease);
     text-decoration: none !important;
     color: var(--text-primary, #1e293b);
     cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: var(--font-size-sm, 0.8rem);
+    font-weight: var(--font-weight-medium, 500);
+    width: 100%;
+    font-family: inherit;
+}
+
+.quick-action i {
+    font-size: var(--font-size-xl, 1.25rem);
+    color: var(--primary-500, #3b82f6);
 }
 
 .quick-action:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
     text-decoration: none !important;
-    border-color: var(--primary-color, #3b82f6);
+    border-color: var(--primary-400, #60a5fa);
+    background: var(--primary-50, #eff6ff);
 }
 
 .quick-action span {
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: var(--font-weight-medium, 500);
 }
 
 .quick-action-danger:hover {
-    border-color: var(--danger-color, #ef4444);
-    background: rgba(239, 68, 68, 0.05);
+    border-color: var(--danger-500, #ef4444);
+    background: var(--danger-50, #fef2f2);
+}
+
+.quick-action-danger i {
+    color: var(--danger-500, #ef4444);
 }
 
 [data-theme="dark"] .quick-action {
     background: rgba(255, 255, 255, 0.04);
     border-color: var(--border-color, #334155);
-    color: #f0f0f0;
+    color: var(--text-primary, #f1f5f9);
 }
 
 [data-theme="dark"] .quick-action:hover {
     background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-400, #60a5fa);
+}
+
+[data-theme="dark"] .quick-action i {
+    color: var(--primary-400, #60a5fa);
+}
+
+[data-theme="dark"] .quick-action-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger-400, #f87171);
+}
+
+[data-theme="dark"] .quick-action-danger i {
+    color: var(--danger-400, #f87171);
+}
+
+/* ==========================================
+   FORM STYLES (for edit mode)
+   ========================================== */
+.profile-edit-field .form-group {
+    margin-bottom: 1rem;
+}
+
+.profile-edit-field .form-group label {
+    display: block;
+    font-size: var(--font-size-sm, 0.8rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 0.25rem;
+}
+
+[data-theme="dark"] .profile-edit-field .form-group label {
+    color: var(--text-primary, #f1f5f9);
+}
+
+.profile-edit-field .form-group input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 6px);
+    font-size: var(--font-size-sm, 0.875rem);
+    background: var(--bg-input, #ffffff);
+    color: var(--text-primary, #1e293b);
+    transition: all var(--transition-fast, 0.2s ease);
+}
+
+[data-theme="dark"] .profile-edit-field .form-group input {
+    background: var(--bg-input, #1e293b);
+    border-color: var(--border-color, #334155);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.profile-edit-field .form-group input:focus {
+    outline: none;
+    border-color: var(--primary-500, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.profile-edit-field .form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.profile-edit-field .form-actions .btn {
+    padding: 0.4rem 1rem;
+    font-size: var(--font-size-sm, 0.8rem);
+    min-height: 34px;
 }
 
 /* ==========================================
@@ -384,8 +455,8 @@
     }
 
     .profile-avatar-large {
-        width: 90px;
-        height: 90px;
+        width: 100px;
+        height: 100px;
     }
 }
 
@@ -398,16 +469,16 @@
     }
 
     .profile-header h1 {
-        font-size: 1.25rem;
+        font-size: var(--font-size-xl, 1.25rem);
     }
 
     .profile-header .profile-subtitle {
-        font-size: 0.8rem;
+        font-size: var(--font-size-sm, 0.8rem);
     }
 
     .profile-card {
         padding: 0.85rem;
-        border-radius: 8px;
+        border-radius: var(--radius-md, 8px);
     }
 
     .profile-avatar-large {
@@ -423,7 +494,7 @@
     }
 
     .profile-avatar-card h2 {
-        font-size: 1rem;
+        font-size: var(--font-size-base, 1rem);
     }
 
     .quick-actions-grid {
@@ -433,7 +504,7 @@
 
     .quick-action {
         padding: 0.65rem 0.4rem;
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs, 0.75rem);
     }
 
     .profile-field {
@@ -441,11 +512,11 @@
     }
 
     .field-label {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs, 0.75rem);
     }
 
     .field-value {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs, 0.75rem);
         max-width: 55%;
     }
 
@@ -454,11 +525,11 @@
     }
 
     .stat-label {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs, 0.75rem);
     }
 
     .stat-value {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm, 0.85rem);
     }
 }
 
@@ -467,7 +538,7 @@
    ========================================== */
 @media (max-width: 480px) {
     .profile-header h1 {
-        font-size: 1.1rem;
+        font-size: var(--font-size-lg, 1.1rem);
     }
 
     .profile-card {
@@ -488,11 +559,11 @@
     }
 
     .profile-avatar-card h2 {
-        font-size: 0.95rem;
+        font-size: var(--font-size-sm, 0.95rem);
     }
 
     .profile-avatar-card .profile-role {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs, 0.75rem);
     }
 
     .profile-field {
@@ -505,19 +576,7 @@
     .field-value {
         text-align: left;
         max-width: 100%;
-        font-size: 0.8rem;
-    }
-
-    .profile-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .profile-actions .btn {
-        width: 100%;
-        justify-content: center;
-        padding: 0.45rem 0.75rem;
-        font-size: 0.8rem;
+        font-size: var(--font-size-sm, 0.8rem);
     }
 
     .quick-actions-grid {
@@ -527,16 +586,16 @@
 
     .quick-action {
         padding: 0.6rem 0.3rem;
-        font-size: 0.7rem;
-        border-radius: 6px;
+        font-size: var(--font-size-xs, 0.7rem);
+        border-radius: var(--radius-sm, 6px);
     }
 
     .quick-action span {
-        font-size: 0.7rem;
+        font-size: var(--font-size-xs, 0.7rem);
     }
 
     .profile-card-header h3 {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm, 0.85rem);
     }
 
     .stat-item {
@@ -544,7 +603,16 @@
     }
 
     .stat-value {
-        font-size: 0.8rem;
+        font-size: var(--font-size-sm, 0.8rem);
+    }
+
+    .profile-edit-field .form-actions {
+        flex-direction: column;
+    }
+
+    .profile-edit-field .form-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -582,11 +650,11 @@
     }
 
     .profile-header h1 {
-        font-size: 1rem;
+        font-size: var(--font-size-base, 1rem);
     }
 
     .profile-avatar-card h2 {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm, 0.85rem);
     }
 }
 
@@ -613,3 +681,21 @@
 .profile-card:nth-child(2) { animation-delay: 0.1s; }
 .profile-card:nth-child(3) { animation-delay: 0.15s; }
 .profile-card:nth-child(4) { animation-delay: 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-card {
+        opacity: 1;
+        animation: none;
+    }
+}
+
+/* ==========================================
+   THEME TRANSITIONS
+   ========================================== */
+.profile-card,
+.profile-field,
+.stat-item,
+.quick-action,
+.profile-edit-field .form-group input {
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}

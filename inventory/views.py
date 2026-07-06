@@ -40,9 +40,19 @@ from .forms import (
     EmployeeForm,
     MaintenanceLogForm,
 )
-from .models import Asset, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, AssetCatalog, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
 from .services.assets import get_asset_list_sections
 from .services.background_jobs import enqueue_job, serialize_job
+from .services.asset_import import (
+    CSVImportError,
+    detect_serial_conflicts,
+    execute_import,
+    is_csv_upload,
+    parse_csv_upload,
+    serialize_catalog,
+    serialize_import_rows,
+    validate_csv_upload,
+)
 from .services.metrics import (
     get_overdue_assets_queryset,
     get_service_overdue_cutoff,
@@ -472,6 +482,11 @@ class AssetListView(LoginRequiredMixin, ListView):
                 "selected_type": self.request.GET.get("type", ""),
                 "selected_status": self.request.GET.get("status", ""),
                 "overdue_cutoff": get_service_overdue_cutoff().date(),
+                "asset_catalogs": [
+                    serialize_catalog(catalog)
+                    for catalog in AssetCatalog.objects.prefetch_related("assets")
+                    .order_by("-created_at", "name")
+                ],
                 "async_asset_sections": True,
                 "assigned_asset_rows": [],
                 "available_asset_rows": [],
@@ -996,6 +1011,92 @@ class ExportAssetCSVView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 
 AssetCSVExportView = ExportAssetCSVView
+
+
+class ImportAssetCSVValidateView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def post(self, request):
+        uploaded = request.FILES.get("file")
+        if not uploaded:
+            return JsonResponse({"detail": "No file uploaded."}, status=400)
+        if not is_csv_upload(uploaded):
+            return JsonResponse(
+                {"detail": "The chosen file was not a CSV, Try again.", "code": "not_csv"},
+                status=400,
+            )
+        try:
+            column_mapping = None
+            mapping_raw = request.POST.get("column_mapping")
+            if mapping_raw:
+                column_mapping = json.loads(mapping_raw)
+
+            result = validate_csv_upload(uploaded, column_mapping)
+            if result.get("needs_column_mapping"):
+                return JsonResponse(result)
+
+            return JsonResponse(
+                {
+                    "rows": serialize_import_rows(result["rows"]),
+                    "conflicts": result["conflicts"],
+                    "valid_count": result["valid_count"],
+                    "error_count": result["error_count"],
+                    "column_mapping": result.get("column_mapping", {}),
+                    "has_employee_column": result.get("has_employee_column", False),
+                    "assignment_reviews": result.get("assignment_reviews", []),
+                    "employees": result.get("employees", []),
+                }
+            )
+        except json.JSONDecodeError:
+            return JsonResponse({"detail": "Invalid column mapping."}, status=400)
+        except CSVImportError as exc:
+            return JsonResponse({"detail": str(exc), "code": exc.code}, status=400)
+
+
+class ImportAssetCSVExecuteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self) -> bool:
+        return user_has_admin_access(self.request.user)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied
+        return super().handle_no_permission()
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode("utf-8") or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+        rows = data.get("rows") or []
+        mode = data.get("mode")
+        catalog_name = data.get("catalog_name", "")
+        resolutions = data.get("resolutions") or {}
+        assignment_confirmations = data.get("assignment_confirmations") or {}
+
+        if mode not in {"merge", "catalog"}:
+            return JsonResponse({"detail": "Import mode is required."}, status=400)
+        if not rows:
+            return JsonResponse({"detail": "No rows to import."}, status=400)
+
+        try:
+            result = execute_import(
+                rows,
+                mode=mode,
+                catalog_name=catalog_name,
+                resolutions=resolutions,
+                assignment_confirmations=assignment_confirmations,
+                user=request.user,
+            )
+            return JsonResponse(result)
+        except CSVImportError as exc:
+            return JsonResponse({"detail": str(exc), "code": exc.code}, status=400)
 
 
 class AssetAPIListView(LoginRequiredMixin, View):

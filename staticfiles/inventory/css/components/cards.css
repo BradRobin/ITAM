@@ -82,6 +82,24 @@
     font-weight: var(--font-weight-semibold);
 }
 
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+}
+
+.maintenance-actions {
+    display: flex;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+}
+
 .card-footer {
     padding: var(--spacing-4) var(--spacing-5);
     border-top: 1px solid var(--border-color);

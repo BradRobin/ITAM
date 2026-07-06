@@ -285,16 +285,17 @@ tbody td {
 @media (max-width: 768px) {
     .page-header {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
         gap: var(--spacing-2, 0.5rem);
     }
 
     .page-header .actions {
-        justify-content: stretch;
+        justify-content: flex-start;
     }
 
     .page-header .actions .btn {
-        flex: 1;
+        flex: 0 0 auto;
+        width: auto;
         justify-content: center;
     }
 

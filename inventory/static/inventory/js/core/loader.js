@@ -14,20 +14,18 @@
         overlay: null,
         textEl: null,
         dotsEl: null,
-        message: 'Please wait',
+        message: 'Loading...',
         dotInterval: null,
-        timeoutId: null
+        isInitialized: false
     };
     
     // ============================================
     // Configuration
     // ============================================
     var CONFIG = {
-        DEFAULT_MESSAGE: 'Please wait',
-        TIMEOUT: 30000,
+        DEFAULT_MESSAGE: 'Loading...',
         DOT_INTERVAL: 400,
-        FADE_DURATION: 300,
-        SKIP_PAGES: ['/login', '/signup', '/logout', '/auth/']
+        SKIP_PAGES: ['/login', '/signup', '/logout', '/auth/', '/password-reset']
     };
     
     // ============================================
@@ -44,17 +42,25 @@
     }
     
     // ============================================
-    // Create Loader Elements - Logo + Text with Dots
+    // Create Loader Elements
     // ============================================
     function createLoaderElements() {
-        if (state.overlay) return;
+        // Check if overlay already exists
+        var existingOverlay = document.getElementById('loading-overlay');
+        if (existingOverlay) {
+            state.overlay = existingOverlay;
+            state.textEl = state.overlay.querySelector('#loaderText');
+            state.dotsEl = state.overlay.querySelector('#loaderDots');
+            return;
+        }
         
+        // Create new overlay
         state.overlay = document.createElement('div');
         state.overlay.id = 'loading-overlay';
         state.overlay.className = 'loading-overlay';
+        state.overlay.style.display = 'none';
         state.overlay.innerHTML = `
             <div class="loader-container">
-                <!-- Animated Logo -->
                 <div class="loader-logo-wrapper">
                     <svg class="loader-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -62,9 +68,8 @@
                         <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <!-- Text with Dots -->
                 <div class="loader-text-wrapper">
-                    <span class="loader-text" id="loaderText">${CONFIG.DEFAULT_MESSAGE}</span>
+                    <span class="loader-text" id="loaderText">${state.message}</span>
                     <span class="loader-dots" id="loaderDots">
                         <span class="dot">.</span>
                         <span class="dot">.</span>
@@ -77,6 +82,8 @@
         document.body.appendChild(state.overlay);
         state.textEl = state.overlay.querySelector('#loaderText');
         state.dotsEl = state.overlay.querySelector('#loaderDots');
+        
+        console.log('Loader elements created');
     }
     
     // ============================================
@@ -88,8 +95,10 @@
         var dots = state.dotsEl.querySelectorAll('.dot');
         if (dots.length !== 3) return;
         
+        // Clear existing interval
         if (state.dotInterval) {
             clearInterval(state.dotInterval);
+            state.dotInterval = null;
         }
         
         var index = 0;
@@ -115,17 +124,98 @@
     }
     
     // ============================================
-    // Show Loader
+    // Stop Dot Animation
+    // ============================================
+    function stopDots() {
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
+            state.dotInterval = null;
+        }
+        
+        if (state.dotsEl) {
+            var dots = state.dotsEl.querySelectorAll('.dot');
+            dots.forEach(function(dot) {
+                dot.style.opacity = '0.3';
+                dot.style.transform = 'translateY(0)';
+            });
+        }
+    }
+    
+    // ============================================
+    // Show Loader - FIXED (removed early return)
     // ============================================
     function show(message) {
-        return;
+        console.log('Loader show called with message:', message || CONFIG.DEFAULT_MESSAGE);
+        
+        // Skip on auth pages
+        if (isAuthPage()) {
+            console.log('Loader: Skipped on auth page');
+            return;
+        }
+        
+        // Create overlay if not exists
+        createLoaderElements();
+        
+        if (!state.overlay) {
+            console.warn('Loader overlay not found');
+            return;
+        }
+        
+        // If already active, just update message
+        if (state.isActive) {
+            if (message) {
+                updateMessage(message);
+            }
+            return;
+        }
+        
+        // Update message if provided
+        if (message) {
+            state.message = message;
+            if (state.textEl) {
+                state.textEl.textContent = message;
+            }
+        }
+        
+        // Show overlay immediately
+        state.overlay.style.display = 'flex';
+        // Force reflow for animation
+        void state.overlay.offsetWidth;
+        state.overlay.classList.add('active');
+        state.isActive = true;
+        
+        // Start dot animation
+        animateDots();
+        
+        console.log('Loader shown:', message || CONFIG.DEFAULT_MESSAGE);
     }
     
     // ============================================
     // Hide Loader
     // ============================================
     function hide() {
-        return;
+        console.log('Loader hide called');
+        
+        if (!state.overlay || !state.isActive) {
+            state.isActive = false;
+            return;
+        }
+        
+        // Hide overlay
+        state.overlay.classList.remove('active');
+        state.isActive = false;
+        
+        // Stop dot animation
+        stopDots();
+        
+        // Hide after fade animation
+        setTimeout(function() {
+            if (state.overlay && !state.isActive) {
+                state.overlay.style.display = 'none';
+            }
+        }, 300);
+        
+        console.log('Loader hidden');
     }
     
     // ============================================
@@ -146,6 +236,19 @@
     }
     
     // ============================================
+    // Force Hide (Emergency)
+    // ============================================
+    function forceHide() {
+        if (state.overlay) {
+            state.overlay.classList.remove('active');
+            state.overlay.style.display = 'none';
+        }
+        state.isActive = false;
+        stopDots();
+        console.log('Loader force hidden');
+    }
+    
+    // ============================================
     // Show Loader on Navigation Links
     // ============================================
     function showOnNavigation(selector) {
@@ -153,15 +256,45 @@
             return;
         }
         
-        var links = document.querySelectorAll(selector || 'a[data-loader="true"]');
+        var links = document.querySelectorAll(selector || 'a[data-loader="true"], .sidebar-link, .hamburger-menu, a[href^="/"]');
         
         links.forEach(function(link) {
+            // Skip if already has listener
+            if (link.dataset.loaderAttached === 'true') {
+                return;
+            }
+            link.dataset.loaderAttached = 'true';
+            
             link.addEventListener('click', function(e) {
                 var href = this.getAttribute('href');
-                if (!href || href === '#') return;
-                show(CONFIG.DEFAULT_MESSAGE);
+                
+                // Skip if no href or it's a hash link
+                if (!href || href === '#' || href === '' || href.startsWith('javascript:')) {
+                    return;
+                }
+                
+                // Skip external links
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) {
+                    return;
+                }
+                
+                // Skip download links
+                if (href.includes('download') || this.hasAttribute('download')) {
+                    return;
+                }
+                
+                // Skip if target is _blank
+                if (this.target === '_blank') {
+                    return;
+                }
+                
+                // Show loader immediately
+                var message = this.getAttribute('data-loader-message') || CONFIG.DEFAULT_MESSAGE;
+                show(message);
             });
         });
+        
+        console.log('Loader attached to navigation links');
     }
     
     // ============================================
@@ -175,44 +308,27 @@
         var forms = document.querySelectorAll(selector || 'form[data-loader="true"]');
         
         forms.forEach(function(form) {
+            if (form.dataset.loaderAttached === 'true') {
+                return;
+            }
+            form.dataset.loaderAttached = 'true';
+            
             form.addEventListener('submit', function() {
-                show(CONFIG.DEFAULT_MESSAGE);
+                var message = this.getAttribute('data-loader-message') || CONFIG.DEFAULT_MESSAGE;
+                show(message);
             });
         });
+        
+        console.log('Loader attached to forms');
     }
     
     // ============================================
-    // Show Loader on AJAX Requests
+    // Cleanup
     // ============================================
-    function showOnAjax() {
-        if (isAuthPage()) {
-            return;
-        }
-        
-        if (typeof window.fetch === 'function') {
-            var originalFetch = window.fetch;
-            window.fetch = function() {
-                var args = arguments;
-                var url = args[0];
-                var isApiCall = false;
-                
-                if (typeof url === 'string') {
-                    isApiCall = url.includes('/api/') && 
-                               !url.includes('/static/') && 
-                               !url.includes('.css') && 
-                               !url.includes('.js');
-                }
-                
-                if (isApiCall) {
-                    show(CONFIG.DEFAULT_MESSAGE);
-                }
-                
-                return originalFetch.apply(this, args).finally(function() {
-                    if (isApiCall) {
-                        hide();
-                    }
-                });
-            };
+    function cleanup() {
+        if (state.dotInterval) {
+            clearInterval(state.dotInterval);
+            state.dotInterval = null;
         }
     }
     
@@ -224,10 +340,66 @@
         hide: hide,
         updateMessage: updateMessage,
         isActive: isActive,
+        forceHide: forceHide,
         showOnNavigation: showOnNavigation,
         showOnSubmit: showOnSubmit,
-        showOnAjax: showOnAjax
+        cleanup: cleanup
     };
+    
+    // ============================================
+    // Auto-init on DOM ready
+    // ============================================
+    function init() {
+        if (state.isInitialized) {
+            return;
+        }
+        state.isInitialized = true;
+        
+        // Create loader elements
+        createLoaderElements();
+        
+        // Hide loader initially
+        forceHide();
+        
+        // Auto-attach to all navigation links with data-loader="true"
+        showOnNavigation('a[data-loader="true"]');
+        
+        // Auto-attach to sidebar links
+        showOnNavigation('.sidebar-link');
+        
+        // Auto-attach to employee sidebar links
+        showOnNavigation('.sidebar-employee .sidebar-link');
+        
+        // Auto-attach to forms
+        showOnSubmit('form[data-loader="true"]');
+        
+        // Handle page navigation events - hide loader on page load
+        document.addEventListener('turbo:load', function() {
+            forceHide();
+        });
+        
+        document.addEventListener('htmx:afterSwap', function() {
+            forceHide();
+        });
+        
+        // Handle back/forward cache
+        window.addEventListener('pageshow', function() {
+            forceHide();
+        });
+        
+        // Handle beforeunload - cleanup
+        window.addEventListener('beforeunload', function() {
+            cleanup();
+        });
+        
+        console.log('Loader module initialized - Auto-attached to all navigation links');
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
     
     console.log('loader.js loaded - Logo + Text with Animated Dots');
     

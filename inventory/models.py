@@ -205,6 +205,56 @@ class MaintenanceLog(models.Model):
         return f"{self.asset} maintenance on {self.date}"
 
 
+class AssetCatalog(models.Model):
+    """Named import directory — a separate asset table for transitional workflows."""
+
+    name = models.CharField(max_length=255, unique=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="asset_catalogs",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class CatalogAsset(models.Model):
+    catalog = models.ForeignKey(
+        AssetCatalog,
+        on_delete=models.CASCADE,
+        related_name="assets",
+    )
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=20, choices=Asset.AssetType.choices)
+    serial_number = models.CharField(max_length=100)
+    status = models.CharField(
+        max_length=30,
+        choices=Asset.AssetStatus.choices,
+        default=Asset.AssetStatus.AVAILABLE,
+    )
+    last_maintenance_date = models.DateField(null=True, blank=True)
+    imported_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["name", "serial_number"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["catalog", "serial_number"],
+                name="catalog_asset_serial_unique",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.serial_number})"
+
+
 class EmployeeNotification(models.Model):
     class NotificationType(models.TextChoices):
         INFO = "info", "Info"
