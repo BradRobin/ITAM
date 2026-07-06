@@ -160,9 +160,5 @@ BACKGROUND_JOB_CSV_ASYNC_MIN_ASSETS = env.int(
 )
 BACKGROUND_JOBS_USE_THREADS = env.bool(
     "BACKGROUND_JOBS_USE_THREADS",
-<<<<<<< HEAD
     default=not IS_VERCEL and "test" not in sys.argv,
-=======
-    default="test" not in sys.argv,
->>>>>>> af8e057 (...)
 )
