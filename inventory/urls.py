@@ -109,6 +109,16 @@ urlpatterns = [
         name="export_asset_csv",
     ),
     path("assets/export.csv", views.ExportAssetCSVView.as_view(), name="asset_export"),
+    path(
+        "assets/import/csv/validate/",
+        views.ImportAssetCSVValidateView.as_view(),
+        name="import_asset_csv_validate",
+    ),
+    path(
+        "assets/import/csv/execute/",
+        views.ImportAssetCSVExecuteView.as_view(),
+        name="import_asset_csv_execute",
+    ),
     path("assets/add/", views.AssetCreateView.as_view(), name="asset_add"),
     path("assets/<int:pk>/", views.AssetDetailView.as_view(), name="asset_detail"),
     path("assets/<int:pk>/edit/", views.AssetUpdateView.as_view(), name="asset_edit"),

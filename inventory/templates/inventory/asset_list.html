@@ -6,6 +6,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=1">
 {% endblock %}
 
 {% block content %}
@@ -13,6 +14,9 @@
         <h1>Assets</h1>
         <div class="actions">
             <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+            <button type="button" class="btn btn-secondary" id="import-csv-btn">
+                <i class="fas fa-file-import"></i> Import CSV
+            </button>
             <button type="button" class="btn btn-success" id="export-csv-btn" data-export-url="{% url 'asset_export' %}?async=1">Export CSV</button>
         </div>
     </div>
@@ -160,14 +164,100 @@
             <footer class="asset-detail-card-footer"></footer>
         </article>
     </div>
+
+    <div id="import-csv-modal" class="import-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="import-csv-title"
+         data-validate-url="{% url 'import_asset_csv_validate' %}"
+         data-execute-url="{% url 'import_asset_csv_execute' %}">
+        <div class="import-modal-backdrop" data-import-close></div>
+        <div class="import-modal-panel">
+            <header class="import-modal-header">
+                <div>
+                    <h2 id="import-csv-title">Import Assets from CSV</h2>
+                    <p class="import-modal-subtitle">Upload a CSV matching the export format to migrate your inventory</p>
+                </div>
+                <button type="button" class="import-modal-close" aria-label="Close import dialog" data-import-close>
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="import-modal-body">
+                <div id="import-step-upload" class="import-step active">
+                    <div id="import-dropzone" class="import-dropzone">
+                        <div class="import-dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <p><strong>Drag and drop your CSV here</strong></p>
+                        <p>or use Choose File below</p>
+                    </div>
+                    <div class="import-actions-row">
+                        <button type="button" class="btn btn-primary" id="import-choose-file-btn">
+                            <i class="fas fa-folder-open"></i> Choose File
+                        </button>
+                    </div>
+                    <input type="file" id="import-file-input" class="import-file-input" accept=".csv,text/csv">
+                    <div id="import-upload-error" class="import-error" hidden></div>
+                </div>
+
+                <div id="import-step-processing" class="import-step">
+                    <div class="import-status">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <p id="import-processing-label">Processing...</p>
+                    </div>
+                </div>
+
+                <div id="import-step-conflicts" class="import-step">
+                    <p class="import-summary" id="import-parse-summary"></p>
+                    <p class="import-summary">Resolve serial number conflicts before continuing.</p>
+                    <div id="import-conflict-list" class="import-conflict-list"></div>
+                </div>
+
+                <div id="import-step-destination" class="import-step">
+                    <p class="import-summary" id="import-destination-summary">Choose how to save these assets.</p>
+                    <div class="import-destination-options">
+                        <label class="import-destination-option selected">
+                            <input type="radio" name="import-mode" value="merge" checked>
+                            <div>
+                                <strong>Merge with existing table</strong>
+                                <span>Import into the main asset inventory. Resolved conflicts apply here.</span>
+                            </div>
+                        </label>
+                        <label class="import-destination-option">
+                            <input type="radio" name="import-mode" value="catalog">
+                            <div>
+                                <strong>Create new directory</strong>
+                                <span>Save as a separate named table without changing the main inventory.</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="import-catalog-name-wrap" class="import-catalog-name">
+                        <label for="import-catalog-name">Directory name</label>
+                        <input type="text" id="import-catalog-name" placeholder="e.g. Legacy Inventory 2024" maxlength="255">
+                    </div>
+                </div>
+
+                <div id="import-step-success" class="import-step">
+                    <div class="import-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div id="import-success-body"></div>
+                    </div>
+                </div>
+            </div>
+            <footer class="import-modal-footer">
+                <button type="button" class="btn btn-secondary" id="import-back-btn" hidden>Back</button>
+                <button type="button" class="btn btn-primary" id="import-next-btn" hidden>Continue</button>
+                <button type="button" class="btn btn-primary" id="import-done-btn" hidden>Done</button>
+            </footer>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=1"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=16"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            if (window.AssetImport && typeof window.AssetImport.init === 'function') {
+                window.AssetImport.init();
+            }
             if (window.AssetManager && typeof window.AssetManager.init === 'function') {
                 window.AssetManager.init();
             }
