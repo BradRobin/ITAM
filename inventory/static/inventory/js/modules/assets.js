@@ -139,9 +139,6 @@
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-text"></span></td>' +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text"></span></td>' +
                     '<td><span class="skeleton skeleton-actions"></span></td>' +
                 '</tr>'
             );
@@ -179,9 +176,6 @@
                 '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
                 '<td>' + escapeHtml(asset.type) + '</td>' +
                 '<td>' + assignee + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_created) + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_assigned) + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_returned) + '</td>' +
                 (window.AssetRowMenu
                     ? window.AssetRowMenu.cellHtml(asset.id, asset.name, {
                         canAssign: window.AssetRowMenu.canAssignAsset(asset)
@@ -230,7 +224,7 @@
     function renderTableMessage(message) {
         elements.assetTableBody.innerHTML =
             '<tr>' +
-                '<td colspan="' + tableColspan(7) + '" class="empty-state">' +
+                '<td colspan="' + tableColspan(4) + '" class="empty-state">' +
                     '<div class="empty-state-content">' +
                         '<h3>' + escapeHtml(message) + '</h3>' +
                     '</div>' +

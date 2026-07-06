@@ -78,16 +78,14 @@
             return html + '<div class="asset-section-empty">No assets are currently assigned.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Assignee</th><th>Date Assigned</th><th>Return Date</th>') +
+            tableHead('<th>Asset Name</th><th>Type</th><th>Assignee</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
                 '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
                     '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.assignee) + '</td>' +
-                    '<td>' + formatDate(row.date_assigned) + '</td>' +
-                    '<td>' + formatDate(row.expected_return_date) + '</td>',
+                    '<td>' + escapeHtml(row.assignee) + '</td>',
                 row.name,
                 'Assigned'
             );
@@ -101,14 +99,13 @@
             return html + '<div class="asset-section-empty">No available assets right now.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Available Since</th>') +
+            tableHead('<th>Asset Name</th><th>Type</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
                 '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
-                    '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.available_since) + '</td>',
+                    '<td>' + escapeHtml(row.type) + '</td>',
                 row.name,
                 'Available'
             );
