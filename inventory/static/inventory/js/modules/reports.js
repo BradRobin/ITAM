@@ -16,6 +16,19 @@
         };
     }
 
+    function initMap(graph) {
+        var root = document.getElementById('ecosystem-map-root');
+        if (!root || !window.ReportEcosystemMap) {
+            return;
+        }
+        root.classList.remove('ecosystem-map-loading');
+        if (!graph || !graph.nodes || !graph.nodes.length) {
+            root.innerHTML = '<div class="ecosystem-map-loading">No map data available.</div>';
+            return;
+        }
+        window.ReportEcosystemMap.init(root, graph);
+    }
+
     function init(data) {
         if (!data || !window.ChartCore) return;
 
@@ -64,6 +77,10 @@
                 null,
                 ''
             );
+        }
+
+        if (data.ecosystemMap) {
+            initMap(data.ecosystemMap);
         }
     }
 
@@ -116,7 +133,8 @@
                     monthlyAssets: parseJson(data.monthly_assets, []),
                     maintenanceByMonth: parseJson(data.maintenance_by_month, []),
                     topAssets: parseJson(data.top_assets_data, []),
-                    departmentData: parseJson(data.department_counts, {})
+                    departmentData: parseJson(data.department_counts, {}),
+                    ecosystemMap: parseJson(data.ecosystem_map, null)
                 });
             })
             .catch(function(error) {
