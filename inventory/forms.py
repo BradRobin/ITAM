@@ -212,3 +212,50 @@ class MaintenanceLogForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+
+class ForgotPasswordEmailForm(forms.Form):
+    email = forms.EmailField()
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+
+class ForgotPasswordSecurityForm(forms.Form):
+    security_answer = forms.CharField(
+        label="What other technology was built by the developers of ITAM?",
+        widget=forms.TextInput(attrs={"autocomplete": "off"}),
+    )
+
+    def clean_security_answer(self):
+        from .services.password_reset import is_eventhub_security_answer
+
+        answer = self.cleaned_data["security_answer"]
+        if not is_eventhub_security_answer(answer):
+            raise forms.ValidationError("Incorrect answer. Please try again.")
+        return answer
+
+
+class ForgotPasswordSetForm(forms.Form):
+    new_password = forms.CharField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(
+        label="Confirm Password",
+        widget=forms.PasswordInput,
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if new_password and confirm_password and new_password != confirm_password:
+            self.add_error("confirm_password", "Passwords do not match.")
+
+        if new_password and self.user is not None:
+            validate_password(new_password, user=self.user)
+
+        return cleaned_data

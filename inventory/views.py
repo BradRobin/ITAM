@@ -9,7 +9,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.views import LoginView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, OuterRef, Q, Subquery
@@ -38,6 +38,9 @@ from .forms import (
     EmailOrUsernameAuthenticationForm,
     EmployeeCreateForm,
     EmployeeForm,
+    ForgotPasswordEmailForm,
+    ForgotPasswordSecurityForm,
+    ForgotPasswordSetForm,
     MaintenanceLogForm,
 )
 from .models import Asset, AssetCatalog, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
@@ -59,6 +62,11 @@ from .services.metrics import (
     get_service_overdue_cutoff,
 )
 from .services.notifications import add_session_notification
+from .services.password_reset import (
+    PASSWORD_RESET_EMAIL_SESSION_KEY,
+    PASSWORD_RESET_VERIFIED_SESSION_KEY,
+    get_user_for_password_reset_email,
+)
 from .views_extras import (
     NotificationAPIView,
     NotificationListView,
@@ -405,42 +413,108 @@ class AuthLogoutView(View):
 # PASSWORD RESET VIEWS
 # ============================================
 
-class CustomPasswordResetView(PasswordResetView):
+def _redirect_authenticated_user(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return None
+
+
+def _clear_password_reset_session(request):
+    request.session.pop(PASSWORD_RESET_EMAIL_SESSION_KEY, None)
+    request.session.pop(PASSWORD_RESET_VERIFIED_SESSION_KEY, None)
+
+
+class ForgotPasswordEmailView(FormView):
     template_name = "inventory/auth.html"
-    success_url = reverse_lazy("password_reset_done")
+    form_class = ForgotPasswordEmailForm
+
+    def dispatch(self, request, *args, **kwargs):
+        redirect_response = _redirect_authenticated_user(request)
+        if redirect_response is not None:
+            return redirect_response
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page"] = "password_reset"
         return context
 
+    def form_valid(self, form):
+        email = form.cleaned_data["email"]
+        if get_user_for_password_reset_email(email) is None:
+            form.add_error("email", "No account found with this email address.")
+            return self.form_invalid(form)
 
-class CustomPasswordResetDoneView(PasswordResetDoneView):
+        self.request.session[PASSWORD_RESET_EMAIL_SESSION_KEY] = email
+        self.request.session.pop(PASSWORD_RESET_VERIFIED_SESSION_KEY, None)
+        return redirect("password_reset_verify")
+
+
+class ForgotPasswordVerifyView(FormView):
     template_name = "inventory/auth.html"
+    form_class = ForgotPasswordSecurityForm
+
+    def dispatch(self, request, *args, **kwargs):
+        redirect_response = _redirect_authenticated_user(request)
+        if redirect_response is not None:
+            return redirect_response
+        if not request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY):
+            return redirect("password_reset")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset_done"
+        context["page"] = "password_reset_verify"
         return context
 
+    def form_valid(self, form):
+        self.request.session[PASSWORD_RESET_VERIFIED_SESSION_KEY] = True
+        return redirect("password_reset_set")
 
-class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+
+class ForgotPasswordSetView(FormView):
     template_name = "inventory/auth.html"
-    success_url = reverse_lazy("password_reset_complete")
+    form_class = ForgotPasswordSetForm
+
+    def dispatch(self, request, *args, **kwargs):
+        redirect_response = _redirect_authenticated_user(request)
+        if redirect_response is not None:
+            return redirect_response
+
+        email = request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
+        verified = request.session.get(PASSWORD_RESET_VERIFIED_SESSION_KEY)
+        if not email:
+            return redirect("password_reset")
+        if not verified:
+            return redirect("password_reset_verify")
+        if get_user_for_password_reset_email(email) is None:
+            _clear_password_reset_session(request)
+            return redirect("password_reset")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        email = self.request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
+        kwargs["user"] = get_user_for_password_reset_email(email)
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset_confirm"
+        context["page"] = "password_reset_set"
         return context
 
+    def form_valid(self, form):
+        email = self.request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
+        user = get_user_for_password_reset_email(email)
+        if user is None:
+            _clear_password_reset_session(self.request)
+            return redirect("password_reset")
 
-class CustomPasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = "inventory/auth.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset_complete"
-        return context
+        user.set_password(form.cleaned_data["new_password"])
+        user.save(update_fields=["password"])
+        _clear_password_reset_session(self.request)
+        messages.success(self.request, "Your password has been reset. Please sign in.")
+        return redirect("login")
 
 
 class AssetListView(LoginRequiredMixin, ListView):

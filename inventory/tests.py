@@ -4,7 +4,7 @@ import json
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -843,6 +843,103 @@ class AuthRoutingTests(TestCase):
 
         self.assertRedirects(response, reverse("dashboard"))
         self.assertTrue(self.client.session.get_expire_at_browser_close())
+
+
+class PasswordResetFlowTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="reset-user",
+            email="reset-user@example.com",
+            password="OldPass12345!",
+        )
+
+    def test_password_reset_email_step_renders(self):
+        response = self.client.get(reverse("password_reset"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/auth.html")
+        self.assertEqual(response.context["page"], "password_reset")
+
+    def test_password_reset_rejects_unknown_email(self):
+        response = self.client.post(
+            reverse("password_reset"),
+            data={"email": "missing@example.com"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No account found with this email address.")
+
+    def test_password_reset_verify_requires_email_session(self):
+        response = self.client.get(reverse("password_reset_verify"))
+
+        self.assertRedirects(response, reverse("password_reset"))
+
+    def test_password_reset_verify_rejects_wrong_answer(self):
+        session = self.client.session
+        session["password_reset_email"] = self.user.email
+        session.save()
+
+        response = self.client.post(
+            reverse("password_reset_verify"),
+            data={"security_answer": "WrongAnswer"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Incorrect answer")
+
+    def test_password_reset_flow_accepts_eventhub_answer_case_insensitive(self):
+        for answer in ("EventHub", "eventhub", "EVENTHUB"):
+            with self.subTest(answer=answer):
+                client = Client()
+                client.post(
+                    reverse("password_reset"),
+                    data={"email": self.user.email},
+                )
+                response = client.post(
+                    reverse("password_reset_verify"),
+                    data={"security_answer": answer},
+                )
+                self.assertRedirects(response, reverse("password_reset_set"))
+
+    def test_password_reset_set_updates_password_and_redirects_login(self):
+        self.client.post(
+            reverse("password_reset"),
+            data={"email": self.user.email},
+        )
+        self.client.post(
+            reverse("password_reset_verify"),
+            data={"security_answer": "EventHub"},
+        )
+
+        response = self.client.post(
+            reverse("password_reset_set"),
+            data={
+                "new_password": "NewStrongPass987!",
+                "confirm_password": "NewStrongPass987!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("login"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewStrongPass987!"))
+
+        login_response = self.client.post(
+            reverse("login"),
+            data={
+                "username": self.user.email,
+                "password": "NewStrongPass987!",
+            },
+        )
+        self.assertRedirects(login_response, reverse("dashboard"))
+
+    def test_password_reset_set_requires_verification(self):
+        session = self.client.session
+        session["password_reset_email"] = self.user.email
+        session.save()
+
+        response = self.client.get(reverse("password_reset_set"))
+
+        self.assertRedirects(response, reverse("password_reset_verify"))
 
 
 class AssetCSVExportTests(TestCase):

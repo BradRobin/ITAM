@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    {% if page == 'login' %}Login{% elif page == 'password_reset' %}Reset Password{% elif page == 'password_reset_done' %}Check Email{% elif page == 'password_reset_confirm' %}Set New Password{% elif page == 'password_reset_complete' %}Password Reset Complete{% else %}Logged Out{% endif %} - {{ itam_product_name }}
+    {% if page == 'login' %}Login{% elif page == 'password_reset' %}Reset Password{% elif page == 'password_reset_verify' %}Verify Identity{% elif page == 'password_reset_set' %}Set New Password{% else %}Logged Out{% endif %} - {{ itam_product_name }}
 {% endblock %}
 
 {% block extra_css %}
@@ -85,7 +85,7 @@
                     <span>{{ itam_product_name }}</span>
                 </div>
                 <h1>Reset Password</h1>
-                <p>Enter your email address and we'll send you a link to reset your password</p>
+                <p>Enter the email address associated with your account</p>
             </div>
 
             {% if form.errors %}
@@ -106,7 +106,7 @@
                     <label for="id_email" class="form-label">Email</label>
                     <input type="email" name="email" id="id_email" required autofocus>
                 </div>
-                <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                <button type="submit" class="btn btn-primary">Continue</button>
             </form>
 
             <div class="auth-divider">or</div>
@@ -117,9 +117,9 @@
         </div>
     </div>
 
-{% elif page == 'password_reset_done' %}
+{% elif page == 'password_reset_verify' %}
     <div class="auth-container">
-        <div class="auth-card logout-card">
+        <div class="auth-card">
             <div class="auth-header">
                 <div class="auth-logo">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -129,16 +129,40 @@
                     </svg>
                     <span>{{ itam_product_name }}</span>
                 </div>
-                <h1>Check Your Email</h1>
-                <p>We've sent you a link to reset your password. Please check your email.</p>
+                <h1>Verify Identity</h1>
+                <p>Answer the security question to continue resetting your password</p>
             </div>
+
+            {% if form.errors %}
+                <div class="auth-error">
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="post" class="auth-form" action="{% url 'password_reset_verify' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_security_answer" class="form-label">What other technology was built by the developers of ITAM?</label>
+                    <input type="text" name="security_answer" id="id_security_answer" required autofocus autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary">Continue</button>
+            </form>
+
+            <div class="auth-divider">or</div>
+
             <div class="auth-footer">
-                <p><a href="{% url 'login' %}">Back to Login</a></p>
+                <p><a href="{% url 'password_reset' %}">Back</a></p>
             </div>
         </div>
     </div>
 
-{% elif page == 'password_reset_confirm' %}
+{% elif page == 'password_reset_set' %}
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
@@ -151,72 +175,48 @@
                     <span>{{ itam_product_name }}</span>
                 </div>
                 <h1>Set New Password</h1>
-                <p>Enter your new password below</p>
+                <p>Enter and confirm your new password</p>
             </div>
 
-            {% if validlink %}
-                {% if form.errors %}
-                    <div class="auth-error">
-                        <ul>
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-
-                <form method="post" class="auth-form">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="id_new_password1" class="form-label">New Password</label>
-                        <div class="password-wrapper">
-                            <input type="password" name="new_password1" id="id_new_password1" required>
-                            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="id_new_password2" class="form-label">Confirm Password</label>
-                        <div class="password-wrapper">
-                            <input type="password" name="new_password2" id="id_new_password2" required>
-                            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                </form>
-            {% else %}
+            {% if form.errors %}
                 <div class="auth-error">
-                    The password reset link is invalid or has expired.
-                </div>
-                <div class="auth-footer">
-                    <p><a href="{% url 'password_reset' %}">Request a new password reset</a></p>
+                    <ul>
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
                 </div>
             {% endif %}
-        </div>
-    </div>
 
-{% elif page == 'password_reset_complete' %}
-    <div class="auth-container">
-        <div class="auth-card logout-card">
-            <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
+            <form method="post" class="auth-form" action="{% url 'password_reset_set' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_new_password" class="form-label">New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="new_password" id="id_new_password" required autofocus>
+                        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <h1>Password Reset Complete</h1>
-                <p>Your password has been successfully reset.</p>
-            </div>
-            <div class="auth-actions">
-                <a href="{% url 'login' %}" class="btn btn-primary">Login Now</a>
+                <div class="form-group">
+                    <label for="id_confirm_password" class="form-label">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" name="confirm_password" id="id_confirm_password" required>
+                        <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Reset Password</button>
+            </form>
+
+            <div class="auth-divider">or</div>
+
+            <div class="auth-footer">
+                <p><a href="{% url 'login' %}">Back to Login</a></p>
             </div>
         </div>
     </div>

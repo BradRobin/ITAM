@@ -1,5 +1,4 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
 from . import views
 
@@ -10,34 +9,23 @@ urlpatterns = [
     path("logout/", views.AuthLogoutView.as_view(), name="logout"),
     
     # ==========================================
-    # PASSWORD RESET URLs - WITH extra_context
+    # PASSWORD RESET URLs
     # ==========================================
-    path('password-reset/', 
-         auth_views.PasswordResetView.as_view(
-             template_name='inventory/auth.html',
-             email_template_name='inventory/password_reset_email.html',
-             subject_template_name='inventory/password_reset_subject.txt',
-             extra_context={'page': 'password_reset'}
-         ), 
-         name='password_reset'),
-    path('password-reset/done/', 
-         auth_views.PasswordResetDoneView.as_view(
-             template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_done'}
-         ), 
-         name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>/', 
-         auth_views.PasswordResetConfirmView.as_view(
-             template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_confirm'}
-         ), 
-         name='password_reset_confirm'),
-    path('password-reset-complete/', 
-         auth_views.PasswordResetCompleteView.as_view(
-             template_name='inventory/auth.html',
-             extra_context={'page': 'password_reset_complete'}
-         ), 
-         name='password_reset_complete'),
+    path(
+        "password-reset/",
+        views.ForgotPasswordEmailView.as_view(),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/verify/",
+        views.ForgotPasswordVerifyView.as_view(),
+        name="password_reset_verify",
+    ),
+    path(
+        "password-reset/set/",
+        views.ForgotPasswordSetView.as_view(),
+        name="password_reset_set",
+    ),
     
     # Dashboard
     path("", views.DashboardView.as_view(), name="dashboard"),
