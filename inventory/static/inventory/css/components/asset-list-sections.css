@@ -122,9 +122,26 @@
     color: #94a3b8;
 }
 
-/* ==========================================
-   ALL ASSETS TABLE ROWS
-   ========================================== */
+.asset-section-table tbody tr.asset-table-row-hidden {
+    display: none;
+}
+
+.asset-table-expand-footer {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-table-header, #f8fafc);
+}
+
+[data-theme="dark"] .asset-table-expand-footer {
+    background: rgba(15, 23, 42, 0.35);
+    border-top-color: var(--border-color, #334155);
+}
+
+.asset-table-expand-btn {
+    min-width: 7.5rem;
+}
 .asset-section-table .asset-name-text {
     color: var(--text-primary, #1e293b);
     font-weight: 600;

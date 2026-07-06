@@ -143,6 +143,10 @@
         }
 
         elements.assetTableBody.innerHTML = assets.map(renderAssetRow).join('');
+
+        if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
+            window.AssetTableExpand.refresh(document.getElementById('all-assets'));
+        }
     }
 
     function renderAssetRow(asset) {
@@ -699,6 +703,9 @@
         try {
             const job = await window.BackgroundJobs.run('asset_sections', { force: true });
             mount.innerHTML = window.AssetSections.renderAll(job.result || {});
+            if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
+                window.AssetTableExpand.refresh(mount);
+            }
         } catch (error) {
             console.error('Failed to refresh asset sections:', error);
         }

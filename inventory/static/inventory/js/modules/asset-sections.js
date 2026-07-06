@@ -170,6 +170,9 @@
             try {
                 mount.classList.remove('async-loading');
                 mount.innerHTML = renderAll(JSON.parse(dataEl.textContent));
+                if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
+                    window.AssetTableExpand.refresh(mount);
+                }
                 scrollToHashTarget();
                 return;
             } catch (error) {
@@ -197,6 +200,9 @@
         }).then(function(job) {
             mount.classList.remove('async-loading');
             mount.innerHTML = renderAll(job.result || {});
+            if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
+                window.AssetTableExpand.refresh(mount);
+            }
             scrollToHashTarget();
         }).catch(function(error) {
             console.error('Asset sections async load failed:', error);
