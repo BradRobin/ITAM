@@ -188,10 +188,11 @@
                 '<td class="date-cell">' + formatDate(asset.date_created) + '</td>' +
                 '<td class="date-cell">' + formatDate(asset.date_assigned) + '</td>' +
                 '<td class="date-cell">' + formatDate(asset.date_returned) + '</td>' +
-                '<td class="actions-cell">' +
-                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/edit/" class="btn btn-sm btn-secondary" data-row-action="true">Edit</a>' +
-                    '<a href="/assets/' + encodeURIComponent(asset.id) + '/delete/" class="btn btn-sm btn-danger" data-row-action="true">Delete</a>' +
-                '</td>' +
+                (window.AssetRowMenu
+                    ? window.AssetRowMenu.cellHtml(asset.id, asset.name, {
+                        canAssign: window.AssetRowMenu.canAssignAsset(asset)
+                    })
+                    : '<td class="actions-cell" data-row-action="true"></td>') +
             '</tr>'
         );
     }
@@ -271,7 +272,7 @@
 
     function setupGlobalRowInteractions() {
         document.addEventListener('click', function(event) {
-            if (event.target.closest('[data-row-action="true"]') || event.target.closest('[data-bulk-select="true"]')) {
+            if (event.target.closest('[data-row-action="true"]') || event.target.closest('[data-bulk-select="true"]') || event.target.closest('.asset-row-menu')) {
                 return;
             }
             if (event.target.closest('.asset-detail-card-panel')) {
@@ -402,6 +403,14 @@
         document.querySelectorAll('.asset-table-row').forEach(function(row) {
             row.classList.toggle('selected', row.dataset.assetId === activeAssetId);
         });
+    }
+
+    async function openAssetDetailCardForAssign(assetId) {
+        await openAssetDetailCard(assetId);
+        const select = elements.detailCard && elements.detailCard.querySelector('.asset-assign-select');
+        if (select) {
+            select.focus();
+        }
     }
 
     function showDetailCard() {
@@ -741,6 +750,7 @@
         handleAssign: handleAssign,
         handleReturn: handleReturn,
         openAssetDetailCard: openAssetDetailCard,
+        openAssetDetailCardForAssign: openAssetDetailCardForAssign,
         closeAssetDetailCard: closeAssetDetailCard,
         refreshAllTables: refreshAllTables
     };

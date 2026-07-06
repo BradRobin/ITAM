@@ -1435,6 +1435,9 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertContains(response, 'class="asset-bulk-checkbox"')
         self.assertContains(response, 'id="asset-bulk-action-bar"', count=0)
         self.assertContains(response, "asset-bulk-select.js")
+        self.assertContains(response, "asset-row-menu.js")
+        self.assertContains(response, "fa-ellipsis-v")
+        self.assertContains(response, 'data-action="view"')
 
     def test_employee_api_list_returns_assigned_asset_counts(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
