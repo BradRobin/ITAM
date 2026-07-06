@@ -22,9 +22,9 @@
                      alt="{{ user.username }}"
                      width="128"
                      height="128">
-                <div class="profile-avatar-badge" title="Change avatar">
+                <label class="profile-avatar-badge" for="avatar-upload" title="Change avatar">
                     <i class="fas fa-camera"></i>
-                </div>
+                </label>
                 <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
             </div>
             <h2>{{ user.get_full_name|default:user.username }}</h2>
@@ -155,8 +155,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-    <script src="{% static 'inventory/js/modules/profile.js' %}"></script>
 {% endblock %}

@@ -5,6 +5,9 @@
     'use strict';
 
     function escapeHtml(value) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(value);
+        }
         if (value === null || value === undefined) {
             return '';
         }
@@ -30,11 +33,6 @@
         });
     }
 
-    function statusBadge(status) {
-        var css = String(status || '').toLowerCase().replace(/\s+/g, '');
-        return '<span class="badge badge-' + escapeHtml(css) + '">' + escapeHtml(status) + '</span>';
-    }
-
     function tableHead(columns) {
         var bulkHead = window.AssetBulkSelect
             ? window.AssetBulkSelect.headerCellHtml()
@@ -43,6 +41,26 @@
             ? window.AssetRowMenu.headerCellHtml()
             : '';
         return bulkHead + columns + actionsHead;
+    }
+
+    function tdName(value) {
+        return '<td class="col-name"><span class="asset-name-text">' + escapeHtml(value) + '</span></td>';
+    }
+
+    function tdType(value) {
+        return '<td class="col-type">' + escapeHtml(value) + '</td>';
+    }
+
+    function tdAssignee(value) {
+        return '<td class="col-assignee">' + escapeHtml(value) + '</td>';
+    }
+
+    function tdDetail(value) {
+        return '<td class="col-detail">' + escapeHtml(value) + '</td>';
+    }
+
+    function openTable() {
+        return '<div class="table-wrapper asset-section-table"><table class="asset-table asset-table-compact"><thead><tr>';
     }
 
     function rowMenuCell(assetPk, label, status) {
@@ -82,17 +100,13 @@
         if (!rows.length) {
             return html + '<div class="asset-section-empty">No assets are currently assigned.</div></section>';
         }
-        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Assignee</th><th>Date Assigned</th><th>Return Date</th>') +
+        html += openTable() +
+            tableHead('<th class="col-name">Asset Name</th><th class="col-type">Type</th><th class="col-assignee">Assignee</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
-                '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
-                    '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.assignee) + '</td>' +
-                    '<td>' + formatDate(row.date_assigned) + '</td>' +
-                    '<td>' + formatDate(row.expected_return_date) + '</td>',
+                tdName(row.name) + tdType(row.type) + tdAssignee(row.assignee),
                 row.name,
                 'Assigned'
             );
@@ -105,15 +119,13 @@
         if (!rows.length) {
             return html + '<div class="asset-section-empty">No available assets right now.</div></section>';
         }
-        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Available Since</th>') +
+        html += openTable() +
+            tableHead('<th class="col-name">Asset Name</th><th class="col-type">Type</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
-                '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
-                    '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.available_since) + '</td>',
+                tdName(row.name) + tdType(row.type),
                 row.name,
                 'Available'
             );
@@ -126,17 +138,23 @@
         if (!rows.length) {
             return html + '<div class="asset-section-empty">No assets are currently under maintenance.</div></section>';
         }
-        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Repair Shop</th><th>Maintenance Worker Contact</th><th>Period Till Full Repair</th>') +
+        html += openTable() +
+            tableHead(
+                '<th class="col-name">Asset Name</th>' +
+                '<th class="col-type">Type</th>' +
+                '<th class="col-detail">Repair Shop</th>' +
+                '<th class="col-detail">Maintenance Worker Contact</th>' +
+                '<th class="col-detail">Period Till Full Repair</th>'
+            ) +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
-                '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
-                    '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.repair_shop) + '</td>' +
-                    '<td>' + escapeHtml(row.worker_contact) + '</td>' +
-                    '<td>' + escapeHtml(row.repair_period) + '</td>',
+                tdName(row.name) +
+                    tdType(row.type) +
+                    tdDetail(row.repair_shop) +
+                    tdDetail(row.worker_contact) +
+                    tdDetail(row.repair_period),
                 row.name,
                 'Under Maintenance'
             );
@@ -149,16 +167,13 @@
         if (!rows.length) {
             return html + '<div class="asset-section-empty">No ' + title.toLowerCase() + ' found.</div></section>';
         }
-        html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            tableHead('<th>Asset Name</th><th>Type</th><th>Serial Number</th><th>Status</th>') +
+        html += openTable() +
+            tableHead('<th class="col-name">Asset Name</th><th class="col-type">Type</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
-                '<td><span class="asset-name-text">' + escapeHtml(row.name) + '</span></td>' +
-                    '<td>' + escapeHtml(row.type) + '</td>' +
-                    '<td>' + escapeHtml(row.serial_number) + '</td>' +
-                    '<td>' + statusBadge(row.status) + '</td>',
+                tdName(row.name) + tdType(row.type),
                 row.name,
                 row.status
             );

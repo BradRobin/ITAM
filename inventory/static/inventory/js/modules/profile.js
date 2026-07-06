@@ -312,6 +312,24 @@
         });
     }
 
+    function parseUploadResponse(response) {
+        return response.text().then(function(text) {
+            var data = {};
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch (error) {
+                    data = {};
+                }
+            }
+            if (!response.ok) {
+                var message = data.detail || 'Avatar upload failed.';
+                throw new Error(message);
+            }
+            return data;
+        });
+    }
+
     function uploadAvatar(file, uploadUrl) {
         var formData = new FormData();
         formData.append('avatar', file);
@@ -323,36 +341,18 @@
             },
             credentials: 'same-origin',
             body: formData
-        }).then(function(response) {
-            return response.json().then(function(data) {
-                if (!response.ok) {
-                    var error = new Error(data.detail || 'Avatar upload failed.');
-                    error.data = data;
-                    throw error;
-                }
-                return data;
-            });
-        });
+        }).then(parseUploadResponse);
     }
 
     function setupAvatarClick() {
         var avatarWrapper = document.querySelector('.profile-avatar-wrapper');
-        var avatarBadge = document.querySelector('.profile-avatar-badge');
         var avatarInput = document.querySelector('#avatar-upload');
-        var uploadUrl = avatarWrapper ? avatarWrapper.getAttribute('data-avatar-upload-url') : '';
+        var uploadUrl = avatarWrapper
+            ? (avatarWrapper.getAttribute('data-avatar-upload-url') || '/api/profile/avatar/')
+            : '/api/profile/avatar/';
         
-        if (avatarBadge) {
-            avatarBadge.addEventListener('click', function() {
-                if (avatarInput) {
-                    avatarInput.click();
-                } else if (window.Utils && typeof window.Utils.showToast === 'function') {
-                    window.Utils.showToast('Avatar upload is unavailable.', 'error');
-                }
-            });
-        }
-        
-        if (avatarInput && uploadUrl) {
-            avatarInput.addEventListener('change', function(e) {
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function() {
                 if (!this.files || !this.files[0]) {
                     return;
                 }
@@ -372,6 +372,8 @@
                     .catch(function(error) {
                         if (window.Utils && typeof window.Utils.showToast === 'function') {
                             window.Utils.showToast(error.message || 'Unable to upload profile photo.', 'error');
+                        } else {
+                            alert(error.message || 'Unable to upload profile photo.');
                         }
                     })
                     .finally(function() {

@@ -1,51 +1,48 @@
 /**
  * EMPLOYEE MODULE
- * Handles employee management: list and actions
+ *
+ * Registers the employee row-menu action handler. Generic dropdown
+ * mechanics live in TableRowMenu; edit/delete URLs come from the row
+ * markup so routing stays owned by Django.
  */
-
 (function() {
     'use strict';
-    
-    // ============================================
-    // DOM Elements
-    // ============================================
-    let elements = {};
-    
-    // ============================================
-    // Initialize Employee Module
-    // ============================================
+
+    function handleAction(action, wrapper) {
+        if (action === 'edit') {
+            var editUrl = wrapper.dataset.editUrl;
+            if (editUrl) {
+                window.location.href = editUrl;
+            }
+            return;
+        }
+
+        if (action === 'delete') {
+            var name = wrapper.dataset.employeeName || 'employee';
+            var deleteUrl = wrapper.dataset.deleteUrl;
+            if (!deleteUrl) {
+                return;
+            }
+            var message = 'Are you sure you want to delete "' + name + '"? This action cannot be undone.';
+            if (window.confirm(message)) {
+                window.location.href = deleteUrl;
+            }
+        }
+    }
+
     function init() {
-        // Cache DOM elements
-        elements = {
-            employeeTable: document.querySelector('.employee-table'),
-            deleteButtons: document.querySelectorAll('.action-delete')
-        };
-        
-        // Setup event listeners
-        setupActionButtons();
-        
-        console.log('Employee module initialized.');
+        if (window.TableRowMenu) {
+            window.TableRowMenu.register('employee', handleAction);
+        }
     }
-    
-    // ============================================
-    // Setup Action Buttons
-    // ============================================
-    function setupActionButtons() {
-        elements.deleteButtons.forEach(function(button) {
-            button.addEventListener('click', function(event) {
-                const employeeName = this.dataset.name;
-                if (!confirm('Are you sure you want to delete "' + employeeName + '"? This action cannot be undone.')) {
-                    event.preventDefault();
-                }
-            });
-        });
-    }
-    
-    // ============================================
-    // Export
-    // ============================================
+
     window.EmployeeManager = {
         init: init
     };
-    
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();

@@ -449,6 +449,9 @@
     }
 
     function escapeHtml(value) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(value);
+        }
         var div = document.createElement('div');
         div.textContent = value == null ? '' : String(value);
         return div.innerHTML;

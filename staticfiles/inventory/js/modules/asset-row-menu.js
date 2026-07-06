@@ -1,13 +1,17 @@
 /**
- * Row actions menu (vertical dots) for asset tables
+ * Asset row actions menu.
+ *
+ * Builds the ⋮ menu markup for asset tables and routes asset-specific
+ * actions (view / assign / delete). Generic dropdown mechanics live in
+ * TableRowMenu; this module only owns asset concerns.
  */
 (function() {
     'use strict';
 
-    var bound = false;
-    var openMenu = null;
-
     function escapeHtml(value) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(value);
+        }
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -15,9 +19,22 @@
             .replace(/"/g, '&quot;');
     }
 
+    function pageHeader() {
+        return document.querySelector('[data-user-is-admin]');
+    }
+
     function isAdminHost() {
-        var host = document.querySelector('[data-user-is-admin]');
+        var host = pageHeader();
         return host && host.getAttribute('data-user-is-admin') === 'true';
+    }
+
+    function deleteUrlFor(assetId) {
+        var host = pageHeader();
+        var template = host && host.getAttribute('data-asset-delete-url-template');
+        if (template) {
+            return template.replace(/0(\/?)$/, encodeURIComponent(assetId) + '$1');
+        }
+        return '/assets/' + encodeURIComponent(assetId) + '/delete/';
     }
 
     function canAssignFromStatus(status) {
@@ -38,61 +55,8 @@
         return canAssignFromStatus(asset.status_label || asset.status);
     }
 
-    function closeOpenMenu() {
-        if (!openMenu) {
-            return;
-        }
-        var dropdown = openMenu.querySelector('.asset-row-menu-dropdown');
-        var trigger = openMenu.querySelector('.asset-row-menu-trigger');
-        if (dropdown) {
-            dropdown.hidden = true;
-            dropdown.classList.remove('open');
-        }
-        if (trigger) {
-            trigger.setAttribute('aria-expanded', 'false');
-        }
-        openMenu.classList.remove('is-open');
-        openMenu = null;
-    }
-
-    function positionDropdown(trigger, dropdown) {
-        var rect = trigger.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.minWidth = '9.5rem';
-        dropdown.style.zIndex = '1300';
-
-        var top = rect.bottom + 4;
-        var left = rect.right - dropdown.offsetWidth;
-
-        if (left < 8) {
-            left = 8;
-        }
-        if (top + dropdown.offsetHeight > window.innerHeight - 8) {
-            top = Math.max(8, rect.top - dropdown.offsetHeight - 4);
-        }
-
-        dropdown.style.top = top + 'px';
-        dropdown.style.left = left + 'px';
-    }
-
-    function openMenuFor(wrapper) {
-        closeOpenMenu();
-        var trigger = wrapper.querySelector('.asset-row-menu-trigger');
-        var dropdown = wrapper.querySelector('.asset-row-menu-dropdown');
-        if (!trigger || !dropdown) {
-            return;
-        }
-
-        dropdown.hidden = false;
-        dropdown.classList.add('open');
-        trigger.setAttribute('aria-expanded', 'true');
-        wrapper.classList.add('is-open');
-        positionDropdown(trigger, dropdown);
-        openMenu = wrapper;
-    }
-
     function menuItemHtml(action, label, icon, extraClass) {
-        return '<button type="button" class="asset-row-menu-item' + (extraClass ? ' ' + extraClass : '') +
+        return '<button type="button" class="table-row-menu-item' + (extraClass ? ' ' + extraClass : '') +
             '" data-action="' + action + '" role="menuitem">' +
             '<i class="fas ' + icon + '" aria-hidden="true"></i>' +
             '<span>' + escapeHtml(label) + '</span>' +
@@ -112,17 +76,17 @@
             items += menuItemHtml('assign', 'Assign', 'fa-user-plus');
         }
         if (showAdmin && !catalogOnly) {
-            items += menuItemHtml('delete', 'Delete', 'fa-trash-alt', 'asset-row-menu-item-danger');
+            items += menuItemHtml('delete', 'Delete', 'fa-trash-alt', 'table-row-menu-item-danger');
         }
 
         return '<td class="actions-cell" data-row-action="true">' +
-            '<div class="asset-row-menu"' +
+            '<div class="table-row-menu" data-menu-type="asset"' +
                 (id ? ' data-asset-id="' + escapeHtml(id) + '"' : ' data-catalog-only="true"') +
                 ' data-asset-name="' + escapeHtml(name) + '">' +
-                '<button type="button" class="asset-row-menu-trigger" data-row-action="true" aria-label="Actions for ' + escapeHtml(name) + '" aria-haspopup="true" aria-expanded="false">' +
+                '<button type="button" class="table-row-menu-trigger" data-row-action="true" aria-label="Actions for ' + escapeHtml(name) + '" aria-haspopup="true" aria-expanded="false">' +
                     '<i class="fas fa-ellipsis-v" aria-hidden="true"></i>' +
                 '</button>' +
-                '<div class="asset-row-menu-dropdown" role="menu" hidden>' + items + '</div>' +
+                '<div class="table-row-menu-dropdown" role="menu" hidden>' + items + '</div>' +
             '</div>' +
         '</td>';
     }
@@ -131,7 +95,10 @@
         return '<th scope="col" class="actions-col">Actions</th>';
     }
 
-    function handleAction(action, assetId, assetName, wrapper) {
+    function handleAction(action, wrapper) {
+        var assetId = wrapper.dataset.assetId;
+        var assetName = wrapper.dataset.assetName || 'asset';
+
         if (action === 'view') {
             if (assetId) {
                 if (window.AssetManager && typeof window.AssetManager.openAssetDetailCard === 'function') {
@@ -139,7 +106,7 @@
                 }
                 return;
             }
-            if (wrapper && window.AssetManager && typeof window.AssetManager.activateRow === 'function') {
+            if (window.AssetManager && typeof window.AssetManager.activateRow === 'function') {
                 var row = wrapper.closest('.asset-table-row');
                 if (row) {
                     window.AssetManager.activateRow(row);
@@ -166,68 +133,14 @@
             if (!window.confirm(message)) {
                 return;
             }
-            window.location.href = '/assets/' + encodeURIComponent(assetId) + '/delete/';
+            window.location.href = deleteUrlFor(assetId);
         }
-    }
-
-    function bindEvents() {
-        if (bound) {
-            return;
-        }
-        bound = true;
-
-        document.addEventListener('click', function(event) {
-            var item = event.target.closest('.asset-row-menu-item');
-            if (item) {
-                event.preventDefault();
-                event.stopPropagation();
-                var wrapper = item.closest('.asset-row-menu');
-                if (!wrapper) {
-                    return;
-                }
-                handleAction(
-                    item.dataset.action,
-                    wrapper.dataset.assetId,
-                    wrapper.dataset.assetName || 'asset',
-                    wrapper
-                );
-                closeOpenMenu();
-                return;
-            }
-
-            var trigger = event.target.closest('.asset-row-menu-trigger');
-            if (trigger) {
-                event.preventDefault();
-                event.stopPropagation();
-                var menu = trigger.closest('.asset-row-menu');
-                if (!menu) {
-                    return;
-                }
-                if (openMenu === menu) {
-                    closeOpenMenu();
-                } else {
-                    openMenuFor(menu);
-                }
-                return;
-            }
-
-            if (!event.target.closest('.asset-row-menu-dropdown')) {
-                closeOpenMenu();
-            }
-        });
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeOpenMenu();
-            }
-        });
-
-        window.addEventListener('resize', closeOpenMenu);
-        window.addEventListener('scroll', closeOpenMenu, true);
     }
 
     function init() {
-        bindEvents();
+        if (window.TableRowMenu) {
+            window.TableRowMenu.register('asset', handleAction);
+        }
     }
 
     window.AssetRowMenu = {
@@ -236,7 +149,11 @@
         headerCellHtml: headerCellHtml,
         canAssignAsset: canAssignAsset,
         canAssignFromStatus: canAssignFromStatus,
-        close: closeOpenMenu
+        close: function() {
+            if (window.TableRowMenu) {
+                window.TableRowMenu.close();
+            }
+        }
     };
 
     if (document.readyState === 'loading') {

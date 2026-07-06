@@ -31,7 +31,7 @@
 
     function refreshTableHelpers(root) {
         if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
-            window.AssetTableExpand.refresh(root || document.getElementById('all-assets'));
+            window.AssetTableExpand.refresh(root || document);
         }
         if (window.AssetBulkSelect && typeof window.AssetBulkSelect.refresh === 'function') {
             window.AssetBulkSelect.refresh(root || document);
@@ -139,11 +139,6 @@
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-text"></span></td>' +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-badge"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
-                    '<td><span class="skeleton skeleton-text"></span></td>' +
                     '<td><span class="skeleton skeleton-actions"></span></td>' +
                 '</tr>'
             );
@@ -173,21 +168,14 @@
     }
 
     function renderAssetRow(asset) {
-        const statusLabel = asset.status_label || asset.status || '';
-        const statusClass = String(statusLabel).toLowerCase().replace(/\s+/g, '');
         const assignee = formatAssignee(asset.assigned_employee);
 
         return (
             '<tr class="asset-table-row" data-asset-id="' + encodeURIComponent(asset.id) + '" tabindex="0" role="button" aria-label="View details for ' + escapeHtml(asset.name) + '">' +
                 bulkRowHtml(asset.id, asset.name) +
-                '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
-                '<td>' + escapeHtml(asset.type) + '</td>' +
-                '<td>' + escapeHtml(asset.serial_number) + '</td>' +
-                '<td><span class="badge badge-' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>' +
-                '<td>' + assignee + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_created) + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_assigned) + '</td>' +
-                '<td class="date-cell">' + formatDate(asset.date_returned) + '</td>' +
+                '<td class="col-name"><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
+                '<td class="col-type">' + escapeHtml(asset.type) + '</td>' +
+                '<td class="col-assignee">' + assignee + '</td>' +
                 (window.AssetRowMenu
                     ? window.AssetRowMenu.cellHtml(asset.id, asset.name, {
                         canAssign: window.AssetRowMenu.canAssignAsset(asset)
@@ -236,7 +224,7 @@
     function renderTableMessage(message) {
         elements.assetTableBody.innerHTML =
             '<tr>' +
-                '<td colspan="' + tableColspan(9) + '" class="empty-state">' +
+                '<td colspan="' + tableColspan(4) + '" class="empty-state">' +
                     '<div class="empty-state-content">' +
                         '<h3>' + escapeHtml(message) + '</h3>' +
                     '</div>' +
@@ -262,6 +250,9 @@
     }
 
     function escapeHtml(value) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(value);
+        }
         return String(value || '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -337,11 +328,19 @@
                 escapeHtml(row.dataset.catalogStatus || '') + '</span>';
         }
         if (body) {
+            var maintenanceField = row.dataset.lastMaintenance
+                ? detailField('Last Maintenance', row.dataset.lastMaintenance)
+                : '';
+            var importedField = row.dataset.importedAt
+                ? detailField('Imported', row.dataset.importedAt)
+                : '';
             body.innerHTML =
                 '<div class="asset-detail-grid">' +
                     detailField('Type', row.dataset.catalogType) +
                     detailField('Serial Number', row.dataset.serialNumber, true) +
                     detailField('Status', row.dataset.catalogStatus) +
+                    maintenanceField +
+                    importedField +
                 '</div>' +
                 '<section class="asset-detail-section">' +
                     '<p class="asset-detail-empty">This catalog entry is not linked to a live inventory asset yet.</p>' +
