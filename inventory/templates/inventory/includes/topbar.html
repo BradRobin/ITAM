@@ -20,20 +20,22 @@
                 <div class="notification-dropdown" id="notificationDropdown">
                     <div class="notification-dropdown-header">
                         <strong>Notifications</strong>
-                        {% if unread_notifications > 0 %}
-                            <button type="button" class="mark-all-link" onclick="markAllRead()">Mark all read</button>
-                        {% endif %}
+                        <button type="button" class="mark-all-link{% if unread_notifications == 0 %} hidden{% endif %}" id="notificationMarkAllBtn">Mark all read</button>
                     </div>
-                    <div class="notification-dropdown-list">
+                    <div class="notification-dropdown-list" id="notificationDropdownList">
                         {% for notification in recent_notifications %}
-                            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
+                            <div class="notification-item {% if not notification.read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
                                 <div class="notification-icon {{ notification.type|default:'info' }}">
-                                    <i class="fas {{ notification.icon|default:'fa-info-circle' }}"></i>
+                                    <i class="fas {% if notification.type == 'success' %}fa-check-circle{% elif notification.type == 'warning' %}fa-exclamation-triangle{% elif notification.type == 'error' or notification.type == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
                                 </div>
                                 <div class="notification-content">
                                     <div class="notification-title">{{ notification.title }}</div>
                                     <div class="notification-message">{{ notification.message }}</div>
-                                    <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+                                    <div class="notification-time">
+                                        {% if notification.time %}
+                                            {{ notification.time|timesince }} ago
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         {% empty %}

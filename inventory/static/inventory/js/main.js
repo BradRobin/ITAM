@@ -221,25 +221,31 @@
     function handleMarkAllRead(event) {
         event.preventDefault();
         event.stopPropagation();
-        
+
+        if (window.Notifications && typeof window.Notifications.markAllAsRead === 'function') {
+            window.Notifications.markAllAsRead();
+            return;
+        }
+
         var badge = document.getElementById('notificationBadge');
         var items = document.querySelectorAll('.notification-item.unread');
-        
+
         items.forEach(function(item) {
             item.classList.remove('unread');
         });
-        
+
         if (badge) {
             badge.classList.add('hidden');
             badge.textContent = '';
         }
-        
+
         var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
         if (csrfToken) {
-            fetch('/notifications/mark-all-read/', {
+            fetch('/api/notifications/mark-all-read/', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken.value,
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 credentials: 'same-origin'

@@ -633,6 +633,9 @@
             if (activeAssetId === String(assetId)) {
                 renderAssetDetailCard(result);
             }
+            if (window.Notifications && typeof window.Notifications.fetchNotifications === 'function') {
+                window.Notifications.fetchNotifications();
+            }
         } catch (error) {
             console.error('Assignment failed:', error);
             if (window.Utils && typeof window.Utils.showToast === 'function') {
@@ -670,6 +673,9 @@
             await refreshAllTables();
             if (activeAssetId === String(assetId)) {
                 renderAssetDetailCard(result);
+            }
+            if (window.Notifications && typeof window.Notifications.fetchNotifications === 'function') {
+                window.Notifications.fetchNotifications();
             }
         } catch (error) {
             console.error('Return failed:', error);
