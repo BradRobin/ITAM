@@ -5,6 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=9">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=1">
 {% endblock %}
 
 {% block content %}
@@ -127,6 +128,85 @@
             </div>
         </section>
 
+        <!-- Analytics canvas -->
+        <section class="dash-section" id="analytics-section">
+            <div class="dash-section-head">
+                <div>
+                    <h2 class="dash-section-title">Analytics Canvas</h2>
+                    <p class="dash-section-sub">Interactive breakdowns — hover charts for detail</p>
+                </div>
+                <div class="dash-chart-tabs" role="tablist" aria-label="Chart focus">
+                    <button type="button" class="dash-tab active" data-tab="composition">Composition</button>
+                    <button type="button" class="dash-tab" data-tab="trends">Trends</button>
+                    <button type="button" class="dash-tab" data-tab="people">People</button>
+                </div>
+            </div>
+            <div class="analytics-bento" id="analytics-bento">
+                <div class="bento-panel active" data-panel="composition">
+                    <div class="bento-card bento-wide">
+                        <div class="bento-card-head">
+                            <h3>Fleet by Status</h3>
+                            <span class="bento-badge">Live</span>
+                        </div>
+                        <div class="bento-chart-wrap">
+                            <canvas id="dashStatusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bento-card">
+                        <div class="bento-card-head">
+                            <h3>Assets by Type</h3>
+                        </div>
+                        <div class="bento-chart-wrap">
+                            <canvas id="dashTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bento-panel" data-panel="trends">
+                    <div class="bento-card bento-wide">
+                        <div class="bento-card-head">
+                            <h3>Asset Growth</h3>
+                            <span class="bento-hint">Last 6 months</span>
+                        </div>
+                        <div class="bento-chart-wrap">
+                            <canvas id="dashMonthlyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bento-card bento-wide">
+                        <div class="bento-card-head">
+                            <h3>Maintenance Activity</h3>
+                            <span class="bento-hint">Last 6 months</span>
+                        </div>
+                        <div class="bento-chart-wrap">
+                            <canvas id="dashMaintenanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bento-panel" data-panel="people">
+                    <div class="bento-card">
+                        <div class="bento-card-head">
+                            <h3>Top Assigned Assets</h3>
+                        </div>
+                        <div class="bento-chart-wrap bento-chart-tall">
+                            <canvas id="dashTopAssetsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bento-card">
+                        <div class="bento-card-head">
+                            <h3>Department Mix</h3>
+                        </div>
+                        <div class="bento-chart-wrap">
+                            <canvas id="dashDepartmentChart"></canvas>
+                        </div>
+                        <div class="dept-legend" id="dashDeptLegend"></div>
+                    </div>
+                </div>
+                <div class="bento-loading" id="analytics-loading">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <span>Loading analytics...</span>
+                </div>
+            </div>
+        </section>
+
         <!-- Overdue -->
         <section class="dash-section">
             <div id="overdue-section-mount" class="{% if async_dashboard %}async-loading{% endif %}">
@@ -196,8 +276,11 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=5"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

@@ -63,6 +63,56 @@ def get_overdue_assets_queryset():
     )
 
 
+def get_analytics_payload(counts: dict | None = None) -> dict:
+    """Chart-ready analytics as Python objects (shared by dashboard and reports)."""
+    counts = counts or get_asset_counts()
+    assigned_assets = counts["assigned_assets"]
+    maintenance_assets = counts["maintenance_assets"]
+
+    type_labels = dict(Asset.AssetType.choices)
+    asset_by_type = {
+        type_labels.get(row["type"], row["type"]): row["total"]
+        for row in Asset.objects.values("type").annotate(total=Count("id")).order_by("type")
+        if row["total"] > 0
+    }
+    asset_by_status = {
+        "Available": counts["available_assets"],
+        "Assigned": assigned_assets,
+        "Under Maintenance": maintenance_assets,
+    }
+
+    month_starts = _last_month_starts()
+    monthly_assets = _serialize_month_counts(Asset.objects.all(), "date_created", month_starts)
+    maintenance_by_month = _serialize_month_counts(
+        MaintenanceLog.objects.all(),
+        "date",
+        month_starts,
+    )
+    top_assets = [
+        {
+            "name": asset.name,
+            "assignments": asset.assignment_count,
+        }
+        for asset in Asset.objects.annotate(
+            assignment_count=Count("assignments"),
+        ).order_by("-assignment_count", "name")[:5]
+    ]
+    department_counts = {
+        row["department"] or "Unassigned": row["total"]
+        for row in Employee.objects.values("department").annotate(total=Count("id")).order_by("department")
+    }
+
+    return {
+        "asset_by_type": asset_by_type,
+        "asset_by_status": asset_by_status,
+        "monthly_assets": monthly_assets,
+        "maintenance_by_month": maintenance_by_month,
+        "top_assets": top_assets,
+        "department_counts": department_counts,
+        "total_assignments": Assignment.objects.count(),
+    }
+
+
 def get_dashboard_context() -> dict:
     counts = get_asset_counts()
     total_assets = counts["total_assets"]
@@ -72,7 +122,7 @@ def get_dashboard_context() -> dict:
     employee_count = Employee.objects.count()
     overdue_assets = get_overdue_assets_queryset()
     asset_list_url = reverse("asset_list")
-    reports = get_reports_context()
+    analytics = get_analytics_payload(counts)
 
     return {
         **counts,
@@ -85,15 +135,8 @@ def get_dashboard_context() -> dict:
         "overdue_cutoff": get_service_overdue_cutoff().date(),
         "utilization_rate": calculate_percentage(assigned_assets, total_assets),
         "asset_health_rate": calculate_percentage(maintenance_assets, total_assets),
-        "total_assignments": reports.get("total_assignments", 0),
-        "analytics": {
-            "asset_by_status": json.loads(reports["asset_by_status"]),
-            "asset_by_type": json.loads(reports["asset_by_type"]),
-            "monthly_assets": json.loads(reports["monthly_assets"]),
-            "maintenance_by_month": json.loads(reports["maintenance_by_month"]),
-            "top_assets": json.loads(reports["top_assets_data"]),
-            "department_counts": json.loads(reports["department_counts"]),
-        },
+        "total_assignments": analytics["total_assignments"],
+        "analytics": analytics,
         "dashboard_stats": [
             {
                 "label": "Total Assets",
@@ -184,53 +227,21 @@ def get_reports_context() -> dict:
     assigned_assets = counts["assigned_assets"]
     maintenance_assets = counts["maintenance_assets"]
     total_employees = Employee.objects.count()
-
-    type_labels = dict(Asset.AssetType.choices)
-    asset_by_type = {
-        type_labels.get(row["type"], row["type"]): row["total"]
-        for row in Asset.objects.values("type").annotate(total=Count("id")).order_by("type")
-        if row["total"] > 0
-    }
-    asset_by_status = {
-        "Available": counts["available_assets"],
-        "Assigned": assigned_assets,
-        "Under Maintenance": maintenance_assets,
-    }
-
-    month_starts = _last_month_starts()
-    monthly_assets = _serialize_month_counts(Asset.objects.all(), "date_created", month_starts)
-    maintenance_by_month = _serialize_month_counts(
-        MaintenanceLog.objects.all(),
-        "date",
-        month_starts,
-    )
-    top_assets_data = [
-        {
-            "name": asset.name,
-            "assignments": asset.assignment_count,
-        }
-        for asset in Asset.objects.annotate(
-            assignment_count=Count("assignments"),
-        ).order_by("-assignment_count", "name")[:5]
-    ]
-    department_counts = {
-        row["department"] or "Unassigned": row["total"]
-        for row in Employee.objects.values("department").annotate(total=Count("id")).order_by("department")
-    }
+    analytics = get_analytics_payload(counts)
     utilization_rate = calculate_percentage(assigned_assets, total_assets, digits=1)
     asset_health_rate = calculate_percentage(maintenance_assets, total_assets)
 
     return {
         **counts,
         "total_employees": total_employees,
-        "asset_by_type": json.dumps(asset_by_type),
-        "asset_by_status": json.dumps(asset_by_status),
-        "monthly_assets": json.dumps(monthly_assets),
-        "maintenance_by_month": json.dumps(maintenance_by_month),
-        "top_assets_data": json.dumps(top_assets_data),
-        "department_counts": json.dumps(department_counts),
+        "asset_by_type": json.dumps(analytics["asset_by_type"]),
+        "asset_by_status": json.dumps(analytics["asset_by_status"]),
+        "monthly_assets": json.dumps(analytics["monthly_assets"]),
+        "maintenance_by_month": json.dumps(analytics["maintenance_by_month"]),
+        "top_assets_data": json.dumps(analytics["top_assets"]),
+        "department_counts": json.dumps(analytics["department_counts"]),
         "utilization_rate": utilization_rate,
         "asset_health_rate": asset_health_rate,
         "overdue_count": get_overdue_assets_queryset().count(),
-        "total_assignments": Assignment.objects.count(),
+        "total_assignments": analytics["total_assignments"],
     }

@@ -355,6 +355,7 @@ class DashboardContextTests(TestCase):
         self.assertIn("analytics", data)
         self.assertIn("asset_by_status", data["analytics"])
         self.assertIn("total_assignments", data)
+        self.assertIn("overdue_list_url", data)
 
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "Fleet Intelligence")
