@@ -70,6 +70,7 @@ from .views_extras import (
     NotificationListView,
     NotificationMarkAllReadView,
     NotificationMarkReadView,
+    ProfileAvatarUploadView,
     ProfileView,
     ReportsView,
     SettingsView,

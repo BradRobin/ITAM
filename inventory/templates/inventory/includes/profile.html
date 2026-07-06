@@ -2,7 +2,7 @@
 <div class="profile-dropdown">
     <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
         <img class="profile-avatar" 
-             src="https://ui-avatars.com/api/?name={{ user.first_name|default:user.username|urlencode }}&background=random&color=fff&size=32&rounded=true&bold=true&font-size=0.33" 
+             src="{{ user_avatar_url_small }}"
              alt="{{ user.username }}"
              width="32"
              height="32">
@@ -13,7 +13,7 @@
         <div class="dropdown-header">
             <div class="dropdown-user-info">
                 <img class="dropdown-avatar" 
-                     src="https://ui-avatars.com/api/?name={{ user.first_name|default:user.username|urlencode }}&background=random&color=fff&size=64&rounded=true&bold=true&font-size=0.33" 
+                     src="{{ user_avatar_url_medium }}"
                      alt="{{ user.username }}"
                      width="64"
                      height="64">

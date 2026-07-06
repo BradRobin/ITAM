@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import AssetForm, AssignmentForm, EmployeeCreateForm, EmployeeForm
-from .models import Asset, AssetCatalog, Assignment, BackgroundJob, CatalogAsset, Employee, EmployeeNotification, MaintenanceLog
+from .models import Asset, AssetCatalog, Assignment, BackgroundJob, CatalogAsset, Employee, EmployeeNotification, MaintenanceLog, UserProfile
 from .services.background_jobs import enqueue_job
 from .services.dates import format_duration_since, format_duration_until
 from .services.ecosystem_map import build_ecosystem_map
@@ -2032,3 +2032,77 @@ class EmployeePortalTests(TestCase):
         self.assertTrue(payload["success"])
         self.assertIn("submitted", payload["message"].lower())
         self.assertEqual(MaintenanceLog.objects.filter(asset=self.asset).count(), 1)
+
+
+MINIMAL_PNG = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+    b"\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde"
+    b"\x00\x00\x00\x0cIDATx\x9cc\x00\x01\x00\x00\x05\x00"
+    b"\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+@override_settings(MEDIA_ROOT=settings.BASE_DIR / "test_media")
+class ProfileAvatarUploadTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="avatar-user",
+            email="avatar@example.com",
+            password="test-pass-12345",
+            first_name="Avatar",
+        )
+        self.client.force_login(self.user)
+
+    def test_upload_avatar_persists_and_returns_url(self):
+        image = SimpleUploadedFile("avatar.png", MINIMAL_PNG, content_type="image/png")
+
+        response = self.client.post(
+            reverse("api_profile_avatar"),
+            data={"avatar": image},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertIn("/media/avatars/", payload["avatar_url"])
+
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertTrue(profile.avatar)
+        self.assertTrue(profile.avatar.storage.exists(profile.avatar.name))
+
+    def test_upload_rejects_non_image_content_type(self):
+        document = SimpleUploadedFile(
+            "notes.txt",
+            b"not an image",
+            content_type="text/plain",
+        )
+
+        response = self.client.post(
+            reverse("api_profile_avatar"),
+            data={"avatar": document},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("JPEG", response.json()["detail"])
+
+    def test_profile_page_uses_uploaded_avatar(self):
+        profile = UserProfile.objects.create(user=self.user)
+        image = SimpleUploadedFile("saved.png", MINIMAL_PNG, content_type="image/png")
+        profile.avatar.save("saved.png", image, save=True)
+
+        response = self.client.get(reverse("profile"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, profile.avatar.url)
+
+    def test_upload_requires_authentication(self):
+        self.client.logout()
+        image = SimpleUploadedFile("avatar.png", MINIMAL_PNG, content_type="image/png")
+
+        response = self.client.post(
+            reverse("api_profile_avatar"),
+            data={"avatar": image},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response.url)

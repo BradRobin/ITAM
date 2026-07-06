@@ -21,6 +21,8 @@ pids
 *.seed
 *.pid.lock
 test.sqlite3
+test_media/
+media/
 __pycache__/
 *.py[cod]
 *$py.class

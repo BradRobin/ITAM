@@ -33,6 +33,11 @@ urlpatterns = [
     
     # Profile
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path(
+        "api/profile/avatar/",
+        views.ProfileAvatarUploadView.as_view(),
+        name="api_profile_avatar",
+    ),
     
     # Settings
     path("settings/", views.SettingsView.as_view(), name="settings"),

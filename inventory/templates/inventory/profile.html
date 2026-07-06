@@ -16,9 +16,9 @@
     <div class="profile-grid">
         <!-- Profile Card -->
         <div class="profile-card profile-avatar-card">
-            <div class="profile-avatar-wrapper">
+            <div class="profile-avatar-wrapper" data-avatar-upload-url="{% url 'api_profile_avatar' %}">
                 <img class="profile-avatar-large" 
-                     src="https://ui-avatars.com/api/?name={{ user.first_name|default:user.username|urlencode }}&background=random&color=fff&size=128&rounded=true&bold=true&font-size=0.33" 
+                     src="{{ user_avatar_url }}"
                      alt="{{ user.username }}"
                      width="128"
                      height="128">

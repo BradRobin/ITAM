@@ -1,10 +1,19 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.views import View
 from django.views.generic import TemplateView
+
+from .models import UserProfile
+from .services.avatars import (
+    AvatarValidationError,
+    get_user_avatar_url,
+    get_user_avatar_urls,
+    validate_avatar_upload,
+)
 
 from .services.notifications import (
     add_session_notification,
@@ -113,4 +122,31 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context["user_last_login"] = self.request.user.last_login
         context["is_staff"] = self.request.user.is_staff
         context["is_superuser"] = self.request.user.is_superuser
+        avatar_urls = get_user_avatar_urls(self.request.user)
+        context["user_avatar_url"] = avatar_urls["large"]
         return context
+
+
+class ProfileAvatarUploadView(LoginRequiredMixin, View):
+    def post(self, request):
+        uploaded = request.FILES.get("avatar")
+        try:
+            validate_avatar_upload(uploaded)
+        except AvatarValidationError as exc:
+            return JsonResponse({"detail": str(exc)}, status=400)
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        if profile.avatar:
+            profile.avatar.delete(save=False)
+        profile.avatar = uploaded
+
+        try:
+            profile.full_clean()
+            profile.save()
+        except ValidationError as exc:
+            messages = exc.message_dict.get("avatar") or exc.messages
+            detail = messages[0] if messages else "Invalid image file."
+            return JsonResponse({"detail": detail}, status=400)
+
+        avatar_url = request.build_absolute_uri(get_user_avatar_url(request.user, size=128))
+        return JsonResponse({"success": True, "avatar_url": avatar_url})
