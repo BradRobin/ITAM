@@ -13,6 +13,31 @@
     let employeeList = [];
     let isAdmin = false;
 
+    function bulkHeaderHtml() {
+        return window.AssetBulkSelect && isAdmin
+            ? window.AssetBulkSelect.headerCellHtml()
+            : '';
+    }
+
+    function bulkRowHtml(assetId, assetName) {
+        return window.AssetBulkSelect && isAdmin
+            ? window.AssetBulkSelect.rowCellHtml(assetId, assetName)
+            : '';
+    }
+
+    function tableColspan(base) {
+        return isAdmin ? base + 1 : base;
+    }
+
+    function refreshTableHelpers(root) {
+        if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
+            window.AssetTableExpand.refresh(root || document.getElementById('all-assets'));
+        }
+        if (window.AssetBulkSelect && typeof window.AssetBulkSelect.refresh === 'function') {
+            window.AssetBulkSelect.refresh(root || document);
+        }
+    }
+
     function init() {
         if (isInitialized) {
             return;
@@ -110,6 +135,7 @@
         for (let rowIndex = 0; rowIndex < 6; rowIndex += 1) {
             rows.push(
                 '<tr class="skeleton-row" aria-hidden="true">' +
+                    (isAdmin ? '<td><span class="skeleton skeleton-text"></span></td>' : '') +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
                     '<td><span class="skeleton skeleton-text"></span></td>' +
                     '<td><span class="skeleton skeleton-text skeleton-wide"></span></td>' +
@@ -143,10 +169,7 @@
         }
 
         elements.assetTableBody.innerHTML = assets.map(renderAssetRow).join('');
-
-        if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
-            window.AssetTableExpand.refresh(document.getElementById('all-assets'));
-        }
+        refreshTableHelpers(document.getElementById('all-assets'));
     }
 
     function renderAssetRow(asset) {
@@ -156,6 +179,7 @@
 
         return (
             '<tr class="asset-table-row" data-asset-id="' + encodeURIComponent(asset.id) + '" tabindex="0" role="button" aria-label="View details for ' + escapeHtml(asset.name) + '">' +
+                bulkRowHtml(asset.id, asset.name) +
                 '<td><span class="asset-name-text">' + escapeHtml(asset.name) + '</span></td>' +
                 '<td>' + escapeHtml(asset.type) + '</td>' +
                 '<td>' + escapeHtml(asset.serial_number) + '</td>' +
@@ -211,7 +235,7 @@
     function renderTableMessage(message) {
         elements.assetTableBody.innerHTML =
             '<tr>' +
-                '<td colspan="9" class="empty-state">' +
+                '<td colspan="' + tableColspan(9) + '" class="empty-state">' +
                     '<div class="empty-state-content">' +
                         '<h3>' + escapeHtml(message) + '</h3>' +
                     '</div>' +
@@ -247,7 +271,7 @@
 
     function setupGlobalRowInteractions() {
         document.addEventListener('click', function(event) {
-            if (event.target.closest('[data-row-action="true"]')) {
+            if (event.target.closest('[data-row-action="true"]') || event.target.closest('[data-bulk-select="true"]')) {
                 return;
             }
             if (event.target.closest('.asset-detail-card-panel')) {
@@ -270,6 +294,9 @@
 
             const row = event.target.closest('.asset-table-row');
             if (!row) {
+                return;
+            }
+            if (event.target.closest('[data-bulk-select="true"]')) {
                 return;
             }
 
@@ -703,9 +730,7 @@
         try {
             const job = await window.BackgroundJobs.run('asset_sections', { force: true });
             mount.innerHTML = window.AssetSections.renderAll(job.result || {});
-            if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
-                window.AssetTableExpand.refresh(mount);
-            }
+            refreshTableHelpers(mount);
         } catch (error) {
             console.error('Failed to refresh asset sections:', error);
         }

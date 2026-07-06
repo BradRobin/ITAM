@@ -1373,6 +1373,69 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertGreaterEqual(payload["unread_count"], 1)
         self.assertTrue(any(item["title"] == "Asset Assigned" for item in payload["notifications"]))
 
+    def test_bulk_delete_api_deletes_assets(self):
+        second_asset = Asset.objects.create(
+            name="Bulk Delete Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="BULK-DEL-1",
+            status=Asset.AssetStatus.AVAILABLE,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk, second_asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertEqual(set(payload["deleted"]), {self.asset.pk, second_asset.pk})
+        self.assertEqual(payload["failed"], [])
+        self.assertFalse(Asset.objects.filter(pk__in=[self.asset.pk, second_asset.pk]).exists())
+
+    def test_bulk_delete_api_rejects_non_admin(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Asset.objects.filter(pk=self.asset.pk).exists())
+
+    def test_bulk_delete_api_reports_protected_assets(self):
+        Assignment.objects.create(asset=self.asset, employee=self.employee)
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("api_asset_bulk_delete"),
+            data={"ids": [self.asset.pk]},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+        self.assertEqual(payload["deleted"], [])
+        self.assertEqual(len(payload["failed"]), 1)
+        self.assertEqual(payload["failed"][0]["id"], self.asset.pk)
+        self.assertIn("assignment history", payload["failed"][0]["detail"])
+        self.assertTrue(Asset.objects.filter(pk=self.asset.pk).exists())
+
+    def test_asset_list_shows_bulk_select_for_admin(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="asset-bulk-checkbox"')
+        self.assertContains(response, 'id="asset-bulk-action-bar"', count=0)
+        self.assertContains(response, "asset-bulk-select.js")
+
     def test_employee_api_list_returns_assigned_asset_counts(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
         self.client.force_login(self.user)

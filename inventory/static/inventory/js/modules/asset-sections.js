@@ -36,9 +36,20 @@
     }
 
     function clickableRow(assetPk, cells, label) {
+        var bulkCell = window.AssetBulkSelect
+            ? window.AssetBulkSelect.rowCellHtml(assetPk, label)
+            : '';
         return '<tr class="asset-table-row" data-asset-id="' + encodeURIComponent(assetPk) + '" tabindex="0" role="button" aria-label="View details for ' + escapeHtml(label) + '">' +
+            bulkCell +
             cells +
             '</tr>';
+    }
+
+    function tableHead(columns) {
+        var bulkHead = window.AssetBulkSelect
+            ? window.AssetBulkSelect.headerCellHtml()
+            : '';
+        return bulkHead + columns;
     }
 
     function sectionHeader(id, icon, title, count) {
@@ -59,7 +70,7 @@
             return html + '<div class="asset-section-empty">No assets are currently assigned.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            '<th>Asset Name</th><th>Type</th><th>Assignee</th><th>Date Assigned</th><th>Return Date</th>' +
+            tableHead('<th>Asset Name</th><th>Type</th><th>Assignee</th><th>Date Assigned</th><th>Return Date</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
@@ -81,7 +92,8 @@
             return html + '<div class="asset-section-empty">No available assets right now.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            '<th>Asset Name</th><th>Type</th><th>Available Since</th></tr></thead><tbody>';
+            tableHead('<th>Asset Name</th><th>Type</th><th>Available Since</th>') +
+            '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
@@ -100,7 +112,7 @@
             return html + '<div class="asset-section-empty">No assets are currently under maintenance.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            '<th>Asset Name</th><th>Type</th><th>Repair Shop</th><th>Maintenance Worker Contact</th><th>Period Till Full Repair</th>' +
+            tableHead('<th>Asset Name</th><th>Type</th><th>Repair Shop</th><th>Maintenance Worker Contact</th><th>Period Till Full Repair</th>') +
             '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
@@ -122,7 +134,8 @@
             return html + '<div class="asset-section-empty">No ' + title.toLowerCase() + ' found.</div></section>';
         }
         html += '<div class="table-wrapper asset-section-table"><table><thead><tr>' +
-            '<th>Asset Name</th><th>Type</th><th>Serial Number</th><th>Status</th></tr></thead><tbody>';
+            tableHead('<th>Asset Name</th><th>Type</th><th>Serial Number</th><th>Status</th>') +
+            '</tr></thead><tbody>';
         rows.forEach(function(row) {
             html += clickableRow(
                 row.asset_pk,
@@ -173,6 +186,9 @@
                 if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
                     window.AssetTableExpand.refresh(mount);
                 }
+                if (window.AssetBulkSelect && typeof window.AssetBulkSelect.refresh === 'function') {
+                    window.AssetBulkSelect.refresh(mount);
+                }
                 scrollToHashTarget();
                 return;
             } catch (error) {
@@ -202,6 +218,9 @@
             mount.innerHTML = renderAll(job.result || {});
             if (window.AssetTableExpand && typeof window.AssetTableExpand.refresh === 'function') {
                 window.AssetTableExpand.refresh(mount);
+            }
+            if (window.AssetBulkSelect && typeof window.AssetBulkSelect.refresh === 'function') {
+                window.AssetBulkSelect.refresh(mount);
             }
             scrollToHashTarget();
         }).catch(function(error) {

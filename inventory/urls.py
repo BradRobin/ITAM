@@ -76,6 +76,11 @@ urlpatterns = [
         name="api_asset_detail",
     ),
     path(
+        "api/assets/bulk-delete/",
+        views.AssetBulkDeleteAPIView.as_view(),
+        name="api_asset_bulk_delete",
+    ),
+    path(
         "api/assets/<int:pk>/assign/",
         views.AssetAssignAPIView.as_view(),
         name="api_asset_assign",
