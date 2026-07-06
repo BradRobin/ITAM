@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import logging
+from pathlib import Path
 from urllib.parse import quote
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from ..models import UserProfile
+from . import supabase_storage
+
+logger = logging.getLogger(__name__)
 
 MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
 ALLOWED_AVATAR_CONTENT_TYPES = {
@@ -16,6 +22,10 @@ ALLOWED_AVATAR_CONTENT_TYPES = {
 
 
 class AvatarValidationError(ValidationError):
+    pass
+
+
+class AvatarStorageError(Exception):
     pass
 
 
@@ -47,8 +57,8 @@ def get_user_avatar_url(user, size: int = 128) -> str:
     except UserProfile.DoesNotExist:
         return ui_avatar_url(user, size=size)
 
-    if profile.avatar:
-        return _avatar_cache_bust(profile.avatar.url, profile)
+    if profile.avatar_url:
+        return _avatar_cache_bust(profile.avatar_url, profile)
     return ui_avatar_url(user, size=size)
 
 
@@ -70,3 +80,72 @@ def validate_avatar_upload(uploaded_file) -> None:
     content_type = getattr(uploaded_file, "content_type", "") or ""
     if content_type and content_type not in ALLOWED_AVATAR_CONTENT_TYPES:
         raise AvatarValidationError("Please upload a JPEG, PNG, GIF, or WebP image.")
+
+
+def should_use_supabase_storage() -> bool:
+    if supabase_storage.is_configured():
+        return True
+    if getattr(settings, "IS_VERCEL", False):
+        return True
+    return False
+
+
+def _local_avatar_path(user_id: int, uploaded_file) -> Path:
+    storage_key = supabase_storage.avatar_storage_key(user_id, uploaded_file)
+    return Path(settings.MEDIA_ROOT) / "avatars" / storage_key
+
+
+def _save_avatar_locally(user_id: int, uploaded_file) -> tuple[str, str]:
+    destination = _local_avatar_path(user_id, uploaded_file)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open("wb") as handle:
+        for chunk in uploaded_file.chunks():
+            handle.write(chunk)
+
+    storage_key = destination.name
+    avatar_url = f"{settings.MEDIA_URL}avatars/{storage_key}"
+    return avatar_url, storage_key
+
+
+def _delete_local_avatar(storage_key: str) -> None:
+    if not storage_key:
+        return
+    path = Path(settings.MEDIA_ROOT) / "avatars" / storage_key
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        logger.warning("Failed to delete local avatar %s", path, exc_info=True)
+
+
+def delete_existing_avatar(profile: UserProfile) -> None:
+    if not profile.avatar_storage_key and profile.avatar_url:
+        profile.avatar_storage_key = supabase_storage.storage_key_from_avatar_url(
+            profile.avatar_url
+        )
+
+    if profile.avatar_storage_key:
+        if supabase_storage.is_configured() and profile.avatar_url.startswith("http"):
+            supabase_storage.delete_avatar(profile.avatar_storage_key)
+        else:
+            _delete_local_avatar(profile.avatar_storage_key)
+
+
+def save_user_avatar(user, uploaded_file) -> str:
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    delete_existing_avatar(profile)
+
+    if should_use_supabase_storage():
+        if not supabase_storage.is_configured():
+            raise AvatarStorageError(
+                "Avatar storage is not configured. Set SUPABASE_URL and "
+                "SUPABASE_SERVICE_ROLE_KEY in your environment."
+            )
+        avatar_url = supabase_storage.upload_avatar(user.id, uploaded_file)
+        storage_key = supabase_storage.storage_key_from_avatar_url(avatar_url)
+    else:
+        avatar_url, storage_key = _save_avatar_locally(user.id, uploaded_file)
+
+    profile.avatar_url = avatar_url
+    profile.avatar_storage_key = storage_key
+    profile.save(update_fields=["avatar_url", "avatar_storage_key", "updated_at"])
+    return get_user_avatar_url(user, size=128)

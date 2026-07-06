@@ -353,7 +353,8 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="profile",
     )
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    avatar_url = models.URLField(max_length=500, blank=True)
+    avatar_storage_key = models.CharField(max_length=255, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

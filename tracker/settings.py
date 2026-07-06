@@ -123,6 +123,14 @@ WHITENOISE_USE_FINDERS = DEBUG
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or env("SUPABASE_URL", default="")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or env(
+    "SUPABASE_SERVICE_ROLE_KEY", default=""
+)
+SUPABASE_AVATAR_BUCKET = os.environ.get("SUPABASE_AVATAR_BUCKET") or env(
+    "SUPABASE_AVATAR_BUCKET", default="avatars"
+)
+
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")

@@ -2042,7 +2042,12 @@ MINIMAL_PNG = (
 )
 
 
-@override_settings(MEDIA_ROOT=settings.BASE_DIR / "test_media")
+@override_settings(
+    MEDIA_ROOT=settings.BASE_DIR / "test_media",
+    SUPABASE_URL="",
+    SUPABASE_SERVICE_ROLE_KEY="",
+    IS_VERCEL=False,
+)
 class ProfileAvatarUploadTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -2067,8 +2072,8 @@ class ProfileAvatarUploadTests(TestCase):
         self.assertIn("/media/avatars/", payload["avatar_url"])
 
         profile = UserProfile.objects.get(user=self.user)
-        self.assertTrue(profile.avatar)
-        self.assertTrue(profile.avatar.storage.exists(profile.avatar.name))
+        self.assertEqual(profile.avatar_url, "/media/avatars/user_{}.png".format(self.user.id))
+        self.assertTrue((settings.BASE_DIR / "test_media" / "avatars" / f"user_{self.user.id}.png").exists())
 
     def test_upload_rejects_non_image_content_type(self):
         document = SimpleUploadedFile(
@@ -2086,14 +2091,56 @@ class ProfileAvatarUploadTests(TestCase):
         self.assertIn("JPEG", response.json()["detail"])
 
     def test_profile_page_uses_uploaded_avatar(self):
-        profile = UserProfile.objects.create(user=self.user)
-        image = SimpleUploadedFile("saved.png", MINIMAL_PNG, content_type="image/png")
-        profile.avatar.save("saved.png", image, save=True)
+        profile = UserProfile.objects.create(
+            user=self.user,
+            avatar_url="/media/avatars/user_{}.png".format(self.user.id),
+        )
 
         response = self.client.get(reverse("profile"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, profile.avatar.url)
+        self.assertContains(response, profile.avatar_url)
+
+    def test_upload_requires_supabase_configuration_on_vercel(self):
+        image = SimpleUploadedFile("avatar.png", MINIMAL_PNG, content_type="image/png")
+
+        with override_settings(IS_VERCEL=True, SUPABASE_URL="", SUPABASE_SERVICE_ROLE_KEY=""):
+            response = self.client.post(
+                reverse("api_profile_avatar"),
+                data={"avatar": image},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("SUPABASE_URL", response.json()["detail"])
+
+    def test_upload_uses_supabase_when_configured(self):
+        image = SimpleUploadedFile("avatar.png", MINIMAL_PNG, content_type="image/png")
+        supabase_url = "https://example.supabase.co/storage/v1/object/public/avatars/user_{}.png".format(
+            self.user.id
+        )
+
+        with override_settings(
+            SUPABASE_URL="https://example.supabase.co",
+            SUPABASE_SERVICE_ROLE_KEY="test-service-role",
+            IS_VERCEL=False,
+        ):
+            with self.settings(SUPABASE_AVATAR_BUCKET="avatars"):
+                from unittest.mock import patch
+
+                with patch(
+                    "inventory.services.avatars.supabase_storage.upload_avatar",
+                    return_value=supabase_url,
+                ) as upload_mock:
+                    response = self.client.post(
+                        reverse("api_profile_avatar"),
+                        data={"avatar": image},
+                    )
+
+        self.assertEqual(response.status_code, 200)
+        upload_mock.assert_called_once()
+        self.assertTrue(response.json()["avatar_url"].startswith(supabase_url))
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.avatar_url, supabase_url)
 
     def test_upload_requires_authentication(self):
         self.client.logout()

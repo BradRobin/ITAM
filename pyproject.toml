@@ -7,6 +7,7 @@ dependencies = [
     "Django==5.2.15",
     "django-environ==0.14.0",
     "gunicorn==25.1.0",
+    "Pillow==11.3.0",
     "psycopg2-binary==2.9.12",
     "sqlparse==0.5.5",
     "whitenoise==6.12.0",
@@ -16,4 +17,4 @@ dependencies = [
 entrypoint = "tracker.wsgi:application"
 
 [tool.vercel.scripts]
-build = "python manage.py migrate --noinput"
+build = "python manage.py collectstatic --noinput && python manage.py migrate --noinput"
