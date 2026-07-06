@@ -1,3 +1,9 @@
+# Django collected static output (build artifact from collectstatic)
+staticfiles/
+
+# Stray diff artifacts
+tash
+
 # Logs
 logs
 *.log

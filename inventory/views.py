@@ -5,11 +5,9 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, logout, update_session_auth_hash
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max, OuterRef, Q, Subquery
@@ -32,15 +30,12 @@ from django.views.generic import (
 )
 from django.utils.decorators import method_decorator
 
+from .access import get_employee_for_user, user_has_admin_access
 from .forms import (
     AssetForm,
     AssignmentForm,
-    EmailOrUsernameAuthenticationForm,
     EmployeeCreateForm,
     EmployeeForm,
-    ForgotPasswordEmailForm,
-    ForgotPasswordSecurityForm,
-    ForgotPasswordSetForm,
     MaintenanceLogForm,
 )
 from .models import Asset, AssetCatalog, Assignment, BackgroundJob, Employee, EmployeeNotification, MaintenanceLog
@@ -62,10 +57,13 @@ from .services.metrics import (
     get_service_overdue_cutoff,
 )
 from .services.notifications import add_session_notification
-from .services.password_reset import (
-    PASSWORD_RESET_EMAIL_SESSION_KEY,
-    PASSWORD_RESET_VERIFIED_SESSION_KEY,
-    get_user_for_password_reset_email,
+from .views_auth import (
+    AuthLoginView,
+    AuthLogoutView,
+    ForgotPasswordEmailView,
+    ForgotPasswordSetView,
+    ForgotPasswordVerifyView,
+    SignUpView,
 )
 from .views_extras import (
     NotificationAPIView,
@@ -147,10 +145,6 @@ class CustomJSONEncoder(json.JSONEncoder):
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()
         return super().default(obj)
-
-
-def user_has_admin_access(user) -> bool:
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
 STATUS_TO_API = {
@@ -339,182 +333,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["overdue_assets_count"] = "—"
         context["overdue_assets"] = None
         return context
-
-
-class AuthLoginView(LoginView):
-    template_name = "inventory/auth.html"
-    authentication_form = EmailOrUsernameAuthenticationForm
-    redirect_authenticated_user = True
-
-    def get_success_url(self):
-        if user_has_admin_access(self.request.user):
-            return reverse("dashboard")
-        if get_employee_for_user(self.request.user):
-            return reverse("employee_dashboard")
-        return reverse("dashboard")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "login"
-        context["remember_me"] = bool(self.request.POST.get("remember"))
-        return context
-
-    def form_valid(self, form):
-        remember_me = self.request.POST.get("remember")
-        login(self.request, form.get_user())
-        if remember_me:
-            self.request.session.set_expiry(settings.SESSION_COOKIE_AGE)
-        else:
-            self.request.session.set_expiry(0)
-        self.request.session.modified = True
-        return redirect(self.get_success_url())
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect("dashboard")
-        return super().dispatch(request, *args, **kwargs)
-
-
-class SignUpView(CreateView):
-    form_class = UserCreationForm
-    template_name = "inventory/auth.html"
-    success_url = reverse_lazy("dashboard")
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect("dashboard")
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        login(self.request, self.object)
-        return response
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "signup"
-        return context
-
-
-class AuthLogoutView(View):
-    template_name = "inventory/auth.html"
-
-    def post(self, request, *args, **kwargs):
-        logout(request)
-        return render(request, self.template_name, {"page": "logout"})
-
-    def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect("dashboard")
-        return render(request, self.template_name, {"page": "logout"})
-
-
-# ============================================
-# PASSWORD RESET VIEWS
-# ============================================
-
-def _redirect_authenticated_user(request):
-    if request.user.is_authenticated:
-        return redirect("dashboard")
-    return None
-
-
-def _clear_password_reset_session(request):
-    request.session.pop(PASSWORD_RESET_EMAIL_SESSION_KEY, None)
-    request.session.pop(PASSWORD_RESET_VERIFIED_SESSION_KEY, None)
-
-
-class ForgotPasswordEmailView(FormView):
-    template_name = "inventory/auth.html"
-    form_class = ForgotPasswordEmailForm
-
-    def dispatch(self, request, *args, **kwargs):
-        redirect_response = _redirect_authenticated_user(request)
-        if redirect_response is not None:
-            return redirect_response
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset"
-        return context
-
-    def form_valid(self, form):
-        email = form.cleaned_data["email"]
-        if get_user_for_password_reset_email(email) is None:
-            form.add_error("email", "No account found with this email address.")
-            return self.form_invalid(form)
-
-        self.request.session[PASSWORD_RESET_EMAIL_SESSION_KEY] = email
-        self.request.session.pop(PASSWORD_RESET_VERIFIED_SESSION_KEY, None)
-        return redirect("password_reset_verify")
-
-
-class ForgotPasswordVerifyView(FormView):
-    template_name = "inventory/auth.html"
-    form_class = ForgotPasswordSecurityForm
-
-    def dispatch(self, request, *args, **kwargs):
-        redirect_response = _redirect_authenticated_user(request)
-        if redirect_response is not None:
-            return redirect_response
-        if not request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY):
-            return redirect("password_reset")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset_verify"
-        return context
-
-    def form_valid(self, form):
-        self.request.session[PASSWORD_RESET_VERIFIED_SESSION_KEY] = True
-        return redirect("password_reset_set")
-
-
-class ForgotPasswordSetView(FormView):
-    template_name = "inventory/auth.html"
-    form_class = ForgotPasswordSetForm
-
-    def dispatch(self, request, *args, **kwargs):
-        redirect_response = _redirect_authenticated_user(request)
-        if redirect_response is not None:
-            return redirect_response
-
-        email = request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
-        verified = request.session.get(PASSWORD_RESET_VERIFIED_SESSION_KEY)
-        if not email:
-            return redirect("password_reset")
-        if not verified:
-            return redirect("password_reset_verify")
-        if get_user_for_password_reset_email(email) is None:
-            _clear_password_reset_session(request)
-            return redirect("password_reset")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        email = self.request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
-        kwargs["user"] = get_user_for_password_reset_email(email)
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page"] = "password_reset_set"
-        return context
-
-    def form_valid(self, form):
-        email = self.request.session.get(PASSWORD_RESET_EMAIL_SESSION_KEY)
-        user = get_user_for_password_reset_email(email)
-        if user is None:
-            _clear_password_reset_session(self.request)
-            return redirect("password_reset")
-
-        user.set_password(form.cleaned_data["new_password"])
-        user.save(update_fields=["password"])
-        _clear_password_reset_session(self.request)
-        messages.success(self.request, "Your password has been reset. Please sign in.")
-        return redirect("login")
 
 
 class AssetListView(LoginRequiredMixin, ListView):
@@ -1571,15 +1389,6 @@ class EmployeeAPIDetailView(LoginRequiredMixin, View):
 # ============================================
 # EMPLOYEE PORTAL VIEWS
 # ============================================
-
-def get_employee_for_user(user):
-    if not user.is_authenticated:
-        return None
-    try:
-        return user.employee
-    except Employee.DoesNotExist:
-        return None
-
 
 def serialize_employee_notification(notification):
     return {

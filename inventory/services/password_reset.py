@@ -11,6 +11,11 @@ def is_eventhub_security_answer(value: str) -> bool:
     return (value or "").strip().lower() == EVENTHUB_SECURITY_ANSWER
 
 
+def clear_password_reset_session(request) -> None:
+    request.session.pop(PASSWORD_RESET_EMAIL_SESSION_KEY, None)
+    request.session.pop(PASSWORD_RESET_VERIFIED_SESSION_KEY, None)
+
+
 def get_user_for_password_reset_email(email: str):
     normalized_email = (email or "").strip().lower()
     if not normalized_email:

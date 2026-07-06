@@ -1,28 +1,28 @@
 <td class="actions-cell" data-row-action="true">
-    <div class="asset-row-menu"
+    <div class="table-row-menu" data-menu-type="asset"
          {% if asset_id %}data-asset-id="{{ asset_id }}"{% else %}data-catalog-only="true"{% endif %}
          data-asset-name="{{ asset_name }}">
         <button type="button"
-                class="asset-row-menu-trigger"
+                class="table-row-menu-trigger"
                 data-row-action="true"
                 aria-label="Actions for {{ asset_name }}"
                 aria-haspopup="true"
                 aria-expanded="false">
             <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
         </button>
-        <div class="asset-row-menu-dropdown" role="menu" hidden>
-            <button type="button" class="asset-row-menu-item" data-action="view" role="menuitem">
+        <div class="table-row-menu-dropdown" role="menu" hidden>
+            <button type="button" class="table-row-menu-item" data-action="view" role="menuitem">
                 <i class="fas fa-eye" aria-hidden="true"></i>
                 <span>View</span>
             </button>
             {% if user_is_admin and asset_id and asset_status == "Available" %}
-            <button type="button" class="asset-row-menu-item" data-action="assign" role="menuitem">
+            <button type="button" class="table-row-menu-item" data-action="assign" role="menuitem">
                 <i class="fas fa-user-plus" aria-hidden="true"></i>
                 <span>Assign</span>
             </button>
             {% endif %}
             {% if user_is_admin and asset_id %}
-            <button type="button" class="asset-row-menu-item asset-row-menu-item-danger" data-action="delete" role="menuitem">
+            <button type="button" class="table-row-menu-item table-row-menu-item-danger" data-action="delete" role="menuitem">
                 <i class="fas fa-trash-alt" aria-hidden="true"></i>
                 <span>Delete</span>
             </button>

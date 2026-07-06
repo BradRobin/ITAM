@@ -15,14 +15,7 @@
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Welcome Back</h1>
                 <p>Sign in to manage your IT assets</p>
             </div>
@@ -76,29 +69,12 @@
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Reset Password</h1>
                 <p>Enter the email address associated with your account</p>
             </div>
 
-            {% if form.errors %}
-                <div class="auth-error">
-                    <ul>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
+            {% include 'inventory/includes/auth_form_errors.html' %}
 
             <form method="post" class="auth-form" action="{% url 'password_reset' %}">
                 {% csrf_token %}
@@ -121,29 +97,12 @@
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Verify Identity</h1>
                 <p>Answer the security question to continue resetting your password</p>
             </div>
 
-            {% if form.errors %}
-                <div class="auth-error">
-                    <ul>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
+            {% include 'inventory/includes/auth_form_errors.html' %}
 
             <form method="post" class="auth-form" action="{% url 'password_reset_verify' %}">
                 {% csrf_token %}
@@ -166,29 +125,12 @@
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Set New Password</h1>
                 <p>Enter and confirm your new password</p>
             </div>
 
-            {% if form.errors %}
-                <div class="auth-error">
-                    <ul>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
+            {% include 'inventory/includes/auth_form_errors.html' %}
 
             <form method="post" class="auth-form" action="{% url 'password_reset_set' %}">
                 {% csrf_token %}
@@ -225,14 +167,7 @@
     <div class="auth-container">
         <div class="auth-card logout-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Logged Out</h1>
                 <p>You have been logged out successfully.</p>
             </div>
@@ -246,14 +181,7 @@
     <div class="auth-container">
         <div class="auth-card logout-card">
             <div class="auth-header">
-                <div class="auth-logo">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span>{{ itam_product_name }}</span>
-                </div>
+                {% include 'inventory/includes/auth_logo.html' %}
                 <h1>Authentication</h1>
                 <p>Please use the available authentication links below.</p>
             </div>

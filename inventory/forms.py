@@ -8,6 +8,19 @@ from django.utils import timezone
 from .models import Asset, Assignment, Employee, MaintenanceLog
 
 
+def validate_password_pair(form, password, confirm_password, *, user, confirm_field="confirm_password"):
+    """Shared password + confirmation validation for account forms.
+
+    Adds a mismatch error to ``confirm_field`` and runs Django's password
+    validators against ``user``. Errors are attached to ``form`` in place.
+    """
+    if password and confirm_password and password != confirm_password:
+        form.add_error(confirm_field, "Passwords do not match.")
+
+    if password:
+        validate_password(password, user=user)
+
+
 class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
@@ -83,16 +96,13 @@ class EmployeeCreateForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        confirm_password = cleaned_data.get("confirm_password")
         username = cleaned_data.get("username")
-
-        if password and confirm_password and password != confirm_password:
-            self.add_error("confirm_password", "Passwords do not match.")
-
-        if password:
-            validate_password(password, user=get_user_model()(username=username or ""))
-
+        validate_password_pair(
+            self,
+            cleaned_data.get("password"),
+            cleaned_data.get("confirm_password"),
+            user=get_user_model()(username=username or ""),
+        )
         return cleaned_data
 
     @transaction.atomic
@@ -249,13 +259,10 @@ class ForgotPasswordSetForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        new_password = cleaned_data.get("new_password")
-        confirm_password = cleaned_data.get("confirm_password")
-
-        if new_password and confirm_password and new_password != confirm_password:
-            self.add_error("confirm_password", "Passwords do not match.")
-
-        if new_password and self.user is not None:
-            validate_password(new_password, user=self.user)
-
+        validate_password_pair(
+            self,
+            cleaned_data.get("new_password"),
+            cleaned_data.get("confirm_password"),
+            user=self.user,
+        )
         return cleaned_data

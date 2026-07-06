@@ -12,6 +12,9 @@
     }
 
     function escapeHtml(value) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(value);
+        }
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')

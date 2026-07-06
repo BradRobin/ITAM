@@ -1,6 +1,7 @@
 import datetime
 import json
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -1610,9 +1611,10 @@ class FrontendAPIBridgeTests(TestCase):
         response = self.client.get(reverse("employee_list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "employee-row-menu.js")
+        self.assertContains(response, "table-row-menu.js")
         self.assertContains(response, "fa-ellipsis-v")
-        self.assertContains(response, 'class="employee-row-menu"')
+        self.assertContains(response, 'class="table-row-menu"')
+        self.assertContains(response, 'data-menu-type="employee"')
         self.assertContains(response, 'data-action="edit"')
         self.assertContains(response, 'data-action="delete"')
         self.assertNotContains(response, 'btn btn-sm btn-danger">Delete</a>')

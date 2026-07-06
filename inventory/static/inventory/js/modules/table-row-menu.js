@@ -1,26 +1,34 @@
 /**
- * Row actions menu (vertical dots) for employee tables
+ * TABLE ROW MENU (shared)
+ *
+ * Generic vertical-dots dropdown mechanics for any table row menu.
+ * Markup contract (per row):
+ *   <div class="table-row-menu" data-menu-type="asset" ...data-*>
+ *     <button class="table-row-menu-trigger" ...>⋮</button>
+ *     <div class="table-row-menu-dropdown" role="menu" hidden>
+ *       <button class="table-row-menu-item" data-action="view">…</button>
+ *     </div>
+ *   </div>
+ *
+ * Consumers register an action handler for their menu type:
+ *   TableRowMenu.register('asset', function(action, wrapper) { ... });
+ *
+ * This module owns open/close, positioning, keyboard (Esc), outside-click,
+ * and resize/scroll dismissal for every menu type at once.
  */
 (function() {
     'use strict';
 
     var bound = false;
     var openMenu = null;
-
-    function escapeHtml(value) {
-        return String(value == null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
+    var handlers = {};
 
     function closeOpenMenu() {
         if (!openMenu) {
             return;
         }
-        var dropdown = openMenu.querySelector('.employee-row-menu-dropdown');
-        var trigger = openMenu.querySelector('.employee-row-menu-trigger');
+        var dropdown = openMenu.querySelector('.table-row-menu-dropdown');
+        var trigger = openMenu.querySelector('.table-row-menu-trigger');
         if (dropdown) {
             dropdown.hidden = true;
             dropdown.classList.remove('open');
@@ -54,8 +62,8 @@
 
     function openMenuFor(wrapper) {
         closeOpenMenu();
-        var trigger = wrapper.querySelector('.employee-row-menu-trigger');
-        var dropdown = wrapper.querySelector('.employee-row-menu-dropdown');
+        var trigger = wrapper.querySelector('.table-row-menu-trigger');
+        var dropdown = wrapper.querySelector('.table-row-menu-dropdown');
         if (!trigger || !dropdown) {
             return;
         }
@@ -68,22 +76,11 @@
         openMenu = wrapper;
     }
 
-    function handleAction(action, employeeId, employeeName) {
-        if (!employeeId) {
-            return;
-        }
-
-        if (action === 'edit') {
-            window.location.href = '/employees/' + encodeURIComponent(employeeId) + '/edit/';
-            return;
-        }
-
-        if (action === 'delete') {
-            var message = 'Are you sure you want to delete "' + employeeName + '"? This action cannot be undone.';
-            if (!window.confirm(message)) {
-                return;
-            }
-            window.location.href = '/employees/' + encodeURIComponent(employeeId) + '/delete/';
+    function dispatchAction(action, wrapper) {
+        var type = wrapper.getAttribute('data-menu-type');
+        var handler = type && handlers[type];
+        if (typeof handler === 'function') {
+            handler(action, wrapper);
         }
     }
 
@@ -94,28 +91,23 @@
         bound = true;
 
         document.addEventListener('click', function(event) {
-            var item = event.target.closest('.employee-row-menu-item');
+            var item = event.target.closest('.table-row-menu-item');
             if (item) {
                 event.preventDefault();
                 event.stopPropagation();
-                var wrapper = item.closest('.employee-row-menu');
-                if (!wrapper) {
-                    return;
+                var wrapper = item.closest('.table-row-menu');
+                if (wrapper) {
+                    dispatchAction(item.dataset.action, wrapper);
                 }
-                handleAction(
-                    item.dataset.action,
-                    wrapper.dataset.employeeId,
-                    wrapper.dataset.employeeName || 'employee'
-                );
                 closeOpenMenu();
                 return;
             }
 
-            var trigger = event.target.closest('.employee-row-menu-trigger');
+            var trigger = event.target.closest('.table-row-menu-trigger');
             if (trigger) {
                 event.preventDefault();
                 event.stopPropagation();
-                var menu = trigger.closest('.employee-row-menu');
+                var menu = trigger.closest('.table-row-menu');
                 if (!menu) {
                     return;
                 }
@@ -127,7 +119,7 @@
                 return;
             }
 
-            if (!event.target.closest('.employee-row-menu-dropdown')) {
+            if (!event.target.closest('.table-row-menu-dropdown')) {
                 closeOpenMenu();
             }
         });
@@ -142,18 +134,20 @@
         window.addEventListener('scroll', closeOpenMenu, true);
     }
 
-    function init() {
+    function register(menuType, handler) {
+        handlers[menuType] = handler;
         bindEvents();
     }
 
-    window.EmployeeRowMenu = {
-        init: init,
+    window.TableRowMenu = {
+        init: bindEvents,
+        register: register,
         close: closeOpenMenu
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', bindEvents);
     } else {
-        init();
+        bindEvents();
     }
 })();

@@ -4,13 +4,15 @@
 {% block title %}Assets - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=17">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=7">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=6">
 {% endblock %}
 
 {% block content %}
-    <div class="page-header" data-user-is-admin="{% if user_is_admin %}true{% else %}false{% endif %}">
+    <div class="page-header"
+         data-user-is-admin="{% if user_is_admin %}true{% else %}false{% endif %}"
+         data-asset-delete-url-template="{% url 'asset_delete' 0 %}">
         <h1>Assets</h1>
         <div class="actions">
             <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
@@ -367,7 +369,8 @@
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/modules/asset-import.js' %}?v=7"></script>
     <script src="{% static 'inventory/js/modules/asset-bulk-select.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/modules/table-row-menu.js' %}?v=1"></script>
+    <script src="{% static 'inventory/js/modules/asset-row-menu.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/modules/asset-table-expand.js' %}?v=2"></script>
     <script src="{% static 'inventory/js/modules/asset-sections.js' %}?v=10"></script>
     <script src="{% static 'inventory/js/modules/assets.js' %}?v=26"></script>

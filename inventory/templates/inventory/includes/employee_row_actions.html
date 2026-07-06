@@ -1,21 +1,23 @@
 <td class="actions-cell" data-row-action="true">
-    <div class="employee-row-menu"
+    <div class="table-row-menu" data-menu-type="employee"
          data-employee-id="{{ employee_id }}"
-         data-employee-name="{{ employee_name }}">
+         data-employee-name="{{ employee_name }}"
+         data-edit-url="{% url 'employee_edit' employee_id %}"
+         data-delete-url="{% url 'employee_delete' employee_id %}">
         <button type="button"
-                class="employee-row-menu-trigger"
+                class="table-row-menu-trigger"
                 data-row-action="true"
                 aria-label="Actions for {{ employee_name }}"
                 aria-haspopup="true"
                 aria-expanded="false">
             <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
         </button>
-        <div class="employee-row-menu-dropdown" role="menu" hidden>
-            <button type="button" class="employee-row-menu-item" data-action="edit" role="menuitem">
+        <div class="table-row-menu-dropdown" role="menu" hidden>
+            <button type="button" class="table-row-menu-item" data-action="edit" role="menuitem">
                 <i class="fas fa-pen" aria-hidden="true"></i>
                 <span>Edit</span>
             </button>
-            <button type="button" class="employee-row-menu-item employee-row-menu-item-danger" data-action="delete" role="menuitem">
+            <button type="button" class="table-row-menu-item table-row-menu-item-danger" data-action="delete" role="menuitem">
                 <i class="fas fa-trash-alt" aria-hidden="true"></i>
                 <span>Delete</span>
             </button>
