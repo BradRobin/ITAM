@@ -537,21 +537,26 @@ class EcosystemMapTests(TestCase):
         node_ids = {node["id"] for node in graph["nodes"]}
         self.assertIn("hub-itam", node_ids)
         self.assertIn("admin-user", node_ids)
-        self.assertIn("view-assets", node_ids)
-        self.assertIn("table-asset", node_ids)
-        self.assertGreaterEqual(len(graph["edges"]), 10)
+        self.assertIn("module-assets", node_ids)
+        self.assertIn("metric-total-assets", node_ids)
+        self.assertLessEqual(len(graph["nodes"]), 20)
+        self.assertIn("summary", graph["meta"])
 
-    def test_build_ecosystem_map_includes_assignment_relationships(self):
+    def test_build_ecosystem_map_reflects_assignment_metrics(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
         self.asset.status = Asset.AssetStatus.ASSIGNED
         self.asset.save(update_fields=["status"])
 
         graph = build_ecosystem_map(self.admin)
-        labels = {edge["label"] for edge in graph["edges"]}
+        assigned = next(
+            node for node in graph["nodes"] if node["id"] == "metric-assigned"
+        )
 
-        self.assertIn("assigned to", labels)
-        self.assertTrue(any(node["id"] == f"employee-{self.employee.pk}" for node in graph["nodes"]))
-        self.assertTrue(any(node["id"] == f"asset-{self.asset.pk}" for node in graph["nodes"]))
+        self.assertEqual(assigned["badge"], 1)
+        self.assertEqual(
+            next(item for item in graph["meta"]["summary"] if item["label"] == "Assigned")["value"],
+            1,
+        )
 
     def test_reports_job_returns_ecosystem_map(self):
         self.client.force_login(self.admin)

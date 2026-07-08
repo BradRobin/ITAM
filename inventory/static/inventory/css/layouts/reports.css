@@ -628,68 +628,77 @@
 .ecosystem-map-shell {
     display: flex;
     flex-direction: column;
-    min-height: 560px;
+    min-height: 480px;
 }
 
 .ecosystem-map-toolbar {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-color, #e2e8f0);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 0.9));
+    background: var(--bg-card, #fff);
     flex-wrap: wrap;
 }
 
 [data-theme="dark"] .ecosystem-map-toolbar {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.85));
+    background: var(--bg-card, #1e293b);
 }
 
 .ecosystem-map-toolbar-left,
 .ecosystem-map-toolbar-right {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
     flex-wrap: wrap;
 }
 
-.ecosystem-map-view-select {
+.ecosystem-map-title-block h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-primary, #0f172a);
+}
+
+.ecosystem-map-title-block p {
+    margin: 0.2rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #64748b);
+}
+
+.ecosystem-map-summary {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ecosystem-map-summary-item {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted, #64748b);
+    min-width: 4.5rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: #f8fafc;
 }
 
-.ecosystem-map-view-select select {
-    min-width: 11rem;
-    padding: 0.35rem 0.6rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color, #cbd5e1);
-    background: var(--bg-card, #fff);
+[data-theme="dark"] .ecosystem-map-summary-item {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: #334155;
+}
+
+.ecosystem-map-summary-value {
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--text-primary, #0f172a);
-    font-size: 0.85rem;
+    line-height: 1.1;
 }
 
-.ecosystem-map-base-ci {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-}
-
-.ecosystem-map-base-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted, #64748b);
-}
-
-.ecosystem-map-base-ci strong {
-    font-size: 0.9rem;
-    color: var(--text-primary, #0f172a);
+.ecosystem-map-summary-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary, #64748b);
+    margin-top: 0.15rem;
 }
 
 .ecosystem-map-tool-btn {
@@ -721,10 +730,10 @@
 
 .ecosystem-map-stage {
     position: relative;
-    min-height: 520px;
-    height: 62vh;
-    max-height: 760px;
-    background: #f8fafc;
+    min-height: 420px;
+    height: 52vh;
+    max-height: 620px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
     cursor: grab;
 }
 
@@ -733,7 +742,7 @@
 }
 
 [data-theme="dark"] .ecosystem-map-stage {
-    background: #0f172a;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
 
 .ecosystem-map-svg {
@@ -742,63 +751,53 @@
     display: block;
 }
 
-.ecosystem-map-bg {
-    pointer-events: none;
-}
-
 .ecosystem-edge line {
-    stroke: rgba(100, 116, 139, 0.45);
-    stroke-width: 1.2;
+    stroke: rgba(148, 163, 184, 0.55);
+    stroke-width: 1.5;
 }
 
 .ecosystem-edge.is-highlighted line {
-    stroke: rgba(37, 99, 235, 0.85);
-    stroke-width: 2;
-}
-
-.ecosystem-edge-label {
-    font-size: 10px;
-    fill: #64748b;
-    text-anchor: middle;
-    paint-order: stroke;
-    stroke: rgba(255, 255, 255, 0.85);
-    stroke-width: 3px;
-}
-
-[data-theme="dark"] .ecosystem-edge-label {
-    fill: #94a3b8;
-    stroke: rgba(15, 23, 42, 0.85);
+    stroke: rgba(37, 99, 235, 0.9);
+    stroke-width: 2.5;
 }
 
 .ecosystem-node {
     cursor: pointer;
-}
-
-.ecosystem-node-ring {
-    fill: none;
-    stroke-width: 2;
-    opacity: 0;
     transition: opacity 0.15s ease;
 }
 
-.ecosystem-node.is-hovered .ecosystem-node-ring,
-.ecosystem-node.is-selected .ecosystem-node-ring,
-.ecosystem-node.is-highlighted .ecosystem-node-ring {
-    opacity: 1;
+.ecosystem-node-card {
+    filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.08));
+    transition: stroke 0.15s ease, filter 0.15s ease;
 }
 
-.ecosystem-node-core {
-    filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.12));
+.ecosystem-node.is-hovered .ecosystem-node-card,
+.ecosystem-node.is-selected .ecosystem-node-card,
+.ecosystem-node.is-highlighted .ecosystem-node-card {
+    stroke: #2563eb;
+    filter: drop-shadow(0 8px 18px rgba(37, 99, 235, 0.18));
+}
+
+.ecosystem-node-module .ecosystem-node-icon {
+    color: #2563eb;
+}
+
+.ecosystem-node-metric .ecosystem-node-icon {
+    color: #64748b;
+}
+
+.ecosystem-node-hub .ecosystem-node-icon,
+.ecosystem-node-admin .ecosystem-node-icon {
+    color: #ffffff;
 }
 
 .ecosystem-node-icon {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 .ecosystem-node-label {
@@ -806,21 +805,29 @@
     font-weight: 600;
     fill: #0f172a;
     text-anchor: middle;
+    pointer-events: none;
+}
+
+.ecosystem-node-sublabel {
+    font-size: 10px;
+    font-weight: 700;
+    fill: #2563eb;
+    text-anchor: middle;
+    pointer-events: none;
 }
 
 [data-theme="dark"] .ecosystem-node-label {
     fill: #e2e8f0;
 }
 
-.ecosystem-node-badge circle {
-    fill: #ef4444;
+[data-theme="dark"] .ecosystem-node-module .ecosystem-node-card {
+    fill: #1e293b;
+    stroke: #475569;
 }
 
-.ecosystem-node-badge text {
-    fill: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    text-anchor: middle;
+[data-theme="dark"] .ecosystem-node-metric .ecosystem-node-card {
+    fill: #0f172a;
+    stroke: #334155;
 }
 
 .ecosystem-map-legend {
@@ -866,9 +873,10 @@
 }
 
 .ecosystem-legend-swatch {
-    width: 0.65rem;
-    height: 0.65rem;
-    border-radius: 999px;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
     flex-shrink: 0;
 }
 
@@ -897,10 +905,15 @@
 
 .ecosystem-map-detail-type {
     margin: 0 0 0.6rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted, #64748b);
+    font-size: 0.82rem;
+    color: var(--text-secondary, #64748b);
+    line-height: 1.4;
+}
+
+.ecosystem-map-detail-count {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-primary, #0f172a);
 }
 
 .ecosystem-map-detail dl {
