@@ -254,6 +254,25 @@
         }
     };
 
+    EcosystemMap.prototype._zoomAt = function(clientX, clientY, scaleFactor) {
+        if (!this.stage) {
+            return;
+        }
+        var rect = this.stage.getBoundingClientRect();
+        var mx = clientX - rect.left;
+        var my = clientY - rect.top;
+        var worldX = (mx - this.panX) / this.scale;
+        var worldY = (my - this.panY) / this.scale;
+        var newScale = Math.max(0.35, Math.min(1.6, this.scale * scaleFactor));
+        if (newScale === this.scale) {
+            return;
+        }
+        this.panX = mx - worldX * newScale;
+        this.panY = my - worldY * newScale;
+        this.scale = newScale;
+        this._updateTransform();
+    };
+
     EcosystemMap.prototype.fitToView = function() {
         var visible = this.nodes.filter(function(node) { return node.visible !== false; });
         if (!visible.length || !this.stage) {
@@ -315,23 +334,22 @@
         this.container.querySelectorAll('[data-map-action]').forEach(function(button) {
             button.addEventListener('click', function() {
                 var action = button.getAttribute('data-map-action');
-                if (action === 'zoom-in') {
-                    self.scale = Math.min(1.6, self.scale * 1.12);
-                } else if (action === 'zoom-out') {
-                    self.scale = Math.max(0.35, self.scale / 1.12);
+                if (action === 'zoom-in' || action === 'zoom-out') {
+                    var rect = self.stage.getBoundingClientRect();
+                    var cx = rect.left + rect.width / 2;
+                    var cy = rect.top + rect.height / 2;
+                    var factor = action === 'zoom-in' ? 1.12 : 1 / 1.12;
+                    self._zoomAt(cx, cy, factor);
                 } else if (action === 'fit') {
                     self.fitToView();
-                    return;
                 }
-                self._updateTransform();
             });
         });
 
         this.stage.addEventListener('wheel', function(event) {
             event.preventDefault();
-            var delta = event.deltaY > 0 ? 0.92 : 1.08;
-            self.scale = Math.max(0.35, Math.min(1.6, self.scale * delta));
-            self._updateTransform();
+            var factor = event.deltaY > 0 ? 0.92 : 1.08;
+            self._zoomAt(event.clientX, event.clientY, factor);
         }, { passive: false });
 
         this.stage.addEventListener('mousedown', function(event) {
