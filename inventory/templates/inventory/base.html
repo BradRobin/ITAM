@@ -36,7 +36,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E">
     
     <!-- Fallback favicon for older browsers -->
-    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAOFJREFUWEdjYEADjIz//zMw/AcCJgaMAAzGgikA0+AGtI/xPwtDYGBg7D/GFIABAoyB+gMeHh6lYPCfYdCAB29v7+3Ukw7c2nuYdTcGJgY3mFE0Oggp1y4coGME8/1pB+CB2ArC2nHnKAM9A7PidBCSFNoLifS09zTfApDjqQE8PDzuQHYL5imQ7J5sweLrYGpR3TbsLGwmS9k4oGcDJDAdIgCqnCJPEzzk8AyYhRRJ+9O0mI4H0QJ5+MRpP2lNgglNaUHnS1p6Z9H4hS5gXhlfB1D2YKEZPhEApIidXmPRjAEAkKJFe1uLqskAAAAASUVORK5CYII=">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAOFJREFUWEdjYEADjIz//zAw/AcCJgaMAAzGgikA0+AGtI/xPwtDYGBg7D/GFIABAoyB+gMeHh6lYPCfYdCAB29v7+3Ukw7c2nuYdTcGJgY3mFE0Oggp1y4coGME8/1pB+CB2ArC2nHnKAM9A7PidBCSFNoLifS09zTfApDjqQE8PDzuQHYL5imQ7J5sweLrYGpR3TbsLGwmS9k4oGcDJDAdIgCqnCJPEzzk8AyYhRRJ+9O0mI4H0QJ5+MRpP2lNgglNaUHnS1p6Z9H4hS5gXhlfB1D2YKEZPhEApIidXmPRjAEAkKJFe1uLqskAAAAASUVORK5CYII=">
     
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -84,25 +84,6 @@
         <main>
             {% block content %}{% endblock %}
         </main>
-
-        <footer class="app-footer" aria-label="Footer navigation">
-            <div class="app-footer-links">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'dashboard' %}">Dashboard</a>
-                    <a href="{% url 'asset_list' %}">Assets</a>
-                    <a href="{% url 'employee_list' %}">Employees</a>
-                    <a href="{% url 'reports' %}">Reports</a>
-                    <a href="{% url 'settings' %}">Settings</a>
-                {% else %}
-                    <a href="{% url 'login' %}">Login</a>
-                    <a href="{% url 'password_reset' %}">Reset Password</a>
-                {% endif %}
-            </div>
-            <div class="app-footer-meta">
-                <span>{{ itam_product_name }}</span>
-                <span>v{{ itam_version }}</span>
-            </div>
-        </footer>
     </div>
     
     <!-- ===== CORE JAVASCRIPT ===== -->
