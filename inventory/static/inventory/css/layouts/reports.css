@@ -767,8 +767,40 @@
 }
 
 .ecosystem-node-card {
+    fill: #ffffff;
+    stroke: #cbd5e1;
     filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.08));
-    transition: stroke 0.15s ease, filter 0.15s ease;
+    transition: fill 0.2s ease, stroke 0.2s ease, filter 0.15s ease;
+}
+
+.ecosystem-node-hub .ecosystem-node-card {
+    fill: #2563eb;
+    stroke: #1d4ed8;
+}
+
+.ecosystem-node-admin .ecosystem-node-card {
+    fill: #7c3aed;
+    stroke: #6d28d9;
+}
+
+.ecosystem-node-module .ecosystem-node-card {
+    fill: #ffffff;
+    stroke: #93c5fd;
+}
+
+.ecosystem-node-metric .ecosystem-node-card {
+    fill: #f8fafc;
+    stroke: #cbd5e1;
+}
+
+[data-theme="dark"] .ecosystem-node-module .ecosystem-node-card {
+    fill: #1e293b;
+    stroke: #475569;
+}
+
+[data-theme="dark"] .ecosystem-node-metric .ecosystem-node-card {
+    fill: #0f172a;
+    stroke: #334155;
 }
 
 .ecosystem-node.is-hovered .ecosystem-node-card,
@@ -784,6 +816,10 @@
 
 .ecosystem-node-metric .ecosystem-node-icon {
     color: #64748b;
+}
+
+[data-theme="dark"] .ecosystem-node-metric .ecosystem-node-icon {
+    color: #94a3b8;
 }
 
 .ecosystem-node-hub .ecosystem-node-icon,
@@ -803,9 +839,23 @@
 .ecosystem-node-label {
     font-size: 11px;
     font-weight: 600;
-    fill: #0f172a;
     text-anchor: middle;
     pointer-events: none;
+}
+
+.ecosystem-node-hub .ecosystem-node-label,
+.ecosystem-node-admin .ecosystem-node-label {
+    fill: #ffffff;
+}
+
+.ecosystem-node-module .ecosystem-node-label,
+.ecosystem-node-metric .ecosystem-node-label {
+    fill: #0f172a;
+}
+
+[data-theme="dark"] .ecosystem-node-module .ecosystem-node-label,
+[data-theme="dark"] .ecosystem-node-metric .ecosystem-node-label {
+    fill: #e2e8f0;
 }
 
 .ecosystem-node-sublabel {
@@ -816,18 +866,8 @@
     pointer-events: none;
 }
 
-[data-theme="dark"] .ecosystem-node-label {
-    fill: #e2e8f0;
-}
-
-[data-theme="dark"] .ecosystem-node-module .ecosystem-node-card {
-    fill: #1e293b;
-    stroke: #475569;
-}
-
-[data-theme="dark"] .ecosystem-node-metric .ecosystem-node-card {
-    fill: #0f172a;
-    stroke: #334155;
+[data-theme="dark"] .ecosystem-node-sublabel {
+    fill: #93c5fd;
 }
 
 .ecosystem-map-legend {
@@ -878,6 +918,41 @@
     border-radius: 4px;
     border: 1px solid transparent;
     flex-shrink: 0;
+}
+
+.ecosystem-legend-swatch--hub {
+    background: #2563eb;
+    border-color: #1d4ed8;
+}
+
+.ecosystem-legend-swatch--module {
+    background: #ffffff;
+    border-color: #93c5fd;
+}
+
+.ecosystem-legend-swatch--metric {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+[data-theme="dark"] .ecosystem-legend-swatch--module {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .ecosystem-legend-swatch--metric {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .ecosystem-map-title-block h4,
+[data-theme="dark"] .ecosystem-map-summary-value {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .ecosystem-map-detail h4,
+[data-theme="dark"] .ecosystem-map-detail-count {
+    color: #f1f5f9;
 }
 
 .ecosystem-map-detail {

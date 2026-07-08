@@ -4,11 +4,11 @@
 (function() {
     'use strict';
 
-    var TYPE_STYLES = {
-        hub: { fill: '#2563eb', stroke: '#1d4ed8', text: '#ffffff', width: 120, height: 52, radius: 26 },
-        admin: { fill: '#7c3aed', stroke: '#6d28d9', text: '#ffffff', width: 108, height: 44, radius: 22 },
-        module: { fill: '#ffffff', stroke: '#93c5fd', text: '#0f172a', width: 118, height: 48, radius: 14 },
-        metric: { fill: '#f8fafc', stroke: '#cbd5e1', text: '#334155', width: 104, height: 40, radius: 12 }
+    var TYPE_DIMENSIONS = {
+        hub: { width: 120, height: 52, radius: 26 },
+        admin: { width: 108, height: 44, radius: 22 },
+        module: { width: 118, height: 48, radius: 14 },
+        metric: { width: 104, height: 40, radius: 12 }
     };
 
     function escapeHtml(value) {
@@ -39,8 +39,23 @@
         this._layout();
         this._render();
         this._bind();
+        this._watchTheme();
         this.fitToView();
     }
+
+    EcosystemMap.prototype._watchTheme = function() {
+        if (this._themeObserver) {
+            return;
+        }
+        var self = this;
+        this._themeObserver = new MutationObserver(function() {
+            self._render();
+        });
+        this._themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-theme', 'class']
+        });
+    };
 
     EcosystemMap.prototype._summaryHtml = function() {
         var summary = (this.graph.meta && this.graph.meta.summary) || [];
@@ -100,8 +115,7 @@
             ['metric', 'Live metrics']
         ];
         return '<h4>Legend</h4><ul>' + items.map(function(item) {
-            var style = TYPE_STYLES[item[0]] || TYPE_STYLES.metric;
-            return '<li><span class="ecosystem-legend-swatch" style="background:' + style.fill + ';border-color:' + style.stroke + '"></span>' + escapeHtml(item[1]) + '</li>';
+            return '<li><span class="ecosystem-legend-swatch ecosystem-legend-swatch--' + escapeHtml(item[0]) + '"></span>' + escapeHtml(item[1]) + '</li>';
         }).join('') + '</ul>';
     };
 
@@ -161,17 +175,17 @@
         return this.positions[id];
     };
 
-    EcosystemMap.prototype._nodeStyle = function(node) {
-        return TYPE_STYLES[node.type] || TYPE_STYLES.metric;
+    EcosystemMap.prototype._nodeDimensions = function(node) {
+        return TYPE_DIMENSIONS[node.type] || TYPE_DIMENSIONS.metric;
     };
 
     EcosystemMap.prototype._renderNode = function(node) {
-        var style = this._nodeStyle(node);
+        var dims = this._nodeDimensions(node);
         var selected = this.selectedId === node.id;
         var hovered = this.hoveredId === node.id;
         var highlighted = this._isHighlighted(node.id);
-        var w = style.width;
-        var h = style.height;
+        var w = dims.width;
+        var h = dims.height;
         var x = -w / 2;
         var y = -h / 2;
         var stateClass = (selected ? ' is-selected' : '') + (hovered ? ' is-hovered' : '') + (highlighted ? ' is-highlighted' : '');
@@ -180,7 +194,7 @@
 
         return (
             '<g class="ecosystem-node ecosystem-node-' + escapeHtml(node.type) + stateClass + '" data-node-id="' + escapeHtml(node.id) + '" transform="translate(' + node.x + ',' + node.y + ')">' +
-                '<rect class="ecosystem-node-card" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + style.radius + '" fill="' + style.fill + '" stroke="' + style.stroke + '"></rect>' +
+                '<rect class="ecosystem-node-card" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + dims.radius + '"></rect>' +
                 '<foreignObject x="' + (x + 10) + '" y="' + (y + 10) + '" width="20" height="20">' +
                     '<div class="ecosystem-node-icon"><i class="fas ' + escapeHtml(node.icon || 'fa-circle') + '"></i></div>' +
                 '</foreignObject>' +
