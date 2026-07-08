@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import json
 
-from django.db.models import Count
 from django.urls import reverse
 
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
+
+MAX_EXPANSION_ITEMS = 40
+
+ASSET_TYPE_ICONS = {
+    Asset.AssetType.LAPTOP: "fa-laptop",
+    Asset.AssetType.PRINTER: "fa-print",
+    Asset.AssetType.ROUTER: "fa-wifi",
+    Asset.AssetType.MONITOR: "fa-desktop",
+}
 
 
 def _user_is_admin(user) -> bool:
@@ -44,6 +52,121 @@ def _edge(source: str, target: str, edge_id: str | None = None) -> dict:
         "id": edge_id or f"{source}->{target}",
         "source": source,
         "target": target,
+    }
+
+
+def _leaf(
+    leaf_id: str,
+    label: str,
+    *,
+    icon: str = "fa-circle",
+    url: str = "",
+    subtitle: str = "",
+) -> dict:
+    return {
+        "id": leaf_id,
+        "label": label,
+        "icon": icon,
+        "url": url,
+        "meta": {"subtitle": subtitle},
+    }
+
+
+def _truncate(items: list[dict], total: int) -> list[dict]:
+    if total <= len(items):
+        return items
+    remaining = total - len(items)
+    return items + [
+        _leaf(
+            "expansion-overflow",
+            f"+{remaining} more",
+            icon="fa-ellipsis-h",
+            subtitle="Open list for full view",
+        )
+    ]
+
+
+def _asset_leaves(assets) -> list[dict]:
+    items = [
+        _leaf(
+            f"asset-{asset.pk}",
+            asset.name,
+            icon=ASSET_TYPE_ICONS.get(asset.type, "fa-box"),
+            url=reverse("asset_detail", kwargs={"pk": asset.pk}),
+            subtitle=asset.status,
+        )
+        for asset in assets[:MAX_EXPANSION_ITEMS]
+    ]
+    return _truncate(items, assets.count() if hasattr(assets, "count") else len(items))
+
+
+def _employee_leaves(employees) -> list[dict]:
+    items = [
+        _leaf(
+            f"employee-{employee.pk}",
+            employee.name,
+            icon="fa-user",
+            url=reverse("employee_edit", kwargs={"pk": employee.pk}),
+            subtitle=employee.department_abbreviation,
+        )
+        for employee in employees[:MAX_EXPANSION_ITEMS]
+    ]
+    return _truncate(items, employees.count() if hasattr(employees, "count") else len(items))
+
+
+def _assignment_leaves(assignments) -> list[dict]:
+    items = [
+        _leaf(
+            f"assignment-{assignment.pk}",
+            assignment.asset.name,
+            icon=ASSET_TYPE_ICONS.get(assignment.asset.type, "fa-link"),
+            url=reverse("asset_detail", kwargs={"pk": assignment.asset_id}),
+            subtitle=assignment.employee.name,
+        )
+        for assignment in assignments[:MAX_EXPANSION_ITEMS]
+    ]
+    return _truncate(items, assignments.count() if hasattr(assignments, "count") else len(items))
+
+
+def _build_expansions() -> dict[str, list[dict]]:
+    all_assets = Asset.objects.order_by("name", "serial_number")
+    assigned_assets = all_assets.filter(status=Asset.AssetStatus.ASSIGNED)
+    available_assets = all_assets.filter(status=Asset.AssetStatus.AVAILABLE)
+    maintenance_assets = all_assets.filter(status=Asset.AssetStatus.UNDER_MAINTENANCE)
+    all_employees = Employee.objects.order_by("name")
+    active_assignments = (
+        Assignment.objects.filter(date_returned__isnull=True)
+        .select_related("asset", "employee")
+        .order_by("-date_assigned")
+    )
+
+    asset_leaves = _asset_leaves(all_assets)
+    employee_leaves = _employee_leaves(all_employees)
+    assignment_leaves = _assignment_leaves(active_assignments)
+
+    return {
+        "module-dashboard": [
+            _leaf("dash-assets", "Asset overview", icon="fa-boxes", url=reverse("asset_list")),
+            _leaf("dash-employees", "Team directory", icon="fa-users", url=reverse("employee_list")),
+            _leaf("dash-reports", "Reports", icon="fa-chart-bar", url=reverse("reports")),
+        ],
+        "module-assets": asset_leaves,
+        "module-employees": employee_leaves,
+        "module-reports": [
+            _leaf("report-overview", "Ecosystem map", icon="fa-project-diagram", url=reverse("reports")),
+            _leaf("report-export", "CSV export", icon="fa-file-csv", url=reverse("export_asset_csv")),
+        ],
+        "module-portal": [
+            _leaf("portal-home", "Portal home", icon="fa-home", url=reverse("employee_dashboard")),
+            _leaf("portal-assets", "My assets", icon="fa-laptop", url=reverse("employee_assets")),
+            _leaf("portal-settings", "Settings", icon="fa-cog", url=reverse("employee_settings")),
+        ],
+        "metric-total-assets": asset_leaves,
+        "metric-assigned": _asset_leaves(assigned_assets),
+        "metric-available": _asset_leaves(available_assets),
+        "metric-maintenance": _asset_leaves(maintenance_assets),
+        "metric-employees": employee_leaves,
+        "metric-assignments": assignment_leaves,
     }
 
 
@@ -106,7 +229,7 @@ def build_ecosystem_map(user) -> dict:
                 url=reverse(url_name),
                 layer=1,
                 order=index,
-                meta={"description": description},
+                meta={"description": description, "expandable": True},
             )
         )
         edges.append(_edge("hub-itam", node_id))
@@ -171,14 +294,21 @@ def build_ecosystem_map(user) -> dict:
                 badge=count,
                 layer=2,
                 order=index,
-                meta={"description": description, "count": count},
+                meta={
+                    "description": description,
+                    "count": count,
+                    "expandable": count > 0,
+                },
             )
         )
         edges.append(_edge(parent_id, node_id))
 
+    expansions = _build_expansions() if is_admin else {}
+
     return {
         "nodes": nodes,
         "edges": edges,
+        "expansions": expansions,
         "meta": {
             "base_label": "ITAM 3.0 Overview",
             "is_admin": is_admin,

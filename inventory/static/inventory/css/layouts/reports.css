@@ -763,7 +763,7 @@
 
 .ecosystem-node {
     cursor: pointer;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.2s ease;
 }
 
 .ecosystem-node-card {
@@ -870,6 +870,67 @@
     fill: #93c5fd;
 }
 
+.ecosystem-node-leaf .ecosystem-node-card {
+    fill: #ffffff;
+    stroke: #94a3b8;
+}
+
+[data-theme="dark"] .ecosystem-node-leaf .ecosystem-node-card {
+    fill: #334155;
+    stroke: #64748b;
+}
+
+.ecosystem-node-leaf .ecosystem-node-label {
+    fill: #0f172a;
+    font-size: 10px;
+}
+
+[data-theme="dark"] .ecosystem-node-leaf .ecosystem-node-label {
+    fill: #e2e8f0;
+}
+
+.ecosystem-node-leaf .ecosystem-node-sublabel {
+    font-size: 9px;
+    fill: #64748b;
+}
+
+[data-theme="dark"] .ecosystem-node-leaf .ecosystem-node-sublabel {
+    fill: #94a3b8;
+}
+
+.ecosystem-node-leaf .ecosystem-node-icon {
+    color: #475569;
+}
+
+.ecosystem-node.is-expandable {
+    cursor: pointer;
+}
+
+.ecosystem-node.is-expanded .ecosystem-node-card {
+    stroke: #2563eb;
+    stroke-width: 2;
+}
+
+.ecosystem-node.is-expanded .ecosystem-node-expand-hint {
+    transform: rotate(180deg);
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
+.ecosystem-node-expand-hint {
+    font-size: 9px;
+    fill: #64748b;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .ecosystem-node-expand-hint {
+    fill: #94a3b8;
+}
+
+.ecosystem-edge {
+    transition: opacity 0.2s ease;
+}
+
 .ecosystem-map-legend {
     position: absolute;
     top: 1rem;
@@ -943,6 +1004,16 @@
 [data-theme="dark"] .ecosystem-legend-swatch--metric {
     background: #0f172a;
     border-color: #334155;
+}
+
+.ecosystem-legend-swatch--leaf {
+    background: #ffffff;
+    border-color: #94a3b8;
+}
+
+[data-theme="dark"] .ecosystem-legend-swatch--leaf {
+    background: #334155;
+    border-color: #64748b;
 }
 
 [data-theme="dark"] .ecosystem-map-title-block h4,

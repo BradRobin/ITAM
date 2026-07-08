@@ -8,8 +8,12 @@
         hub: { width: 120, height: 52, radius: 26 },
         admin: { width: 108, height: 44, radius: 22 },
         module: { width: 118, height: 48, radius: 14 },
-        metric: { width: 104, height: 40, radius: 12 }
+        metric: { width: 104, height: 40, radius: 12 },
+        leaf: { width: 96, height: 36, radius: 10 }
     };
+
+    var ANIMATION_MS = 360;
+    var MAP_CENTER = { x: 560, y: 320 };
 
     function escapeHtml(value) {
         if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
@@ -22,11 +26,16 @@
             .replace(/"/g, '&quot;');
     }
 
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+
     function EcosystemMap(container, graph) {
         this.container = container;
-        this.graph = graph || { nodes: [], edges: [], meta: {} };
+        this.graph = graph || { nodes: [], edges: [], expansions: {}, meta: {} };
         this.nodes = (this.graph.nodes || []).slice();
         this.edges = this.graph.edges || [];
+        this.expansions = this.graph.expansions || {};
         this.scale = 1;
         this.panX = 0;
         this.panY = 0;
@@ -34,7 +43,11 @@
         this.dragStart = null;
         this.selectedId = null;
         this.hoveredId = null;
+        this.expandedIds = {};
+        this.dynamicNodes = [];
+        this.dynamicEdges = [];
         this.positions = {};
+        this._animFrame = null;
         this._buildDom();
         this._layout();
         this._render();
@@ -49,7 +62,9 @@
         }
         var self = this;
         this._themeObserver = new MutationObserver(function() {
-            self._render();
+            if (!self._animFrame) {
+                self._render();
+            }
         });
         this._themeObserver.observe(document.documentElement, {
             attributes: true,
@@ -80,7 +95,7 @@
                     '<div class="ecosystem-map-toolbar-left">' +
                         '<div class="ecosystem-map-title-block">' +
                             '<h4>' + escapeHtml(meta.base_label || 'ITAM Overview') + '</h4>' +
-                            '<p>How modules connect to live inventory metrics</p>' +
+                            '<p>Click modules or metrics to expand details</p>' +
                         '</div>' +
                         this._summaryHtml() +
                     '</div>' +
@@ -112,7 +127,8 @@
         var items = [
             ['hub', 'Platform'],
             ['module', 'Modules'],
-            ['metric', 'Live metrics']
+            ['metric', 'Live metrics'],
+            ['leaf', 'Expanded items']
         ];
         return '<h4>Legend</h4><ul>' + items.map(function(item) {
             return '<li><span class="ecosystem-legend-swatch ecosystem-legend-swatch--' + escapeHtml(item[0]) + '"></span>' + escapeHtml(item[1]) + '</li>';
@@ -120,8 +136,8 @@
     };
 
     EcosystemMap.prototype._layout = function() {
-        var centerX = 560;
-        var centerY = 320;
+        var centerX = MAP_CENTER.x;
+        var centerY = MAP_CENTER.y;
         var layerNodes = { 0: [], 1: [], 2: [] };
 
         this.nodes.forEach(function(node) {
@@ -168,15 +184,204 @@
         this.nodes.forEach(function(node) {
             this.positions[node.id] = node;
             node.visible = true;
+            node.opacity = 1;
         }, this);
+
+        this.dynamicNodes.forEach(function(node) {
+            this.positions[node.id] = node;
+        }, this);
+    };
+
+    EcosystemMap.prototype._allNodes = function() {
+        return this.nodes.concat(this.dynamicNodes);
+    };
+
+    EcosystemMap.prototype._allEdges = function() {
+        return this.edges.concat(this.dynamicEdges);
     };
 
     EcosystemMap.prototype._nodeById = function(id) {
         return this.positions[id];
     };
 
+    EcosystemMap.prototype._isExpandable = function(node) {
+        if (!node) {
+            return false;
+        }
+        var children = this.expansions[node.id];
+        return !!(children && children.length && (node.meta || {}).expandable !== false);
+    };
+
     EcosystemMap.prototype._nodeDimensions = function(node) {
         return TYPE_DIMENSIONS[node.type] || TYPE_DIMENSIONS.metric;
+    };
+
+    EcosystemMap.prototype._expansionTargets = function(parent, children) {
+        var dx = parent.x - MAP_CENTER.x;
+        var dy = parent.y - MAP_CENTER.y;
+        var outward = Math.atan2(dy, dx);
+        var count = children.length;
+        var spread = Math.min(Math.PI * 0.95, Math.max(0.55, count * 0.14));
+        var radius = Math.min(165, 70 + count * 7);
+
+        return children.map(function(child, index) {
+            var angle = count === 1
+                ? outward
+                : outward - spread / 2 + (index / (count - 1)) * spread;
+            return {
+                child: child,
+                x: parent.x + Math.cos(angle) * radius,
+                y: parent.y + Math.sin(angle) * radius
+            };
+        });
+    };
+
+    EcosystemMap.prototype._toggleExpand = function(nodeId) {
+        if (this.expandedIds[nodeId]) {
+            this._collapseNode(nodeId);
+            return;
+        }
+        this._expandNode(nodeId);
+    };
+
+    EcosystemMap.prototype._expandNode = function(parentId) {
+        var parent = this._nodeById(parentId);
+        var children = this.expansions[parentId];
+        if (!parent || !children || !children.length) {
+            return;
+        }
+
+        this.expandedIds[parentId] = true;
+        var targets = this._expansionTargets(parent, children);
+        var self = this;
+
+        targets.forEach(function(target) {
+            var child = target.child;
+            var node = {
+                id: child.id,
+                label: child.label,
+                type: 'leaf',
+                icon: child.icon || 'fa-circle',
+                url: child.url || '',
+                meta: child.meta || {},
+                parentId: parentId,
+                layer: 3,
+                x: parent.x,
+                y: parent.y,
+                targetX: target.x,
+                targetY: target.y,
+                visible: true,
+                opacity: 0
+            };
+            self.dynamicNodes.push(node);
+            self.positions[node.id] = node;
+            self.dynamicEdges.push({
+                id: parentId + '->' + node.id,
+                source: parentId,
+                target: node.id,
+                opacity: 0
+            });
+        });
+
+        this._render();
+        this._animateExpansion(parentId, true);
+    };
+
+    EcosystemMap.prototype._collapseNode = function(parentId) {
+        var parent = this._nodeById(parentId);
+        if (!parent) {
+            return;
+        }
+
+        var collapsing = this.dynamicNodes.filter(function(node) {
+            return node.parentId === parentId;
+        });
+        if (!collapsing.length) {
+            delete this.expandedIds[parentId];
+            return;
+        }
+
+        var self = this;
+        collapsing.forEach(function(node) {
+            node.targetX = parent.x;
+            node.targetY = parent.y;
+            node.opacity = 1;
+        });
+
+        this._animateExpansion(parentId, false, function() {
+            self.dynamicNodes = self.dynamicNodes.filter(function(node) {
+                return node.parentId !== parentId;
+            });
+            self.dynamicEdges = self.dynamicEdges.filter(function(edge) {
+                return edge.source !== parentId;
+            });
+            collapsing.forEach(function(node) {
+                delete self.positions[node.id];
+            });
+            delete self.expandedIds[parentId];
+            self._render();
+        });
+    };
+
+    EcosystemMap.prototype._animateExpansion = function(parentId, expanding, onComplete) {
+        var self = this;
+        var nodes = this.dynamicNodes.filter(function(node) {
+            return node.parentId === parentId;
+        });
+        var edges = this.dynamicEdges.filter(function(edge) {
+            return edge.source === parentId;
+        });
+        var start = null;
+
+        if (this._animFrame) {
+            cancelAnimationFrame(this._animFrame);
+            this._animFrame = null;
+        }
+
+        function frame(timestamp) {
+            if (!start) {
+                start = timestamp;
+                nodes.forEach(function(node) {
+                    node._animFromX = node.x;
+                    node._animFromY = node.y;
+                });
+            }
+            var progress = Math.min(1, (timestamp - start) / ANIMATION_MS);
+            var eased = easeOutCubic(progress);
+
+            nodes.forEach(function(node) {
+                var fromX = node._animFromX;
+                var fromY = node._animFromY;
+                node.x = fromX + (node.targetX - fromX) * eased;
+                node.y = fromY + (node.targetY - fromY) * eased;
+                node.opacity = expanding ? eased : 1 - eased;
+            });
+
+            edges.forEach(function(edge) {
+                edge.opacity = expanding ? eased : 1 - eased;
+            });
+
+            self._applyPositions();
+
+            if (progress < 1) {
+                self._animFrame = requestAnimationFrame(frame);
+                return;
+            }
+
+            self._animFrame = null;
+            nodes.forEach(function(node) {
+                node.x = node.targetX;
+                node.y = node.targetY;
+                node.opacity = expanding ? 1 : 0;
+                delete node._animFromX;
+                delete node._animFromY;
+            });
+            if (typeof onComplete === 'function') {
+                onComplete();
+            }
+        }
+
+        this._animFrame = requestAnimationFrame(frame);
     };
 
     EcosystemMap.prototype._renderNode = function(node) {
@@ -184,22 +389,36 @@
         var selected = this.selectedId === node.id;
         var hovered = this.hoveredId === node.id;
         var highlighted = this._isHighlighted(node.id);
+        var expanded = !!this.expandedIds[node.id];
+        var expandable = this._isExpandable(node);
         var w = dims.width;
         var h = dims.height;
         var x = -w / 2;
         var y = -h / 2;
-        var stateClass = (selected ? ' is-selected' : '') + (hovered ? ' is-hovered' : '') + (highlighted ? ' is-highlighted' : '');
+        var stateClass =
+            (selected ? ' is-selected' : '') +
+            (hovered ? ' is-hovered' : '') +
+            (highlighted ? ' is-highlighted' : '') +
+            (expanded ? ' is-expanded' : '') +
+            (expandable ? ' is-expandable' : '');
         var badge = node.badge != null ? String(node.badge) : '';
-        var subtitle = node.type === 'metric' && badge ? badge : '';
+        var subtitle = '';
+        if (node.type === 'metric' && badge) {
+            subtitle = badge;
+        } else if (node.type === 'leaf' && node.meta && node.meta.subtitle) {
+            subtitle = node.meta.subtitle;
+        }
+        var opacity = node.opacity != null ? node.opacity : 1;
 
         return (
-            '<g class="ecosystem-node ecosystem-node-' + escapeHtml(node.type) + stateClass + '" data-node-id="' + escapeHtml(node.id) + '" transform="translate(' + node.x + ',' + node.y + ')">' +
+            '<g class="ecosystem-node ecosystem-node-' + escapeHtml(node.type) + stateClass + '" data-node-id="' + escapeHtml(node.id) + '" transform="translate(' + node.x + ',' + node.y + ')" style="opacity:' + opacity + '">' +
                 '<rect class="ecosystem-node-card" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + dims.radius + '"></rect>' +
-                '<foreignObject x="' + (x + 10) + '" y="' + (y + 10) + '" width="20" height="20">' +
+                '<foreignObject x="' + (x + 10) + '" y="' + (y + 8) + '" width="20" height="20">' +
                     '<div class="ecosystem-node-icon"><i class="fas ' + escapeHtml(node.icon || 'fa-circle') + '"></i></div>' +
                 '</foreignObject>' +
                 '<text class="ecosystem-node-label" x="0" y="' + (subtitle ? -2 : 4) + '">' + escapeHtml(node.label) + '</text>' +
                 (subtitle ? '<text class="ecosystem-node-sublabel" x="0" y="14">' + escapeHtml(subtitle) + '</text>' : '') +
+                (expandable ? '<text class="ecosystem-node-expand-hint" x="' + (w / 2 - 10) + '" y="' + (-h / 2 + 13) + '">▾</text>' : '') +
             '</g>'
         );
     };
@@ -209,21 +428,22 @@
         var edgeHtml = '';
         var nodeHtml = '';
 
-        this.edges.forEach(function(edge) {
+        this._allEdges().forEach(function(edge) {
             var source = self.positions[edge.source];
             var target = self.positions[edge.target];
-            if (!source || !target || !source.visible || !target.visible) {
+            if (!source || !target || source.visible === false || target.visible === false) {
                 return;
             }
             var highlighted = self._isHighlighted(edge.source) || self._isHighlighted(edge.target);
+            var opacity = edge.opacity != null ? edge.opacity : 1;
             edgeHtml +=
-                '<g class="ecosystem-edge' + (highlighted ? ' is-highlighted' : '') + '">' +
+                '<g class="ecosystem-edge' + (highlighted ? ' is-highlighted' : '') + '" data-edge-id="' + escapeHtml(edge.id) + '" style="opacity:' + opacity + '">' +
                     '<line x1="' + source.x + '" y1="' + source.y + '" x2="' + target.x + '" y2="' + target.y + '"></line>' +
                 '</g>';
         });
 
-        this.nodes.forEach(function(node) {
-            if (!node.visible) {
+        this._allNodes().forEach(function(node) {
+            if (node.visible === false) {
                 return;
             }
             nodeHtml += self._renderNode(node);
@@ -231,6 +451,37 @@
 
         this.world.innerHTML = edgeHtml + nodeHtml;
         this._updateTransform();
+    };
+
+    EcosystemMap.prototype._applyPositions = function() {
+        var self = this;
+
+        this._allNodes().forEach(function(node) {
+            var el = self.world.querySelector('[data-node-id="' + node.id + '"]');
+            if (!el) {
+                return;
+            }
+            el.setAttribute('transform', 'translate(' + node.x + ',' + node.y + ')');
+            el.style.opacity = node.opacity != null ? node.opacity : 1;
+        });
+
+        this._allEdges().forEach(function(edge) {
+            var source = self.positions[edge.source];
+            var target = self.positions[edge.target];
+            var el = self.world.querySelector('[data-edge-id="' + edge.id + '"]');
+            if (!source || !target || !el) {
+                return;
+            }
+            var line = el.querySelector('line');
+            if (!line) {
+                return;
+            }
+            line.setAttribute('x1', source.x);
+            line.setAttribute('y1', source.y);
+            line.setAttribute('x2', target.x);
+            line.setAttribute('y2', target.y);
+            el.style.opacity = edge.opacity != null ? edge.opacity : 1;
+        });
     };
 
     EcosystemMap.prototype._isHighlighted = function(nodeId) {
@@ -241,7 +492,14 @@
         if (focus === nodeId) {
             return true;
         }
-        return this.edges.some(function(edge) {
+        var focusNode = this._nodeById(focus);
+        if (focusNode && focusNode.parentId === nodeId) {
+            return true;
+        }
+        if (this.expandedIds[nodeId] && focusNode && focusNode.parentId === nodeId) {
+            return true;
+        }
+        return this._allEdges().some(function(edge) {
             return (edge.source === focus && edge.target === nodeId) ||
                 (edge.target === focus && edge.source === nodeId);
         });
@@ -274,7 +532,7 @@
     };
 
     EcosystemMap.prototype.fitToView = function() {
-        var visible = this.nodes.filter(function(node) { return node.visible !== false; });
+        var visible = this._allNodes().filter(function(node) { return node.visible !== false; });
         if (!visible.length || !this.stage) {
             this.scale = 1;
             this.panX = 40;
@@ -298,7 +556,7 @@
         var padding = 48;
         var scaleX = (stageRect.width - padding * 2) / graphWidth;
         var scaleY = (stageRect.height - padding * 2) / graphHeight;
-        this.scale = Math.max(0.45, Math.min(1.1, Math.min(scaleX, scaleY)));
+        this.scale = Math.max(0.35, Math.min(1.1, Math.min(scaleX, scaleY)));
         this.panX = (stageRect.width - graphWidth * this.scale) / 2 - minX * this.scale;
         this.panY = (stageRect.height - graphHeight * this.scale) / 2 - minY * this.scale;
         this._updateTransform();
@@ -309,14 +567,20 @@
             return;
         }
         var meta = node.meta || {};
-        var description = meta.description || '';
-        var countLine = node.badge != null ? '<p class="ecosystem-map-detail-count"><strong>' + escapeHtml(node.badge) + '</strong> in system</p>' : '';
+        var description = meta.description || meta.subtitle || '';
+        var countLine = node.badge != null
+            ? '<p class="ecosystem-map-detail-count"><strong>' + escapeHtml(node.badge) + '</strong> in system</p>'
+            : '';
+        var expandHint = this._isExpandable(node)
+            ? '<p class="ecosystem-map-detail-type">Click again to collapse expanded items.</p>'
+            : '';
         this.detail.hidden = false;
         this.detail.innerHTML =
             '<button type="button" class="ecosystem-map-detail-close" aria-label="Close details"><i class="fas fa-times"></i></button>' +
             '<h4>' + escapeHtml(node.label) + '</h4>' +
             (description ? '<p class="ecosystem-map-detail-type">' + escapeHtml(description) + '</p>' : '') +
             countLine +
+            expandHint +
             (node.url ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(node.url) + '">Open</a>' : '');
         var closeBtn = this.detail.querySelector('.ecosystem-map-detail-close');
         if (closeBtn) {
@@ -375,12 +639,18 @@
         });
 
         this.world.addEventListener('mouseover', function(event) {
+            if (self._animFrame) {
+                return;
+            }
             var nodeEl = event.target.closest('.ecosystem-node');
             self.hoveredId = nodeEl ? nodeEl.getAttribute('data-node-id') : null;
             self._render();
         });
 
         this.world.addEventListener('mouseleave', function() {
+            if (self._animFrame) {
+                return;
+            }
             self.hoveredId = null;
             self._render();
         });
@@ -402,6 +672,9 @@
                 return;
             }
             self.selectedId = nodeId;
+            if (self._isExpandable(node)) {
+                self._toggleExpand(nodeId);
+            }
             self._showDetail(node);
             self._render();
         });
@@ -431,6 +704,10 @@
             activeMap.graph = graph;
             activeMap.nodes = (graph.nodes || []).slice();
             activeMap.edges = graph.edges || [];
+            activeMap.expansions = graph.expansions || {};
+            activeMap.expandedIds = {};
+            activeMap.dynamicNodes = [];
+            activeMap.dynamicEdges = [];
             activeMap._layout();
             activeMap._render();
             activeMap.fitToView();

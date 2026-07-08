@@ -541,6 +541,15 @@ class EcosystemMapTests(TestCase):
         self.assertIn("metric-total-assets", node_ids)
         self.assertLessEqual(len(graph["nodes"]), 20)
         self.assertIn("summary", graph["meta"])
+        self.assertIn("expansions", graph)
+        self.assertIn("metric-total-assets", graph["expansions"])
+        self.assertEqual(graph["expansions"]["metric-total-assets"][0]["id"], "asset-" + str(self.asset.pk))
+
+    def test_build_ecosystem_map_metric_expansion_reflects_assets(self):
+        graph = build_ecosystem_map(self.admin)
+        assets = graph["expansions"]["metric-total-assets"]
+        self.assertEqual(len(assets), 1)
+        self.assertEqual(assets[0]["label"], "Map Laptop")
 
     def test_build_ecosystem_map_reflects_assignment_metrics(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
