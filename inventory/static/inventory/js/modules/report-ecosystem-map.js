@@ -94,14 +94,10 @@
                 '<div class="ecosystem-map-stage" data-map-stage>' +
                     '<svg class="ecosystem-map-svg" role="img" aria-label="ITAM ecosystem relationship map">' +
                         '<defs>' +
-                            '<pattern id="ecosystem-map-grid" width="24" height="24" patternUnits="userSpaceOnUse">' +
-                                '<circle cx="1" cy="1" r="1" fill="rgba(148,163,184,0.35)"></circle>' +
-                            '</pattern>' +
                             '<marker id="ecosystem-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">' +
                                 '<path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(100,116,139,0.8)"></path>' +
                             '</marker>' +
                         '</defs>' +
-                        '<rect class="ecosystem-map-bg" width="100%" height="100%" fill="url(#ecosystem-map-grid)"></rect>' +
                         '<g class="ecosystem-map-world"></g>' +
                     '</svg>' +
                     '<aside class="ecosystem-map-legend" aria-label="Map legend">' +
