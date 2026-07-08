@@ -766,6 +766,16 @@
     transition: opacity 0.2s ease;
 }
 
+.ecosystem-node-hit {
+    cursor: pointer;
+    stroke: transparent;
+}
+
+.ecosystem-node foreignObject,
+.ecosystem-node-icon {
+    pointer-events: none;
+}
+
 .ecosystem-node-card {
     fill: #ffffff;
     stroke: #cbd5e1;
@@ -944,6 +954,7 @@
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
     font-size: 0.78rem;
     color: var(--text-secondary, #475569);
+    pointer-events: none;
 }
 
 [data-theme="dark"] .ecosystem-map-legend {

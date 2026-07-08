@@ -241,7 +241,11 @@ def get_reports_context(user=None) -> dict:
         "maintenance_by_month": json.dumps(analytics["maintenance_by_month"]),
         "top_assets_data": json.dumps(analytics["top_assets"]),
         "department_counts": json.dumps(analytics["department_counts"]),
-        "ecosystem_map": json.dumps(build_ecosystem_map(user) if user else {"nodes": [], "edges": [], "meta": {}}),
+        "ecosystem_map": json.dumps(
+            build_ecosystem_map(user)
+            if user
+            else {"nodes": [], "edges": [], "expansions": {}, "meta": {}}
+        ),
         "utilization_rate": utilization_rate,
         "asset_health_rate": asset_health_rate,
         "overdue_count": get_overdue_assets_queryset().count(),

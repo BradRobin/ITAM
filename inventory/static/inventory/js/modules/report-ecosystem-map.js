@@ -30,6 +30,13 @@
         return 1 - Math.pow(1 - t, 3);
     }
 
+    function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+            return window.CSS.escape(String(value));
+        }
+        return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
     function EcosystemMap(container, graph) {
         this.container = container;
         this.graph = graph || { nodes: [], edges: [], expansions: {}, meta: {} };
@@ -133,6 +140,56 @@
         return '<h4>Legend</h4><ul>' + items.map(function(item) {
             return '<li><span class="ecosystem-legend-swatch ecosystem-legend-swatch--' + escapeHtml(item[0]) + '"></span>' + escapeHtml(item[1]) + '</li>';
         }).join('') + '</ul>';
+    };
+
+    EcosystemMap.prototype._nodeEl = function(nodeId) {
+        if (!this.world || !nodeId) {
+            return null;
+        }
+        return this.world.querySelector('[data-node-id="' + cssEscape(nodeId) + '"]');
+    };
+
+    EcosystemMap.prototype._edgeEl = function(edgeId) {
+        if (!this.world || !edgeId) {
+            return null;
+        }
+        return this.world.querySelector('[data-edge-id="' + cssEscape(edgeId) + '"]');
+    };
+
+    EcosystemMap.prototype._resolveNodeEl = function(event) {
+        if (!event || !event.target) {
+            return null;
+        }
+        var nodeEl = event.target.closest('.ecosystem-node');
+        if (nodeEl && this.world && this.world.contains(nodeEl)) {
+            return nodeEl;
+        }
+        return null;
+    };
+
+    EcosystemMap.prototype._refreshNodeStates = function() {
+        var self = this;
+        if (!this.world) {
+            return;
+        }
+        this.world.querySelectorAll('.ecosystem-node').forEach(function(el) {
+            var id = el.getAttribute('data-node-id');
+            el.classList.toggle('is-selected', id === self.selectedId);
+            el.classList.toggle('is-hovered', id === self.hoveredId);
+            el.classList.toggle('is-expanded', !!self.expandedIds[id]);
+            el.classList.toggle('is-highlighted', self._isHighlighted(id));
+        });
+        this.world.querySelectorAll('.ecosystem-edge').forEach(function(el) {
+            var edgeId = el.getAttribute('data-edge-id');
+            var edge = self._allEdges().find(function(item) { return item.id === edgeId; });
+            if (!edge) {
+                return;
+            }
+            el.classList.toggle(
+                'is-highlighted',
+                self._isHighlighted(edge.source) || self._isHighlighted(edge.target)
+            );
+        });
     };
 
     EcosystemMap.prototype._layout = function() {
@@ -257,8 +314,9 @@
 
         targets.forEach(function(target) {
             var child = target.child;
+            var leafId = parentId + '::' + child.id;
             var node = {
-                id: child.id,
+                id: leafId,
                 label: child.label,
                 type: 'leaf',
                 icon: child.icon || 'fa-circle',
@@ -271,15 +329,15 @@
                 targetX: target.x,
                 targetY: target.y,
                 visible: true,
-                opacity: 0
+                opacity: 0.01
             };
             self.dynamicNodes.push(node);
-            self.positions[node.id] = node;
+            self.positions[leafId] = node;
             self.dynamicEdges.push({
-                id: parentId + '->' + node.id,
+                id: parentId + '->' + leafId,
                 source: parentId,
-                target: node.id,
-                opacity: 0
+                target: leafId,
+                opacity: 0.01
             });
         });
 
@@ -293,11 +351,12 @@
             return;
         }
 
+        delete this.expandedIds[parentId];
+
         var collapsing = this.dynamicNodes.filter(function(node) {
             return node.parentId === parentId;
         });
         if (!collapsing.length) {
-            delete this.expandedIds[parentId];
             return;
         }
 
@@ -318,7 +377,6 @@
             collapsing.forEach(function(node) {
                 delete self.positions[node.id];
             });
-            delete self.expandedIds[parentId];
             self._render();
         });
     };
@@ -376,6 +434,10 @@
                 delete node._animFromX;
                 delete node._animFromY;
             });
+            edges.forEach(function(edge) {
+                edge.opacity = expanding ? 1 : 0;
+            });
+            self._applyPositions();
             if (typeof onComplete === 'function') {
                 onComplete();
             }
@@ -413,12 +475,13 @@
         return (
             '<g class="ecosystem-node ecosystem-node-' + escapeHtml(node.type) + stateClass + '" data-node-id="' + escapeHtml(node.id) + '" transform="translate(' + node.x + ',' + node.y + ')" style="opacity:' + opacity + '">' +
                 '<rect class="ecosystem-node-card" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + dims.radius + '"></rect>' +
-                '<foreignObject x="' + (x + 10) + '" y="' + (y + 8) + '" width="20" height="20">' +
-                    '<div class="ecosystem-node-icon"><i class="fas ' + escapeHtml(node.icon || 'fa-circle') + '"></i></div>' +
+                '<foreignObject x="' + (x + 10) + '" y="' + (y + 8) + '" width="20" height="20" pointer-events="none">' +
+                    '<div class="ecosystem-node-icon" xmlns="http://www.w3.org/1999/xhtml"><i class="fas ' + escapeHtml(node.icon || 'fa-circle') + '"></i></div>' +
                 '</foreignObject>' +
                 '<text class="ecosystem-node-label" x="0" y="' + (subtitle ? -2 : 4) + '">' + escapeHtml(node.label) + '</text>' +
                 (subtitle ? '<text class="ecosystem-node-sublabel" x="0" y="14">' + escapeHtml(subtitle) + '</text>' : '') +
                 (expandable ? '<text class="ecosystem-node-expand-hint" x="' + (w / 2 - 10) + '" y="' + (-h / 2 + 13) + '">▾</text>' : '') +
+                '<rect class="ecosystem-node-hit" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + dims.radius + '" fill="transparent"></rect>' +
             '</g>'
         );
     };
@@ -451,13 +514,14 @@
 
         this.world.innerHTML = edgeHtml + nodeHtml;
         this._updateTransform();
+        this._refreshNodeStates();
     };
 
     EcosystemMap.prototype._applyPositions = function() {
         var self = this;
 
         this._allNodes().forEach(function(node) {
-            var el = self.world.querySelector('[data-node-id="' + node.id + '"]');
+            var el = self._nodeEl(node.id);
             if (!el) {
                 return;
             }
@@ -468,7 +532,7 @@
         this._allEdges().forEach(function(edge) {
             var source = self.positions[edge.source];
             var target = self.positions[edge.target];
-            var el = self.world.querySelector('[data-edge-id="' + edge.id + '"]');
+            var el = self._edgeEl(edge.id);
             if (!source || !target || !el) {
                 return;
             }
@@ -587,9 +651,25 @@
             closeBtn.addEventListener('click', function() {
                 this.detail.hidden = true;
                 this.selectedId = null;
-                this._render();
+                this._refreshNodeStates();
             }.bind(this));
         }
+    };
+
+    EcosystemMap.prototype._handleNodeClick = function(nodeId) {
+        var node = this._nodeById(nodeId);
+        if (!node) {
+            return;
+        }
+
+        this.selectedId = nodeId;
+
+        if (this._isExpandable(node)) {
+            this._toggleExpand(nodeId);
+        }
+
+        this._showDetail(node);
+        this._refreshNodeStates();
     };
 
     EcosystemMap.prototype._bind = function() {
@@ -617,7 +697,7 @@
         }, { passive: false });
 
         this.stage.addEventListener('mousedown', function(event) {
-            if (event.target.closest('.ecosystem-node')) {
+            if (self._resolveNodeEl(event)) {
                 return;
             }
             self.dragging = true;
@@ -638,49 +718,47 @@
             self.dragStart = null;
         });
 
-        this.world.addEventListener('mouseover', function(event) {
-            if (self._animFrame) {
+        this.stage.addEventListener('mousemove', function(event) {
+            if (self._animFrame || self.dragging) {
                 return;
             }
-            var nodeEl = event.target.closest('.ecosystem-node');
-            self.hoveredId = nodeEl ? nodeEl.getAttribute('data-node-id') : null;
-            self._render();
+            var nodeEl = self._resolveNodeEl(event);
+            var nextId = nodeEl ? nodeEl.getAttribute('data-node-id') : null;
+            if (nextId === self.hoveredId) {
+                return;
+            }
+            self.hoveredId = nextId;
+            self._refreshNodeStates();
         });
 
-        this.world.addEventListener('mouseleave', function() {
+        this.stage.addEventListener('mouseleave', function() {
             if (self._animFrame) {
                 return;
             }
             self.hoveredId = null;
-            self._render();
+            self._refreshNodeStates();
         });
 
-        this.world.addEventListener('click', function(event) {
-            var nodeEl = event.target.closest('.ecosystem-node');
+        this.stage.addEventListener('click', function(event) {
+            if (event.target.closest('.ecosystem-map-detail')) {
+                return;
+            }
+            var nodeEl = self._resolveNodeEl(event);
             if (!nodeEl) {
                 self.selectedId = null;
                 if (self.detail) {
                     self.detail.hidden = true;
                 }
-                self._render();
+                self._refreshNodeStates();
                 return;
             }
+            event.preventDefault();
             event.stopPropagation();
-            var nodeId = nodeEl.getAttribute('data-node-id');
-            var node = self._nodeById(nodeId);
-            if (!node) {
-                return;
-            }
-            self.selectedId = nodeId;
-            if (self._isExpandable(node)) {
-                self._toggleExpand(nodeId);
-            }
-            self._showDetail(node);
-            self._render();
+            self._handleNodeClick(nodeEl.getAttribute('data-node-id'));
         });
 
-        this.world.addEventListener('dblclick', function(event) {
-            var nodeEl = event.target.closest('.ecosystem-node');
+        this.stage.addEventListener('dblclick', function(event) {
+            var nodeEl = self._resolveNodeEl(event);
             if (!nodeEl) {
                 return;
             }
