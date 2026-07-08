@@ -12,8 +12,14 @@
         leaf: { width: 96, height: 36, radius: 10 }
     };
 
-    var ANIMATION_MS = 360;
-    var MAP_CENTER = { x: 560, y: 320 };
+    var ANIMATION_MS = 420;
+    var MAP_CENTER = { x: 620, y: 320 };
+    var MODULE_RING_RADIUS = 250;
+    var METRIC_RING_RADIUS = 390;
+    var ADMIN_RING_RADIUS = 150;
+    var EXPANSION_BASE_RADIUS = 145;
+    var EXPANSION_RADIUS_STEP = 72;
+    var COLLISION_GAP = 26;
 
     function escapeHtml(value) {
         if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
@@ -55,6 +61,9 @@
         this.dynamicEdges = [];
         this.positions = {};
         this._animFrame = null;
+        this.nodeDrag = null;
+        this.panDrag = null;
+        this.suppressClick = false;
         this._buildDom();
         this._layout();
         this._render();
@@ -212,30 +221,41 @@
         });
 
         var hubNodes = layerNodes[0] || [];
-        hubNodes.forEach(function(node, index) {
-            if (hubNodes.length === 1) {
-                node.x = centerX;
-                node.y = centerY;
+        var itamHub = null;
+        var admins = [];
+        hubNodes.forEach(function(node) {
+            if (node.type === 'hub' && !itamHub) {
+                itamHub = node;
             } else {
-                node.x = centerX + (index === 0 ? -70 : 70);
-                node.y = centerY - 10;
+                admins.push(node);
             }
+        });
+        if (!itamHub && hubNodes.length) {
+            itamHub = hubNodes[0];
+            admins = hubNodes.slice(1);
+        }
+        if (itamHub) {
+            itamHub.x = centerX;
+            itamHub.y = centerY;
+        }
+        admins.forEach(function(node, index) {
+            var angle = -Math.PI / 2 + (index * (Math.PI / 3));
+            node.x = centerX + Math.cos(angle) * ADMIN_RING_RADIUS;
+            node.y = centerY + Math.sin(angle) * ADMIN_RING_RADIUS;
         });
 
         var modules = layerNodes[1] || [];
-        var moduleRadius = 175;
         modules.forEach(function(node, index) {
-            var angle = (-Math.PI / 2) + (index / Math.max(modules.length, 1)) * Math.PI * 1.35;
-            node.x = centerX + Math.cos(angle) * moduleRadius;
-            node.y = centerY + Math.sin(angle) * moduleRadius;
+            var angle = (-Math.PI / 2) + ((index / Math.max(modules.length, 1)) * Math.PI * 2);
+            node.x = centerX + Math.cos(angle) * MODULE_RING_RADIUS;
+            node.y = centerY + Math.sin(angle) * MODULE_RING_RADIUS;
         });
 
         var metrics = layerNodes[2] || [];
-        var metricRadius = 300;
         metrics.forEach(function(node, index) {
-            var angle = (-Math.PI / 2) + (index / Math.max(metrics.length, 1)) * Math.PI * 1.6;
-            node.x = centerX + Math.cos(angle) * metricRadius;
-            node.y = centerY + Math.sin(angle) * metricRadius;
+            var angle = (-Math.PI / 2) + ((index / Math.max(metrics.length, 1)) * Math.PI * 2);
+            node.x = centerX + Math.cos(angle) * METRIC_RING_RADIUS;
+            node.y = centerY + Math.sin(angle) * METRIC_RING_RADIUS;
         });
 
         this.nodes.forEach(function(node) {
@@ -273,24 +293,66 @@
         return TYPE_DIMENSIONS[node.type] || TYPE_DIMENSIONS.metric;
     };
 
+    EcosystemMap.prototype._nodeRadius = function(node) {
+        var dims = this._nodeDimensions(node);
+        return Math.sqrt(Math.pow(dims.width / 2, 2) + Math.pow(dims.height / 2, 2));
+    };
+
+    EcosystemMap.prototype._collidesWithOccupied = function(candidate, occupied, candidateRadius) {
+        return occupied.some(function(item) {
+            var min = item.r + candidateRadius + COLLISION_GAP;
+            var dx = candidate.x - item.x;
+            var dy = candidate.y - item.y;
+            return (dx * dx + dy * dy) < (min * min);
+        });
+    };
+
+    EcosystemMap.prototype._findOpenTarget = function(parent, preferredAngle, occupied, candidateRadius) {
+        for (var ring = 0; ring < 9; ring += 1) {
+            var radius = EXPANSION_BASE_RADIUS + ring * EXPANSION_RADIUS_STEP;
+            var steps = 1 + ring * 2;
+            for (var i = -steps; i <= steps; i += 1) {
+                var angle = preferredAngle + i * 0.19;
+                var candidate = {
+                    x: parent.x + Math.cos(angle) * radius,
+                    y: parent.y + Math.sin(angle) * radius
+                };
+                if (!this._collidesWithOccupied(candidate, occupied, candidateRadius)) {
+                    return candidate;
+                }
+            }
+        }
+        return {
+            x: parent.x + Math.cos(preferredAngle) * (EXPANSION_BASE_RADIUS + 6 * EXPANSION_RADIUS_STEP),
+            y: parent.y + Math.sin(preferredAngle) * (EXPANSION_BASE_RADIUS + 6 * EXPANSION_RADIUS_STEP)
+        };
+    };
+
     EcosystemMap.prototype._expansionTargets = function(parent, children) {
         var dx = parent.x - MAP_CENTER.x;
         var dy = parent.y - MAP_CENTER.y;
         var outward = Math.atan2(dy, dx);
         var count = children.length;
-        var spread = Math.min(Math.PI * 0.95, Math.max(0.55, count * 0.14));
-        var radius = Math.min(165, 70 + count * 7);
+        var spread = Math.min(Math.PI * 1.25, Math.max(0.9, count * 0.2));
+        var leafRadius = this._nodeRadius({ type: 'leaf' });
+        var occupied = this._allNodes()
+            .filter(function(node) { return node.id !== parent.id; })
+            .map(function(node) {
+                return { x: node.x, y: node.y, r: this._nodeRadius(node) };
+            }, this);
 
         return children.map(function(child, index) {
             var angle = count === 1
                 ? outward
-                : outward - spread / 2 + (index / (count - 1)) * spread;
+                : outward - spread / 2 + (index / Math.max(count - 1, 1)) * spread;
+            var candidate = this._findOpenTarget(parent, angle, occupied, leafRadius);
+            occupied.push({ x: candidate.x, y: candidate.y, r: leafRadius });
             return {
                 child: child,
-                x: parent.x + Math.cos(angle) * radius,
-                y: parent.y + Math.sin(angle) * radius
+                x: candidate.x,
+                y: candidate.y
             };
-        });
+        }, this);
     };
 
     EcosystemMap.prototype._toggleExpand = function(nodeId) {
@@ -308,6 +370,11 @@
             return;
         }
 
+        Object.keys(this.expandedIds).forEach(function(id) {
+            if (id !== parentId) {
+                this._collapseNode(id);
+            }
+        }, this);
         this.expandedIds[parentId] = true;
         var targets = this._expansionTargets(parent, children);
         var self = this;
@@ -420,6 +487,7 @@
             });
 
             self._applyPositions();
+            self._refreshNodeStates();
 
             if (progress < 1) {
                 self._animFrame = requestAnimationFrame(frame);
@@ -438,6 +506,7 @@
                 edge.opacity = expanding ? 1 : 0;
             });
             self._applyPositions();
+            self._refreshNodeStates();
             if (typeof onComplete === 'function') {
                 onComplete();
             }
@@ -672,6 +741,40 @@
         this._refreshNodeStates();
     };
 
+    EcosystemMap.prototype._isNodeDraggable = function(node) {
+        return !!node && (node.type === 'module' || node.type === 'metric' || node.type === 'leaf');
+    };
+
+    EcosystemMap.prototype._nodeDragIds = function(node) {
+        var ids = [node.id];
+        if (this.expandedIds[node.id]) {
+            this.dynamicNodes.forEach(function(child) {
+                if (child.parentId === node.id) {
+                    ids.push(child.id);
+                }
+            });
+        }
+        return ids;
+    };
+
+    EcosystemMap.prototype._startNodeDrag = function(event, node) {
+        var self = this;
+        var ids = this._nodeDragIds(node);
+        this.nodeDrag = {
+            startX: event.clientX,
+            startY: event.clientY,
+            moved: false,
+            ids: ids,
+            initial: ids.reduce(function(acc, id) {
+                var current = self._nodeById(id);
+                if (current) {
+                    acc[id] = { x: current.x, y: current.y };
+                }
+                return acc;
+            }, {})
+        };
+    };
+
     EcosystemMap.prototype._bind = function() {
         var self = this;
 
@@ -697,7 +800,16 @@
         }, { passive: false });
 
         this.stage.addEventListener('mousedown', function(event) {
-            if (self._resolveNodeEl(event)) {
+            if (event.button !== 0) {
+                return;
+            }
+            var nodeEl = self._resolveNodeEl(event);
+            if (nodeEl) {
+                var node = self._nodeById(nodeEl.getAttribute('data-node-id'));
+                if (self._isNodeDraggable(node)) {
+                    self._startNodeDrag(event, node);
+                    event.preventDefault();
+                }
                 return;
             }
             self.dragging = true;
@@ -705,6 +817,24 @@
         });
 
         window.addEventListener('mousemove', function(event) {
+            if (self.nodeDrag) {
+                var dx = (event.clientX - self.nodeDrag.startX) / self.scale;
+                var dy = (event.clientY - self.nodeDrag.startY) / self.scale;
+                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                    self.nodeDrag.moved = true;
+                }
+                self.nodeDrag.ids.forEach(function(id) {
+                    var node = self._nodeById(id);
+                    var startPos = self.nodeDrag.initial[id];
+                    if (!node || !startPos) {
+                        return;
+                    }
+                    node.x = startPos.x + dx;
+                    node.y = startPos.y + dy;
+                });
+                self._applyPositions();
+                return;
+            }
             if (!self.dragging || !self.dragStart) {
                 return;
             }
@@ -714,6 +844,13 @@
         });
 
         window.addEventListener('mouseup', function() {
+            if (self.nodeDrag) {
+                self.suppressClick = self.nodeDrag.moved;
+                self.nodeDrag = null;
+                setTimeout(function() {
+                    self.suppressClick = false;
+                }, 0);
+            }
             self.dragging = false;
             self.dragStart = null;
         });
@@ -743,6 +880,9 @@
             if (event.target.closest('.ecosystem-map-detail')) {
                 return;
             }
+            if (self.suppressClick) {
+                return;
+            }
             var nodeEl = self._resolveNodeEl(event);
             if (!nodeEl) {
                 self.selectedId = null;
@@ -758,6 +898,9 @@
         });
 
         this.stage.addEventListener('dblclick', function(event) {
+            if (self.suppressClick) {
+                return;
+            }
             var nodeEl = self._resolveNodeEl(event);
             if (!nodeEl) {
                 return;
