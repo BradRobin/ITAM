@@ -519,6 +519,12 @@ class EcosystemMapTests(TestCase):
             password="test-pass-12345",
             is_staff=True,
         )
+        self.viewer = get_user_model().objects.create_user(
+            username="map-viewer",
+            email="map-viewer@example.com",
+            password="test-pass-12345",
+            is_staff=False,
+        )
         self.employee = Employee.objects.create(
             name="Map Employee",
             department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
@@ -567,6 +573,36 @@ class EcosystemMapTests(TestCase):
             1,
         )
 
+    def test_non_admin_gets_empty_expansions(self):
+        graph = build_ecosystem_map(self.viewer)
+        self.assertEqual(graph["expansions"], {})
+        self.assertFalse(graph["meta"]["is_admin"])
+        node_ids = {node["id"] for node in graph["nodes"]}
+        self.assertNotIn("admin-user", node_ids)
+
+    def test_overflow_leaf_ids_are_parent_scoped(self):
+        for index in range(41):
+            Asset.objects.create(
+                name=f"Extra Asset {index}",
+                type=Asset.AssetType.LAPTOP,
+                serial_number=f"MAP-X-{index:03d}",
+                status=Asset.AssetStatus.AVAILABLE,
+            )
+
+        graph = build_ecosystem_map(self.admin)
+        total_leaves = graph["expansions"]["metric-total-assets"]
+        available_leaves = graph["expansions"]["metric-available"]
+
+        self.assertEqual(total_leaves[-1]["id"], "metric-total-assets-overflow")
+        self.assertEqual(available_leaves[-1]["id"], "metric-available-overflow")
+        self.assertNotEqual(total_leaves[-1]["id"], available_leaves[-1]["id"])
+        self.assertTrue(total_leaves[-1]["label"].startswith("+"))
+
+    def test_build_ecosystem_map_query_budget(self):
+        # 4 count queries + 4 limited asset slices + employees + assignments
+        with self.assertNumQueries(10):
+            build_ecosystem_map(self.admin)
+
     def test_reports_job_returns_ecosystem_map(self):
         self.client.force_login(self.admin)
         response = self.client.post(
@@ -587,7 +623,11 @@ class EcosystemMapTests(TestCase):
         response = self.client.get(reverse("reports"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ecosystem-map-root")
+        self.assertContains(response, "report-ecosystem-map-layout.js")
+        self.assertContains(response, "report-ecosystem-map-render.js")
+        self.assertContains(response, "report-ecosystem-map-gestures.js")
         self.assertContains(response, "report-ecosystem-map.js")
+        self.assertContains(response, "ecosystem-map.css")
 
 
 
