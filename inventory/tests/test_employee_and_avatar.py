@@ -141,6 +141,7 @@ class EmployeePortalTests(TestCase):
             reverse("employee_password_change"),
             data=json.dumps(
                 {
+                    "current_password": "test-pass-12345",
                     "new_password": "VeryStrongNewPass987!",
                     "confirm_password": "VeryStrongNewPass987!",
                 }
@@ -176,6 +177,7 @@ class EmployeePortalTests(TestCase):
             reverse("employee_password_change"),
             data=json.dumps(
                 {
+                    "current_password": "test-pass-12345",
                     "new_password": "VeryStrongNewPass987!",
                     "confirm_password": "DifferentStrongPass987!",
                 }
@@ -185,6 +187,27 @@ class EmployeePortalTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["success"], False)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.check_password("test-pass-12345"))
+
+    def test_employee_password_change_requires_current_password(self):
+        self.client.force_login(self.employee_user)
+
+        response = self.client.post(
+            reverse("employee_password_change"),
+            data=json.dumps(
+                {
+                    "current_password": "wrong-current-password",
+                    "new_password": "VeryStrongNewPass987!",
+                    "confirm_password": "VeryStrongNewPass987!",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["success"], False)
+        self.assertIn("Current password", response.json()["message"])
         self.employee_user.refresh_from_db()
         self.assertTrue(self.employee_user.check_password("test-pass-12345"))
 
@@ -198,7 +221,11 @@ class EmployeePortalTests(TestCase):
 
         response = self.client.get(reverse("employee_dashboard"))
 
-        self.assertRedirects(response, reverse("dashboard"))
+        self.assertRedirects(
+            response,
+            reverse("dashboard"),
+            fetch_redirect_response=False,
+        )
 
     def test_employee_can_confirm_own_assigned_asset(self):
         self.client.force_login(self.employee_user)

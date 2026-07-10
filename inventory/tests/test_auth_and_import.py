@@ -51,6 +51,7 @@ class AuthRoutingTests(TestCase):
             username="session-user",
             email="session-user@example.com",
             password="test-pass-12345",
+            is_staff=True,
         )
         self.client.force_login(user)
 
@@ -66,6 +67,7 @@ class AuthRoutingTests(TestCase):
             username="remember-user",
             email="remember-user@example.com",
             password="test-pass-12345",
+            is_staff=True,
         )
 
         response = self.client.post(
@@ -89,6 +91,7 @@ class AuthRoutingTests(TestCase):
             username="browser-session-user",
             email="browser-session-user@example.com",
             password="test-pass-12345",
+            is_staff=True,
         )
 
         response = self.client.post(
@@ -115,6 +118,7 @@ class PasswordResetFlowTests(TestCase):
             username="reset-user",
             email="reset-user@example.com",
             password="OldPass12345!",
+            is_staff=True,
         )
 
     def test_password_reset_email_step_renders(self):

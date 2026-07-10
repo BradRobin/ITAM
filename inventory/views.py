@@ -25,7 +25,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from .access import user_has_admin_access
+from .access import AdminRequiredMixin, user_has_admin_access
 from .http import parse_request_data
 from .forms import (
     AssetForm,
@@ -286,7 +286,7 @@ class CSVBuffer:
         return value
 
 
-class DashboardView(LoginRequiredMixin, TemplateView):
+class DashboardView(AdminRequiredMixin, TemplateView):
     template_name = "inventory/dashboard.html"
 
     def get_context_data(self, **kwargs):
@@ -336,7 +336,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class AssetListView(LoginRequiredMixin, ListView):
+class AssetListView(AdminRequiredMixin, ListView):
     model = Asset
     template_name = "inventory/asset_list.html"
     context_object_name = "assets"
@@ -399,7 +399,7 @@ class AssetListView(LoginRequiredMixin, ListView):
         return context
 
 
-class AssetDetailView(LoginRequiredMixin, DetailView):
+class AssetDetailView(AdminRequiredMixin, DetailView):
     model = Asset
     template_name = "inventory/asset_detail.html"
     context_object_name = "asset"
@@ -509,14 +509,14 @@ class AssetDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return super().handle_no_permission()
 
 
-class EmployeeListView(LoginRequiredMixin, ListView):
+class EmployeeListView(AdminRequiredMixin, ListView):
     model = Employee
     template_name = "inventory/employee_list.html"
     context_object_name = "employees"
     paginate_by = 25
 
 
-class EmployeeDetailView(LoginRequiredMixin, DetailView):
+class EmployeeDetailView(AdminRequiredMixin, DetailView):
     model = Employee
     template_name = "inventory/employee_detail.html"
     context_object_name = "employee"
@@ -1015,7 +1015,7 @@ class ImportAssetCSVExecuteView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({"detail": str(exc), "code": exc.code}, status=400)
 
 
-class AssetAPIListView(LoginRequiredMixin, View):
+class AssetAPIListView(AdminRequiredMixin, View):
     def get(self, request):
         queryset = Asset.objects.annotate(
             last_assigned_date=Max("assignments__date_assigned"),
@@ -1054,7 +1054,7 @@ class AssetAPIListView(LoginRequiredMixin, View):
         return JsonResponse(serialize_asset(asset), status=201)
 
 
-class AssetAPIDetailView(LoginRequiredMixin, View):
+class AssetAPIDetailView(AdminRequiredMixin, View):
     def get(self, request, pk):
         asset = get_object_or_404(Asset, pk=pk)
         return JsonResponse(serialize_asset(asset))
@@ -1098,7 +1098,7 @@ class AssetAPIDetailView(LoginRequiredMixin, View):
         return JsonResponse({"deleted": True})
 
 
-class AssetAssignAPIView(LoginRequiredMixin, View):
+class AssetAssignAPIView(AdminRequiredMixin, View):
     def post(self, request, pk):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
@@ -1182,7 +1182,7 @@ class AssetAssignAPIView(LoginRequiredMixin, View):
         return JsonResponse(serialize_asset(asset))
 
 
-class AssetReturnAPIView(LoginRequiredMixin, View):
+class AssetReturnAPIView(AdminRequiredMixin, View):
     def post(self, request, pk):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
@@ -1230,7 +1230,7 @@ class AssetReturnAPIView(LoginRequiredMixin, View):
         return JsonResponse(serialize_asset(asset))
 
 
-class AssetBulkDeleteAPIView(LoginRequiredMixin, View):
+class AssetBulkDeleteAPIView(AdminRequiredMixin, View):
     def post(self, request):
         if not user_has_admin_access(request.user):
             return json_permission_denied()
@@ -1304,7 +1304,7 @@ class AssetBulkDeleteAPIView(LoginRequiredMixin, View):
         )
 
 
-class EmployeeAPIListView(LoginRequiredMixin, View):
+class EmployeeAPIListView(AdminRequiredMixin, View):
     def get(self, request):
         queryset = Employee.objects.all().order_by("name")
         search = request.GET.get("search")
@@ -1343,7 +1343,7 @@ class EmployeeAPIListView(LoginRequiredMixin, View):
         return JsonResponse(serialize_employee(employee), status=201)
 
 
-class EmployeeAPIDetailView(LoginRequiredMixin, View):
+class EmployeeAPIDetailView(AdminRequiredMixin, View):
     def get(self, request, pk):
         employee = get_object_or_404(Employee, pk=pk)
         return JsonResponse(serialize_employee(employee))

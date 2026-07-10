@@ -84,7 +84,7 @@ class Employee(models.Model):
         help_text="User account that can access the employee portal.",
     )
     department = models.CharField(max_length=255, choices=Department.choices)
-    email = models.EmailField() 
+    email = models.EmailField(unique=True)
 
     class Meta:
         ordering = ["name"]

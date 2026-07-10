@@ -1,4 +1,5 @@
 from ._helpers import *
+from django.db import IntegrityError, transaction
 
 class AssetFormSerialNumberValidationTests(TestCase):
     def setUp(self):
@@ -161,6 +162,21 @@ class AssignmentStateMachineViewTests(TestCase):
 
         self.assertEqual(employee.department_abbreviation, "IO")
 
+    def test_employee_email_is_unique_at_database_level(self):
+        Employee.objects.create(
+            name="Unique One",
+            department=Employee.Department.TECHNICAL_CORE_PROGRAMME,
+            email="unique.employee@example.com",
+        )
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Employee.objects.create(
+                    name="Unique Two",
+                    department=Employee.Department.CAPACITY_BUILDING_INNOVATION,
+                    email="unique.employee@example.com",
+                )
+
     def test_assign_asset_creates_assignment_and_marks_asset_assigned(self):
         response = self.client.post(
             reverse("assign_asset", kwargs={"pk": self.asset.pk}),
@@ -275,6 +291,7 @@ class DashboardContextTests(TestCase):
             username="viewer",
             email="viewer@example.com",
             password="test-pass-12345",
+            is_staff=True,
         )
         self.client.force_login(self.user)
         Asset.objects.create(
@@ -335,6 +352,18 @@ class DashboardContextTests(TestCase):
         self.assertContains(response, "Fleet Intelligence")
         self.assertContains(response, "Analytics Canvas")
         self.assertContains(response, "dashStatusChart")
+
+    def test_dashboard_rejects_non_admin_user(self):
+        non_admin = get_user_model().objects.create_user(
+            username="dashboard-non-admin",
+            email="dashboard-non-admin@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(non_admin)
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_dashboard_overdue_count_uses_creation_or_recent_maintenance_date(self):
         recent_asset = Asset.objects.create(
@@ -468,6 +497,22 @@ class BackgroundJobTests(TestCase):
         self.assertEqual(detail.json()["status"], "completed")
         self.assertIn("total_assets", detail.json()["result"])
         self.assertIn("ecosystem_map", detail.json()["result"])
+
+    def test_background_job_create_rejects_non_admin(self):
+        non_admin = get_user_model().objects.create_user(
+            username="bgjob-non-admin",
+            password="password123",
+        )
+        self.client.force_login(non_admin)
+
+        response = self.client.post(
+            reverse("background_job_create"),
+            data=json.dumps({"job_type": "reports"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(BackgroundJob.objects.filter(user=non_admin).exists())
 
     def test_csv_export_job_writes_downloadable_file(self):
         job = enqueue_job(self.user, BackgroundJob.JobType.CSV_EXPORT, force=True)

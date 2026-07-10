@@ -341,8 +341,21 @@ class EmployeePasswordChangeView(EmployeePortalJSONAccessMixin, View):
                 status=400,
             )
 
+        current_password = payload.get("current_password", "")
         new_password = payload.get("new_password", "")
         confirm_password = payload.get("confirm_password", "")
+
+        if not current_password:
+            return JsonResponse(
+                {"success": False, "message": "Enter your current password."},
+                status=400,
+            )
+
+        if not request.user.check_password(current_password):
+            return JsonResponse(
+                {"success": False, "message": "Current password is incorrect."},
+                status=400,
+            )
 
         if not new_password or not confirm_password:
             return JsonResponse(

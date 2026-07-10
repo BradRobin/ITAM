@@ -94,7 +94,7 @@
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('employee-modal-open');
 
-        const firstInput = modal.querySelector('#id_new_password');
+        const firstInput = modal.querySelector('#id_current_password');
         if (firstInput) {
             window.setTimeout(function() {
                 firstInput.focus();
@@ -112,6 +112,11 @@
     }
 
     function validatePasswordPayload(payload, errorBox) {
+        if (!payload.current_password) {
+            showModalError(errorBox, 'Enter your current password.');
+            return false;
+        }
+
         if (!payload.new_password || !payload.confirm_password) {
             showModalError(errorBox, 'Enter and confirm your new password.');
             return false;
@@ -165,6 +170,7 @@
 
             const formData = new FormData(form);
             const payload = {
+                current_password: String(formData.get('current_password') || ''),
                 new_password: String(formData.get('new_password') || '').trim(),
                 confirm_password: String(formData.get('confirm_password') || '').trim(),
             };

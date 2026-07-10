@@ -6,6 +6,7 @@ class FrontendAPIBridgeTests(TestCase):
             username="api-viewer",
             email="api-viewer@example.com",
             password="test-pass-12345",
+            is_staff=True,
         )
         self.admin = get_user_model().objects.create_user(
             username="api-admin",
@@ -33,6 +34,18 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()[0]["status"], "available")
         self.assertEqual(response.json()[0]["status_label"], "Available")
+
+    def test_asset_api_list_rejects_non_admin_user(self):
+        non_admin = get_user_model().objects.create_user(
+            username="api-non-admin",
+            email="api-non-admin@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(non_admin)
+
+        response = self.client.get(reverse("api_asset_list"))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_asset_api_list_returns_assigned_employee(self):
         Assignment.objects.create(asset=self.asset, employee=self.employee)
@@ -245,7 +258,12 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertFalse(Asset.objects.filter(pk__in=[self.asset.pk, second_asset.pk]).exists())
 
     def test_bulk_delete_api_rejects_non_admin(self):
-        self.client.force_login(self.user)
+        non_admin = get_user_model().objects.create_user(
+            username="bulk-delete-non-admin",
+            email="bulk-delete-non-admin@example.com",
+            password="test-pass-12345",
+        )
+        self.client.force_login(non_admin)
 
         response = self.client.post(
             reverse("api_asset_bulk_delete"),

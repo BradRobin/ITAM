@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +25,13 @@ for env_path in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
         except Exception as exc:
             logger.warning("Could not read %s: %s", env_path.name, exc)
 
-SECRET_KEY = os.environ.get("SECRET_KEY") or env(
-    "SECRET_KEY", default="django-insecure-dev-key-change-in-production"
-)
-DEBUG = env.bool("DEBUG", default=not IS_VERCEL)
+DEBUG = env.bool("DEBUG", default=False)
+SECRET_KEY = os.environ.get("SECRET_KEY") or env("SECRET_KEY", default="")
+if not SECRET_KEY:
+    if DEBUG or "test" in sys.argv:
+        SECRET_KEY = "django-insecure-dev-key-change-in-production"
+    else:
+        raise ImproperlyConfigured("SECRET_KEY must be set when DEBUG is False.")
 
 _raw_hosts = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1")
 ALLOWED_HOSTS = [host.strip() for host in _raw_hosts.split(",") if host.strip()]
