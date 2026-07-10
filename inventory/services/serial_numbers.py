@@ -24,11 +24,6 @@ def generate_unique_serial_numbers(*, count: int = 8, asset_type: str | None = N
     if count <= 0:
         return []
 
-    existing = {
-        serial.lower()
-        for serial in Asset.objects.values_list("serial_number", flat=True)
-        if serial
-    }
     results: list[str] = []
     max_attempts = max(count * 20, 40)
     attempts = 0
@@ -36,7 +31,7 @@ def generate_unique_serial_numbers(*, count: int = 8, asset_type: str | None = N
     while len(results) < count and attempts < max_attempts:
         attempts += 1
         candidate = _build_candidate(asset_type or Asset.AssetType.LAPTOP)
-        if candidate.lower() in existing:
+        if Asset.objects.filter(serial_number__iexact=candidate).exists():
             continue
         if candidate in results:
             continue

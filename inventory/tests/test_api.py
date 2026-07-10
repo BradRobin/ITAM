@@ -201,8 +201,8 @@ class FrontendAPIBridgeTests(TestCase):
         notification = EmployeeNotification.objects.get(employee=self.employee)
         self.assertEqual(notification.title, "Asset Returned")
         self.assertFalse(notification.read)
-        admin_notifications = self.client.session.get("notifications", [])
-        self.assertTrue(any(item["title"] == "Asset Returned" for item in admin_notifications))
+        from inventory.models import AdminNotification
+        self.assertTrue(AdminNotification.objects.filter(user=self.admin, title="Asset Returned").exists())
 
     def test_asset_api_assign_notifies_admin_and_employee(self):
         self.client.force_login(self.admin)
@@ -216,8 +216,8 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         notification = EmployeeNotification.objects.get(employee=self.employee)
         self.assertEqual(notification.title, "Asset Assigned")
-        admin_notifications = self.client.session.get("notifications", [])
-        self.assertTrue(any(item["title"] == "Asset Assigned" for item in admin_notifications))
+        from inventory.models import AdminNotification
+        self.assertTrue(AdminNotification.objects.filter(user=self.admin, title="Asset Assigned").exists())
 
     def test_notification_api_returns_session_notifications_after_assign(self):
         self.client.force_login(self.admin)

@@ -133,6 +133,9 @@ class ProfileAvatarUploadView(LoginRequiredMixin, View):
         try:
             validate_avatar_upload(uploaded)
             avatar_url = save_user_avatar(request.user, uploaded)
+            session_key = f"avatar_urls_{request.user.id}"
+            request.session.pop(session_key, None)
+            request.session.modified = True
         except AvatarValidationError as exc:
             return JsonResponse({"detail": str(exc)}, status=400)
         except AvatarStorageError as exc:

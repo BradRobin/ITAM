@@ -35,7 +35,7 @@
             <i class="fas fa-check"></i> Confirm
         </button>
         {% endif %}
-        {% if not assignment.date_returned %}
+        {% if not assignment.date_returned and not assignment.return_requested %}
         <button class="btn btn-sm btn-warning return-btn" data-id="{{ assignment.id }}" onclick="requestReturn('{{ assignment.id }}')">
             <i class="fas fa-undo-alt"></i> Return
         </button>

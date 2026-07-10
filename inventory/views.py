@@ -694,7 +694,8 @@ class ReturnAssetView(LoginRequiredMixin, UserPassesTestMixin, View):
                 return redirect("asset_detail", pk=asset.pk)
 
             assignment.date_returned = timezone.now()
-            assignment.save(update_fields=["date_returned"])
+            assignment.return_requested = False
+            assignment.save(update_fields=["date_returned", "return_requested"])
 
             asset.status = Asset.AssetStatus.AVAILABLE
             asset.save(update_fields=["status"])

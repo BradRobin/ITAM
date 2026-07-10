@@ -82,8 +82,9 @@ class EmployeePortalTests(TestCase):
         self.assertEqual(employee.name, "created.employee")
         self.assertEqual(employee.user.username, "created.employee")
         self.assertTrue(employee.user.check_password("StrongPass123!"))
-        notifications = self.client.session.get("notifications", [])
-        self.assertEqual(notifications[0]["title"], "New Employee Added")
+        from inventory.models import AdminNotification
+        notifications = AdminNotification.objects.filter(user=admin_user)
+        self.assertEqual(notifications[0].title, "New Employee Added")
 
     def test_linked_employee_can_open_portal_dashboard(self):
         self.client.force_login(self.employee_user)

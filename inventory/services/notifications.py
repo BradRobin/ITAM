@@ -1,22 +1,6 @@
 import datetime
-
 from django.utils import timezone
-
-
-MAX_SESSION_NOTIFICATIONS = 100
-
-
-def _get_session_notifications(request) -> list:
-    return list(request.session.get("notifications", []))
-
-
-def _next_notification_id(notifications: list) -> int:
-    existing_ids = [
-        notification.get("id", 0)
-        for notification in notifications
-        if isinstance(notification.get("id", 0), int)
-    ]
-    return (max(existing_ids) if existing_ids else 0) + 1
+from inventory.models import AdminNotification
 
 
 def add_session_notification(
@@ -28,21 +12,25 @@ def add_session_notification(
     link: str | None = None,
     source: str = "system",
 ) -> dict:
-    notifications = _get_session_notifications(request)
-    notification = {
-        "id": _next_notification_id(notifications),
-        "type": notification_type,
-        "title": title,
-        "message": message,
-        "time": timezone.now().isoformat(),
-        "read": False,
-        "link": link,
-        "source": source,
-    }
-    notifications.insert(0, notification)
-    request.session["notifications"] = notifications[:MAX_SESSION_NOTIFICATIONS]
-    request.session.modified = True
-    return notification
+    if request.user.is_authenticated:
+        notif = AdminNotification.objects.create(
+            user=request.user,
+            type=notification_type,
+            title=title,
+            message=message,
+            link=link or "",
+        )
+        return {
+            "id": notif.id,
+            "type": notif.type,
+            "title": notif.title,
+            "message": notif.message,
+            "time": notif.created_at.isoformat(),
+            "read": notif.read,
+            "link": notif.link,
+            "source": source,
+        }
+    return {}
 
 
 def parse_notification_time(value):
@@ -57,37 +45,43 @@ def parse_notification_time(value):
 
 
 def get_display_notifications(request) -> list:
-    display_notifications = []
-    for notification in _get_session_notifications(request):
-        notification_copy = notification.copy()
-        notification_copy["time"] = parse_notification_time(notification_copy.get("time"))
-        display_notifications.append(notification_copy)
-    return display_notifications
+    if not request.user.is_authenticated:
+        return []
+    return [
+        {
+            "id": notif.id,
+            "type": notif.type,
+            "title": notif.title,
+            "message": notif.message,
+            "time": notif.created_at,
+            "read": notif.read,
+            "link": notif.link,
+            "source": "system",
+        }
+        for notif in AdminNotification.objects.filter(user=request.user)[:100]
+    ]
 
 
 def get_unread_count(request) -> int:
-    return sum(
-        1
-        for notification in _get_session_notifications(request)
-        if not notification.get("read", False)
-    )
+    if not request.user.is_authenticated:
+        return 0
+    return AdminNotification.objects.filter(user=request.user, read=False).count()
 
 
 def mark_all_notifications_read(request) -> list:
-    notifications = _get_session_notifications(request)
-    for notification in notifications:
-        notification["read"] = True
-    request.session["notifications"] = notifications
-    request.session.modified = True
-    return notifications
+    if not request.user.is_authenticated:
+        return []
+    AdminNotification.objects.filter(user=request.user, read=False).update(read=True)
+    return get_display_notifications(request)
 
 
 def mark_notification_read(request, notification_id: int) -> list:
-    notifications = _get_session_notifications(request)
-    for notification in notifications:
-        if notification.get("id") == notification_id:
-            notification["read"] = True
-            break
-    request.session["notifications"] = notifications
-    request.session.modified = True
-    return notifications
+    if not request.user.is_authenticated:
+        return []
+    try:
+        notif_id = int(notification_id)
+    except (ValueError, TypeError):
+        return get_display_notifications(request)
+
+    AdminNotification.objects.filter(user=request.user, id=notif_id).update(read=True)
+    return get_display_notifications(request)

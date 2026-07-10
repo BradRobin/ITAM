@@ -28,13 +28,19 @@ class BackgroundJobCreateView(AdminRequiredMixin, View):
 
 class BackgroundJobDetailView(AdminRequiredMixin, View):
     def get(self, request, job_id):
-        job = get_object_or_404(BackgroundJob, pk=job_id, user=request.user)
+        if request.user.is_staff or request.user.is_superuser:
+            job = get_object_or_404(BackgroundJob, pk=job_id)
+        else:
+            job = get_object_or_404(BackgroundJob, pk=job_id, user=request.user)
         return JsonResponse(serialize_job(job))
 
 
 class BackgroundJobDownloadView(AdminRequiredMixin, View):
     def get(self, request, job_id):
-        job = get_object_or_404(BackgroundJob, pk=job_id, user=request.user)
+        if request.user.is_staff or request.user.is_superuser:
+            job = get_object_or_404(BackgroundJob, pk=job_id)
+        else:
+            job = get_object_or_404(BackgroundJob, pk=job_id, user=request.user)
         if job.status != BackgroundJob.Status.COMPLETED:
             raise Http404("Export file is not ready")
 

@@ -32,7 +32,13 @@ def avatar_context(request):
             "user_avatar_url_large": "",
         }
 
-    avatar_urls = get_user_avatar_urls(request.user)
+    session_key = f"avatar_urls_{request.user.id}"
+    avatar_urls = request.session.get(session_key)
+    if not avatar_urls:
+        avatar_urls = get_user_avatar_urls(request.user)
+        request.session[session_key] = avatar_urls
+        request.session.modified = True
+
     return {
         "user_avatar_url_small": avatar_urls["small"],
         "user_avatar_url_medium": avatar_urls["medium"],

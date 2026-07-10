@@ -3,19 +3,21 @@ import json
 import logging
 
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Q
 from django.db.utils import DatabaseError, OperationalError, ProgrammingError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from .access import get_employee_for_user
 from .http import parse_request_data
-from .models import Asset, Assignment, EmployeeNotification, MaintenanceLog
+from .models import AdminNotification, Asset, Assignment, EmployeeNotification, MaintenanceLog
 from .services.employee_notifications import (
     create_employee_notification,
     get_employee_notifications,
@@ -38,11 +40,12 @@ class EmployeePortalAccessMixin(LoginRequiredMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        notifications = get_employee_notifications(self.employee)
         context.update(
             {
                 "employee": self.employee,
-                "employee_notifications": get_employee_notifications(self.employee),
-                "recent_notifications": get_employee_notifications(self.employee),
+                "employee_notifications": notifications,
+                "recent_notifications": notifications,
                 "unread_notifications": get_employee_unread_notification_count(
                     self.employee
                 ),
@@ -195,8 +198,9 @@ class EmployeeReportIssueView(EmployeePortalJSONAccessMixin, View):
         issue_type = request.POST.get("issue_type")
         issue_description = request.POST.get("issue_description")
 
+        asset = assignment.asset
         MaintenanceLog.objects.create(
-            asset=assignment.asset,
+            asset=asset,
             issue_description=(
                 f"[Reported by Employee] {issue_type}: {issue_description}"
             ),
@@ -205,6 +209,19 @@ class EmployeeReportIssueView(EmployeePortalJSONAccessMixin, View):
             resolved=False,
             created_by=request.user,
         )
+
+        asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
+        asset.save(update_fields=["status"])
+
+        admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
+        for admin in admins:
+            AdminNotification.objects.create(
+                user=admin,
+                type=AdminNotification.NotificationType.ERROR,
+                title="Asset Issue Reported",
+                message=f'Employee "{self.employee.name}" reported an issue on "{asset.name}": {issue_type}.',
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+            )
 
         messages.success(request, "Issue reported successfully. We will look into it.")
         return redirect("employee_asset_detail", pk=assignment.pk)
@@ -224,14 +241,28 @@ class EmployeeMaintenanceRequestView(EmployeePortalJSONAccessMixin, View):
             or "Maintenance requested via employee portal"
         )
 
+        asset = assignment.asset
         MaintenanceLog.objects.create(
-            asset=assignment.asset,
+            asset=asset,
             issue_description=f"[Maintenance Request] {maintenance_type}: {description}",
             technician=request.user.get_full_name() or request.user.username,
             date=timezone.localdate(),
             resolved=False,
             created_by=request.user,
         )
+
+        asset.status = Asset.AssetStatus.UNDER_MAINTENANCE
+        asset.save(update_fields=["status"])
+
+        admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
+        for admin in admins:
+            AdminNotification.objects.create(
+                user=admin,
+                type=AdminNotification.NotificationType.WARNING,
+                title="Asset Maintenance Requested",
+                message=f'Employee "{self.employee.name}" requested maintenance for "{asset.name}".',
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+            )
 
         if request.content_type.startswith("application/json"):
             return JsonResponse(
@@ -253,15 +284,22 @@ class EmployeeReturnRequestView(EmployeePortalJSONAccessMixin, View):
             date_returned__isnull=True,
         )
 
-        assignment.date_returned = timezone.now()
-        assignment.save()
+        assignment.return_requested = True
+        assignment.save(update_fields=["return_requested"])
 
         asset = assignment.asset
-        asset.status = Asset.AssetStatus.AVAILABLE
-        asset.save(update_fields=["status"])
+        admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
+        for admin in admins:
+            AdminNotification.objects.create(
+                user=admin,
+                type=AdminNotification.NotificationType.WARNING,
+                title="Asset Return Requested",
+                message=f'Employee "{self.employee.name}" has requested to return asset "{asset.name}".',
+                link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+            )
 
-        messages.success(request, "Asset returned successfully.")
-        return JsonResponse({"success": True, "message": "Asset returned successfully"})
+        messages.success(request, "Return request submitted successfully.")
+        return JsonResponse({"success": True, "message": "Return request submitted successfully."})
 
 
 class EmployeeMarkNotificationReadView(EmployeePortalJSONAccessMixin, View):

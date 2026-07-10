@@ -135,7 +135,7 @@ def get_dashboard_context() -> dict:
         "overdue_assets_count": overdue_assets.count(),
         "overdue_cutoff": get_service_overdue_cutoff().date(),
         "utilization_rate": calculate_percentage(assigned_assets, total_assets),
-        "asset_health_rate": calculate_percentage(maintenance_assets, total_assets),
+        "asset_health_rate": calculate_percentage(total_assets - maintenance_assets, total_assets),
         "total_assignments": analytics["total_assignments"],
         "analytics": analytics,
         "dashboard_stats": [
@@ -230,7 +230,7 @@ def get_reports_context(user=None) -> dict:
     total_employees = Employee.objects.count()
     analytics = get_analytics_payload(counts)
     utilization_rate = calculate_percentage(assigned_assets, total_assets, digits=1)
-    asset_health_rate = calculate_percentage(maintenance_assets, total_assets)
+    asset_health_rate = calculate_percentage(total_assets - maintenance_assets, total_assets)
 
     return {
         **counts,

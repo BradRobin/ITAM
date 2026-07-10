@@ -69,6 +69,11 @@
                         <p><strong>Email:</strong> {{ active_assignment.employee.email }}</p>
                         <p><strong>Assigned on:</strong> {{ active_assignment.date_assigned|date:"M d, Y H:i" }}</p>
                         <p><strong>Expected return:</strong> {{ active_assignment.expected_return_date|date:"M d, Y"|default:"—" }}</p>
+                        {% if active_assignment.return_requested %}
+                            <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 6px; margin: 12px 0;">
+                                <i class="fas fa-exclamation-triangle"></i> <strong>Return Requested</strong>: The employee has requested to return this asset. Please confirm receipt.
+                            </div>
+                        {% endif %}
                         <form method="post" action="{% url 'return_asset' asset.pk %}" class="mt-2">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-success">Return Asset</button>

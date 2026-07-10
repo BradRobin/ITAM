@@ -138,6 +138,7 @@ class Assignment(models.Model):
         blank=True,
         related_name="assignments_created",
     )
+    return_requested = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-date_assigned", "-id"]
@@ -171,6 +172,8 @@ class Assignment(models.Model):
     def status_display(self) -> str:
         if self.date_returned:
             return "Returned"
+        if self.return_requested:
+            return "Pending Return"
         if self.confirmed_by_employee:
             return "Confirmed"
         return "Pending Confirmation"
@@ -179,6 +182,8 @@ class Assignment(models.Model):
     def status_class(self) -> str:
         if self.date_returned:
             return "secondary"
+        if self.return_requested:
+            return "danger"
         if self.confirmed_by_employee:
             return "success"
         return "warning"
@@ -310,6 +315,42 @@ class EmployeeNotification(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} for {self.employee}"
+
+
+class AdminNotification(models.Model):
+    class NotificationType(models.TextChoices):
+        INFO = "info", "Info"
+        SUCCESS = "success", "Success"
+        WARNING = "warning", "Warning"
+        ERROR = "error", "Error"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="admin_notifications",
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=NotificationType.choices,
+        default=NotificationType.INFO,
+    )
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+    link = models.CharField(max_length=255, blank=True)
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["user", "read", "-created_at"],
+                name="admin_notif_unread_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.title} for {self.user}"
 
 
 class BackgroundJob(models.Model):
