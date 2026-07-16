@@ -86,7 +86,7 @@ def _serialize_dashboard_result(context: dict) -> dict:
     }
 
 
-def _serialize_asset_sections(sections: dict) -> dict:
+def serialize_asset_sections(sections: dict) -> dict:
     def row_dates(row, *keys):
         serialized = dict(row)
         for key in keys:
@@ -120,7 +120,7 @@ def handle_reports_job(job: BackgroundJob) -> dict:
 
 @register_handler(BackgroundJob.JobType.ASSET_SECTIONS)
 def handle_asset_sections_job(job: BackgroundJob) -> dict:
-    return _serialize_asset_sections(get_asset_list_sections())
+    return serialize_asset_sections(get_asset_list_sections())
 
 
 @register_handler(BackgroundJob.JobType.SERIAL_SUGGESTIONS)

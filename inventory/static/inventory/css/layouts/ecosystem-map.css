@@ -531,17 +531,14 @@
     .ecosystem-map-stage {
         height: 52vh;
         min-height: 420px;
+        display: flex;
+        flex-direction: column;
     }
 
     .ecosystem-map-legend {
         position: static;
         width: auto;
         margin: 0.75rem;
-    }
-
-    .ecosystem-map-stage {
-        display: flex;
-        flex-direction: column;
     }
 
     .ecosystem-map-svg {

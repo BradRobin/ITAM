@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Asset, Assignment, Employee, EmployeeNotification, MaintenanceLog, BackgroundJob
+from .models import (
+    AdminNotification,
+    Asset,
+    Assignment,
+    BackgroundJob,
+    Employee,
+    EmployeeNotification,
+    MaintenanceLog,
+)
 
 
 @admin.register(Asset)
@@ -60,6 +68,14 @@ class EmployeeNotificationAdmin(admin.ModelAdmin):
     list_display = ("employee", "title", "type", "read", "created_at")
     list_filter = ("type", "read", "created_at")
     search_fields = ("employee__name", "employee__email", "title", "message")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(AdminNotification)
+class AdminNotificationAdmin(admin.ModelAdmin):
+    list_display = ("user", "title", "type", "read", "created_at")
+    list_filter = ("type", "read", "created_at")
+    search_fields = ("user__username", "user__email", "title", "message")
     readonly_fields = ("created_at",)
 
 

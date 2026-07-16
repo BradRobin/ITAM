@@ -8,6 +8,7 @@ from typing import Callable
 from django.db.models import Count, Q
 from django.urls import reverse
 
+from inventory.access import user_has_admin_access
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
 
 MAX_EXPANSION_ITEMS = 40
@@ -43,10 +44,6 @@ MODULES = [
     ("module-reports", "Reports", "fa-chart-bar", "reports", "Analytics and insights"),
     ("module-portal", "Employee Portal", "fa-id-badge", "employee_dashboard", "Self-service for staff"),
 ]
-
-
-def _user_is_admin(user) -> bool:
-    return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
 def _node(
@@ -256,7 +253,7 @@ def _build_expansions(counts: dict[str, int]) -> dict[str, list[dict]]:
 
 
 def build_ecosystem_map(user) -> dict:
-    is_admin = _user_is_admin(user)
+    is_admin = user_has_admin_access(user)
     nodes: list[dict] = []
     edges: list[dict] = []
 

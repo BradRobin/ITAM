@@ -6,6 +6,7 @@ from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
+from inventory.constants import STATUS_TO_MODEL, TYPE_TO_MODEL
 from inventory.models import (
     Asset,
     AssetCatalog,
@@ -46,21 +47,6 @@ AUTO_MAPPED_FIELDS = frozenset({
     "employee",
     "last_maintenance_date",
 })
-
-TYPE_TO_MODEL = {
-    "laptop": Asset.AssetType.LAPTOP,
-    "printer": Asset.AssetType.PRINTER,
-    "router": Asset.AssetType.ROUTER,
-    "monitor": Asset.AssetType.MONITOR,
-}
-
-STATUS_TO_MODEL = {
-    "available": Asset.AssetStatus.AVAILABLE,
-    "assigned": Asset.AssetStatus.ASSIGNED,
-    "maintenance": Asset.AssetStatus.UNDER_MAINTENANCE,
-    "under maintenance": Asset.AssetStatus.UNDER_MAINTENANCE,
-}
-
 
 class CSVImportError(Exception):
     def __init__(self, message: str, *, code: str = "invalid_csv"):
