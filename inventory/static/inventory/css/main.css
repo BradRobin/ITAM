@@ -73,6 +73,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-width: 0;
     overflow: hidden;
     transition: margin-left 0.3s ease;
     background: var(--bg-secondary, #f8fafc);
@@ -94,8 +95,9 @@ body {
 main {
     flex: 1 1 auto;
     min-height: 0;
+    min-width: 0;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: clip;
     padding: 1.5rem 2rem 2rem;
     background: var(--bg-secondary, #f8fafc);
 }

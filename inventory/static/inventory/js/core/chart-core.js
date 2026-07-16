@@ -425,6 +425,23 @@
         setTimeout(updateAll, 150);
     });
 
+    var resizeTimer = null;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resizeAll, 120);
+    });
+
+    if (typeof ResizeObserver !== 'undefined') {
+        var chartResizeObserver = new ResizeObserver(function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeAll, 80);
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            var bento = document.getElementById('analytics-bento');
+            if (bento) chartResizeObserver.observe(bento);
+        });
+    }
+
     window.ChartCore = {
         colorMap: colorMap,
         chartColors: chartColors,
