@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=10">
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -162,7 +162,15 @@
                     <div class="bento-card bento-wide">
                         <div class="bento-card-head">
                             <h3>Asset Growth</h3>
-                            <span class="bento-hint">Last 6 months</span>
+                            <div class="month-switcher" data-growth-month-switcher>
+                                <button type="button" class="month-switcher-btn" data-growth-prev aria-label="Previous month">
+                                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                                </button>
+                                <span class="month-switcher-label" data-growth-month-label>This month</span>
+                                <button type="button" class="month-switcher-btn" data-growth-next aria-label="Next month">
+                                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="bento-chart-wrap">
                             <canvas id="dashMonthlyChart"></canvas>
@@ -275,8 +283,8 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
-    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=1"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=3"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=2"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=4"></script>
     <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

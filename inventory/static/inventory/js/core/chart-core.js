@@ -168,10 +168,16 @@
         });
     }
 
-    function createLine(id, data, labels, color, fill) {
+    function createLine(id, data, labels, color, fill, options) {
         var ctx = document.getElementById(id);
         if (!ctx || typeof Chart === 'undefined') return;
 
+        if (chartInstances[id] && typeof chartInstances[id].destroy === 'function') {
+            chartInstances[id].destroy();
+            delete chartInstances[id];
+        }
+
+        options = options || {};
         var isDark = getTheme() === 'dark';
         var baseColor = color || '#3b82f6';
         var grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
@@ -205,12 +211,29 @@
                 scales: {
                     x: {
                         grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
-                        ticks: { color: getColors().text, font: { size: 10 } }
+                        ticks: { color: getColors().text, font: { size: 10 } },
+                        title: options.xAxisTitle ? {
+                            display: true,
+                            text: options.xAxisTitle,
+                            color: getColors().text,
+                            font: { size: 11, weight: '600' }
+                        } : undefined
                     },
                     y: {
                         beginAtZero: true,
                         grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
-                        ticks: { color: getColors().text, font: { size: 10 }, stepSize: 1 }
+                        ticks: {
+                            color: getColors().text,
+                            font: { size: 10 },
+                            stepSize: 1,
+                            precision: 0
+                        },
+                        title: options.yAxisTitle ? {
+                            display: true,
+                            text: options.yAxisTitle,
+                            color: getColors().text,
+                            font: { size: 11, weight: '600' }
+                        } : undefined
                     }
                 },
                 interaction: { intersect: false, mode: 'index' },

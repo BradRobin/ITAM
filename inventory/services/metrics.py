@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import json
 
@@ -8,6 +9,14 @@ from django.utils import timezone
 
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
 from inventory.services.ecosystem_map import get_ecosystem_map_json
+
+# Fixed four buckets per month: days 1-7, 8-14, 15-21, 22-end.
+WEEK_DAY_RANGES = (
+    (1, 7),
+    (8, 14),
+    (15, 21),
+    (22, 31),
+)
 
 
 def calculate_percentage(value: int, total: int, *, digits: int = 0):
@@ -89,6 +98,7 @@ def get_analytics_payload(counts: dict | None = None) -> dict:
         "date",
         month_starts,
     )
+    weekly_asset_growth = _serialize_weekly_asset_growth(month_count=12)
     top_assets = [
         {
             "name": asset.name,
@@ -108,6 +118,7 @@ def get_analytics_payload(counts: dict | None = None) -> dict:
         "asset_by_status": asset_by_status,
         "monthly_assets": monthly_assets,
         "maintenance_by_month": maintenance_by_month,
+        "weekly_asset_growth": weekly_asset_growth,
         "top_assets": top_assets,
         "department_counts": department_counts,
         "total_assignments": Assignment.objects.count(),
@@ -220,6 +231,73 @@ def _serialize_month_counts(queryset, date_field: str, month_starts: list):
         }
         for month_start in month_starts
     ]
+
+
+def _week_bounds_for_month(year: int, month: int) -> list[tuple[datetime.date, datetime.date]]:
+    last_day = calendar.monthrange(year, month)[1]
+    bounds = []
+    for start_day, end_day in WEEK_DAY_RANGES:
+        week_end = min(end_day, last_day)
+        if start_day > last_day:
+            continue
+        bounds.append(
+            (
+                datetime.date(year, month, start_day),
+                datetime.date(year, month, week_end),
+            )
+        )
+    # Always expose 4 weeks; pad if a short month somehow truncates.
+    while len(bounds) < 4:
+        last_start, last_end = bounds[-1]
+        bounds.append((last_end, last_end))
+    return bounds[:4]
+
+
+def _serialize_weekly_asset_growth(*, month_count: int = 12) -> dict:
+    """Asset creations by week (1-4) for a continuous month switcher."""
+    month_starts = _last_month_starts(month_count)
+    first_month = month_starts[0]
+    next_month = _add_months(month_starts[-1], 1)
+    created_dates = list(
+        Asset.objects.filter(
+            date_created__gte=first_month,
+            date_created__lt=next_month,
+        ).values_list("date_created", flat=True)
+    )
+    local_dates = []
+    for value in created_dates:
+        if timezone.is_aware(value):
+            value = timezone.localtime(value)
+        local_dates.append(value.date())
+
+    months = []
+    for month_start in month_starts:
+        year = month_start.year
+        month = month_start.month
+        week_bounds = _week_bounds_for_month(year, month)
+        weeks = []
+        for index, (week_start, week_end) in enumerate(week_bounds, start=1):
+            count = sum(1 for day in local_dates if week_start <= day <= week_end)
+            weeks.append(
+                {
+                    "week": index,
+                    "label": f"Week {index}",
+                    "count": count,
+                }
+            )
+        months.append(
+            {
+                "key": month_start.strftime("%Y-%m"),
+                "label": month_start.strftime("%b %Y"),
+                "weeks": weeks,
+            }
+        )
+
+    default_month = months[-1]["key"] if months else None
+    return {
+        "months": months,
+        "default_month": default_month,
+    }
 
 
 def get_reports_context(user=None) -> dict:

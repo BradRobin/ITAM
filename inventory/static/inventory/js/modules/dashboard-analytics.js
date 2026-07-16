@@ -5,6 +5,9 @@
     'use strict';
 
     var tabsReady = false;
+    var growthSwitcherReady = false;
+    var weeklyGrowth = null;
+    var selectedMonthKey = null;
 
     function monthSeries(rows) {
         return {
@@ -26,6 +29,95 @@
                 '<span class="dept-legend-pct">' + pct + '%</span>' +
             '</div>';
         }).join('');
+    }
+
+    function getSelectedMonth() {
+        if (!weeklyGrowth || !weeklyGrowth.months || !weeklyGrowth.months.length) {
+            return null;
+        }
+        var months = weeklyGrowth.months;
+        for (var i = 0; i < months.length; i += 1) {
+            if (months[i].key === selectedMonthKey) {
+                return { month: months[i], index: i };
+            }
+        }
+        selectedMonthKey = weeklyGrowth.default_month || months[months.length - 1].key;
+        return getSelectedMonth();
+    }
+
+    function updateGrowthSwitcher() {
+        var selected = getSelectedMonth();
+        var label = document.querySelector('[data-growth-month-label]');
+        var prevBtn = document.querySelector('[data-growth-prev]');
+        var nextBtn = document.querySelector('[data-growth-next]');
+        if (!selected) {
+            if (label) label.textContent = 'No data';
+            if (prevBtn) prevBtn.disabled = true;
+            if (nextBtn) nextBtn.disabled = true;
+            return;
+        }
+        if (label) label.textContent = selected.month.label;
+        if (prevBtn) prevBtn.disabled = selected.index <= 0;
+        if (nextBtn) nextBtn.disabled = selected.index >= weeklyGrowth.months.length - 1;
+    }
+
+    function renderGrowthChart() {
+        if (!window.ChartCore) return;
+        var selected = getSelectedMonth();
+        updateGrowthSwitcher();
+        if (!selected) {
+            ChartCore.createLine(
+                'dashMonthlyChart',
+                [0, 0, 0, 0],
+                ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                '#3b82f6',
+                true,
+                { yAxisTitle: 'Asset Count', xAxisTitle: 'Week' }
+            );
+            return;
+        }
+        var weeks = selected.month.weeks || [];
+        ChartCore.createLine(
+            'dashMonthlyChart',
+            weeks.map(function(week) { return week.count || 0; }),
+            weeks.map(function(week) { return week.label || ('Week ' + week.week); }),
+            '#3b82f6',
+            true,
+            { yAxisTitle: 'Asset Count', xAxisTitle: 'Week' }
+        );
+    }
+
+    function shiftGrowthMonth(delta) {
+        if (!weeklyGrowth || !weeklyGrowth.months || !weeklyGrowth.months.length) {
+            return;
+        }
+        var selected = getSelectedMonth();
+        if (!selected) return;
+        var nextIndex = selected.index + delta;
+        if (nextIndex < 0 || nextIndex >= weeklyGrowth.months.length) {
+            return;
+        }
+        selectedMonthKey = weeklyGrowth.months[nextIndex].key;
+        renderGrowthChart();
+    }
+
+    function setupGrowthSwitcher() {
+        if (growthSwitcherReady) return;
+        var root = document.querySelector('[data-growth-month-switcher]');
+        if (!root) return;
+        growthSwitcherReady = true;
+        var prevBtn = root.querySelector('[data-growth-prev]');
+        var nextBtn = root.querySelector('[data-growth-next]');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                shiftGrowthMonth(-1);
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                shiftGrowthMonth(1);
+            });
+        }
     }
 
     function renderCharts(analytics) {
@@ -52,10 +144,12 @@
             );
         }
 
-        if (analytics.monthly_assets && analytics.monthly_assets.length) {
-            var monthly = monthSeries(analytics.monthly_assets);
-            ChartCore.createLine('dashMonthlyChart', monthly.values, monthly.labels, '#3b82f6', true);
+        weeklyGrowth = analytics.weekly_asset_growth || null;
+        if (weeklyGrowth && weeklyGrowth.default_month) {
+            selectedMonthKey = weeklyGrowth.default_month;
         }
+        setupGrowthSwitcher();
+        renderGrowthChart();
 
         if (analytics.maintenance_by_month && analytics.maintenance_by_month.length) {
             var maintenance = monthSeries(analytics.maintenance_by_month);

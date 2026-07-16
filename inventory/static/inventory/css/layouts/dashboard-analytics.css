@@ -117,6 +117,61 @@
     color: var(--text-muted, #94a3b8);
 }
 
+.month-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.month-switcher-label {
+    min-width: 5.5rem;
+    text-align: center;
+    font-size: var(--font-size-xs, 0.7rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--text-secondary, #64748b);
+}
+
+[data-theme="dark"] .month-switcher-label {
+    color: var(--text-secondary, #cbd5e1);
+}
+
+.month-switcher-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    background: var(--surface, #ffffff);
+    color: var(--text-secondary, #64748b);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.month-switcher-btn:hover:not(:disabled) {
+    background: var(--primary-50, #eff6ff);
+    border-color: var(--primary-200, #bfdbfe);
+    color: var(--primary-600, #2563eb);
+}
+
+.month-switcher-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+[data-theme="dark"] .month-switcher-btn {
+    background: var(--surface, #1e293b);
+    border-color: var(--border-color, #334155);
+    color: var(--text-secondary, #94a3b8);
+}
+
+[data-theme="dark"] .month-switcher-btn:hover:not(:disabled) {
+    background: rgba(37, 99, 235, 0.18);
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
 .bento-chart-wrap {
     position: relative;
     height: 220px;
