@@ -74,28 +74,35 @@
         var now = new Date();
         var timeElement = document.getElementById('liveTime');
         var dateElement = document.getElementById('liveDate');
-        
+
         if (timeElement) {
             var hours = String(now.getHours()).padStart(2, '0');
             var minutes = String(now.getMinutes()).padStart(2, '0');
             var seconds = String(now.getSeconds()).padStart(2, '0');
             timeElement.textContent = hours + ':' + minutes + ':' + seconds;
+            timeElement.setAttribute('datetime', now.toISOString());
         }
-        
+
         if (dateElement) {
-            var options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            var options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             };
             dateElement.textContent = now.toLocaleDateString('en-US', options);
+            dateElement.setAttribute(
+                'datetime',
+                now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0')
+            );
         }
-        
+
         var lastUpdated = document.getElementById('lastUpdated');
         if (lastUpdated) {
-            var nowStr = now.getFullYear() + '-' + 
-                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+            var nowStr = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
                 String(now.getDate()).padStart(2, '0') + ' ' +
                 String(now.getHours()).padStart(2, '0') + ':' +
                 String(now.getMinutes()).padStart(2, '0') + ':' +
