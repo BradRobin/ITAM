@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=11">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=16">
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=4">
 {% endblock %}
 
@@ -48,18 +48,35 @@
         </div>
 
         <!-- Fleet overview stats -->
-        <div class="dashboard-stats" id="dashboard-stats">
-            {% for stat in dashboard_stats %}
-                <a href="{{ stat.link }}" class="stat-card stat-card-link {{ stat.css_class }}" data-loader="true" data-loader-message="Loading Assets...">
-                    <i class="fas {{ stat.icon }} stat-icon"></i>
-                    <div class="stat-content">
-                        <h3>{{ stat.label }}</h3>
-                        <p class="stat-number"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
-                        <span class="stat-trend">{{ stat.trend }}</span>
-                    </div>
-                </a>
-            {% endfor %}
-        </div>
+        <section class="dash-section dash-stats-section" aria-labelledby="fleet-overview-heading">
+            <div class="dash-section-head">
+                <div>
+                    <h2 class="dash-section-title" id="fleet-overview-heading">Fleet overview</h2>
+                    <p class="dash-section-sub">Asset counts by status — open a card to jump to that list</p>
+                </div>
+            </div>
+            <ul class="dashboard-stats" id="dashboard-stats">
+                {% for stat in dashboard_stats %}
+                    <li class="dashboard-stats-item">
+                        <a
+                            href="{{ stat.link }}"
+                            class="stat-card stat-card-link {{ stat.css_class }}"
+                            data-stat="{{ stat.css_class }}"
+                            data-loader="true"
+                            data-loader-message="Loading Assets..."
+                            aria-labelledby="{{ stat.css_class }}-label {{ stat.css_class }}-value"
+                        >
+                            <header class="stat-card-head">
+                                <span class="stat-label" id="{{ stat.css_class }}-label">{{ stat.label }}</span>
+                                <i class="fas {{ stat.icon }} stat-icon" aria-hidden="true"></i>
+                            </header>
+                            <p class="stat-number" id="{{ stat.css_class }}-value"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
+                            <p class="stat-trend">{{ stat.trend }}</p>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
 
         <!-- Intelligence spotlight -->
         <section class="dash-section" aria-labelledby="fleet-intelligence-heading">
@@ -304,7 +321,7 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
-    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=9"></script>
     <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=7"></script>
     <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>

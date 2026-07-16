@@ -264,18 +264,26 @@
         }
 
         container.innerHTML = stats.map(function(stat) {
+            var key = stat.css_class || 'stat';
+            var labelId = key + '-label';
+            var valueId = key + '-value';
             var animateAttr = stat.animate_count && stat.data_count !== undefined
                 ? ' data-count="' + stat.data_count + '"'
                 : '';
             return '' +
-                '<a href="' + stat.link + '" class="stat-card stat-card-link ' + stat.css_class + '" data-loader="true" data-loader-message="Loading Assets...">' +
-                    '<i class="fas ' + stat.icon + ' stat-icon"></i>' +
-                    '<div class="stat-content">' +
-                        '<h3>' + stat.label + '</h3>' +
-                        '<p class="stat-number"' + animateAttr + '>' + stat.value + '</p>' +
-                        '<span class="stat-trend">' + stat.trend + '</span>' +
-                    '</div>' +
-                '</a>';
+                '<li class="dashboard-stats-item">' +
+                    '<a href="' + stat.link + '" class="stat-card stat-card-link ' + key + '"' +
+                        ' data-stat="' + key + '"' +
+                        ' data-loader="true" data-loader-message="Loading Assets..."' +
+                        ' aria-labelledby="' + labelId + ' ' + valueId + '">' +
+                        '<header class="stat-card-head">' +
+                            '<span class="stat-label" id="' + labelId + '">' + stat.label + '</span>' +
+                            '<i class="fas ' + stat.icon + ' stat-icon" aria-hidden="true"></i>' +
+                        '</header>' +
+                        '<p class="stat-number" id="' + valueId + '"' + animateAttr + '>' + stat.value + '</p>' +
+                        '<p class="stat-trend">' + stat.trend + '</p>' +
+                    '</a>' +
+                '</li>';
         }).join('');
     }
 

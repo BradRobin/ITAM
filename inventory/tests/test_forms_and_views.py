@@ -332,6 +332,10 @@ class DashboardContextTests(TestCase):
         self.assertContains(response, "Workforce")
         self.assertContains(response, reverse("asset_list"))
         self.assertContains(response, 'class="stat-card stat-card-link stat-total"')
+        self.assertContains(response, 'id="fleet-overview-heading"')
+        self.assertContains(response, 'Fleet overview')
+        self.assertContains(response, 'id="fleet-intelligence-heading"')
+        self.assertContains(response, "Fleet Intelligence")
 
         job = enqueue_job(self.user, BackgroundJob.JobType.DASHBOARD, force=True)
         job.refresh_from_db()

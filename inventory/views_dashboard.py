@@ -13,9 +13,9 @@ class DashboardView(AdminRequiredMixin, TemplateView):
         context["async_dashboard"] = True
         context["dashboard_stats"] = [
             {
-                "label": "Total Assets",
+                "label": "Total assets",
                 "value": "—",
-                "trend": "Loading...",
+                "trend": "Loading…",
                 "css_class": "stat-total",
                 "icon": "fa-boxes",
                 "link": asset_list_url,
@@ -23,7 +23,7 @@ class DashboardView(AdminRequiredMixin, TemplateView):
             {
                 "label": "Available",
                 "value": "—",
-                "trend": "Loading...",
+                "trend": "Loading…",
                 "css_class": "stat-available",
                 "icon": "fa-check-circle",
                 "link": f"{asset_list_url}#available-assets",
@@ -31,15 +31,15 @@ class DashboardView(AdminRequiredMixin, TemplateView):
             {
                 "label": "Assigned",
                 "value": "—",
-                "trend": "Loading...",
+                "trend": "Loading…",
                 "css_class": "stat-assigned",
                 "icon": "fa-user-check",
                 "link": f"{asset_list_url}#assigned-assets",
             },
             {
-                "label": "Under Maintenance",
+                "label": "Under maintenance",
                 "value": "—",
-                "trend": "Loading...",
+                "trend": "Loading…",
                 "css_class": "stat-maintenance",
                 "icon": "fa-tools",
                 "link": f"{asset_list_url}#maintenance-assets",

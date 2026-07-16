@@ -27,7 +27,7 @@ def calculate_percentage(value: int, total: int, *, digits: int = 0):
 
 
 def format_ratio(value: int, total: int) -> str:
-    return f"{value}/{total}"
+    return f"{value} of {total}"
 
 
 def get_asset_counts() -> dict:
@@ -167,9 +167,9 @@ def get_dashboard_context() -> dict:
         "analytics": analytics,
         "dashboard_stats": [
             {
-                "label": "Total Assets",
+                "label": "Total assets",
                 "value": total_assets,
-                "trend": "All equipment",
+                "trend": "Every asset in the inventory",
                 "css_class": "stat-total",
                 "icon": "fa-boxes",
                 "data_count": total_assets,
@@ -179,7 +179,7 @@ def get_dashboard_context() -> dict:
             {
                 "label": "Available",
                 "value": format_ratio(available_assets, total_assets),
-                "trend": "Ready for assignment",
+                "trend": "Ready to assign right now",
                 "css_class": "stat-available",
                 "icon": "fa-check-circle",
                 "link": f"{asset_list_url}#available-assets",
@@ -187,15 +187,15 @@ def get_dashboard_context() -> dict:
             {
                 "label": "Assigned",
                 "value": format_ratio(assigned_assets, total_assets),
-                "trend": "Currently with employees",
+                "trend": "Checked out to employees",
                 "css_class": "stat-assigned",
                 "icon": "fa-user-check",
                 "link": f"{asset_list_url}#assigned-assets",
             },
             {
-                "label": "Under Maintenance",
+                "label": "Under maintenance",
                 "value": format_ratio(maintenance_assets, total_assets),
-                "trend": "In repair shop",
+                "trend": "In service or repair",
                 "css_class": "stat-maintenance",
                 "icon": "fa-tools",
                 "link": f"{asset_list_url}#maintenance-assets",
