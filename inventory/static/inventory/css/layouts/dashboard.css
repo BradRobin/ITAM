@@ -829,6 +829,14 @@
     border-left: none;
 }
 
+.overdue-clear-icon {
+    color: var(--success-500, #22c55e);
+}
+
+[data-theme="dark"] .overdue-clear-icon {
+    color: var(--success-400, #4ade80);
+}
+
 .overdue-header {
     display: flex;
     align-items: center;

@@ -335,9 +335,9 @@
             container.innerHTML = '' +
                 '<div class="overdue-section overdue-clear">' +
                     '<div class="overdue-header">' +
-                        '<h2><i class="fas fa-check-circle" style="color: var(--success-500, #22c55e);"></i> You\'re all caught up!</h2>' +
+                        '<h2><i class="fas fa-check-circle overdue-clear-icon" aria-hidden="true"></i> You\'re all caught up!</h2>' +
                     '</div>' +
-                    '<p class="overdue-clear-message"><i class="fas fa-check"></i> All assets serviced within 6 months</p>' +
+                    '<p class="overdue-clear-message">All assets serviced within 6 months</p>' +
                 '</div>';
             return;
         }
