@@ -46,6 +46,58 @@
         });
     }
 
+    function outerRingPlugin(id) {
+        return {
+            id: 'outerRing_' + id,
+            afterDatasetsDraw: function(chart) {
+                var meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) {
+                    return;
+                }
+                var firstArc = meta.data[0];
+                var props = firstArc.getProps(['x', 'y', 'outerRadius'], true);
+                if (!props.outerRadius) {
+                    return;
+                }
+                var c = chart.ctx;
+                var isDark = getTheme() === 'dark';
+                c.save();
+                c.beginPath();
+                c.arc(props.x, props.y, props.outerRadius + 5, 0, Math.PI * 2);
+                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)';
+                c.lineWidth = 1.5;
+                c.stroke();
+                c.restore();
+            }
+        };
+    }
+
+    function centerTextPlugin(id, total, centerLabel) {
+        return {
+            id: 'centerText_' + id,
+            beforeDraw: function(chart) {
+                var area = chart.chartArea;
+                var c = chart.ctx;
+                var fs = Math.min(chart.width, chart.height) / 5;
+                c.save();
+                c.font = 'bold ' + fs + 'px system-ui, sans-serif';
+                c.textBaseline = 'middle';
+                c.textAlign = 'center';
+                var cx = (area.left + area.right) / 2;
+                var cy = (area.top + area.bottom) / 2 - (centerLabel ? 6 : 0);
+                c.fillStyle = getColors().text;
+                c.fillText(total, cx, cy);
+                if (centerLabel) {
+                    c.font = (fs / 2.5) + 'px system-ui, sans-serif';
+                    c.globalAlpha = 0.6;
+                    c.fillText(centerLabel, cx, cy + fs / 1.8);
+                    c.globalAlpha = 1;
+                }
+                c.restore();
+            }
+        };
+    }
+
     function createDoughnut(id, data, labels, colors, centerLabel) {
         var ctx = document.getElementById(id);
         if (!ctx || typeof Chart === 'undefined') return;
@@ -56,7 +108,6 @@
         }
 
         var total = data.reduce(function(a, b) { return a + b; }, 0);
-        var isDark = getTheme() === 'dark';
         var filteredLabels = [];
         var filteredData = [];
         var filteredColors = [];
@@ -75,6 +126,11 @@
             filteredColors = colorSet.slice();
         }
 
+        var plugins = [outerRingPlugin(id)];
+        if (centerLabel !== false) {
+            plugins.push(centerTextPlugin(id, total, centerLabel));
+        }
+
         chartInstances[id] = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -83,15 +139,18 @@
                     data: filteredData,
                     backgroundColor: filteredColors,
                     borderWidth: 0,
+                    // Rounded caps with negative spacing so segment ends overlap clockwise.
                     borderRadius: 40,
-                    spacing: 6,
-                    hoverOffset: 8
+                    spacing: -10,
+                    hoverOffset: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '70%',
+                rotation: -90,
+                circumference: 360,
                 elements: {
                     arc: {
                         borderWidth: 0,
@@ -122,29 +181,7 @@
                 },
                 animation: { duration: 1000 }
             },
-            plugins: centerLabel !== false ? [{
-                id: 'centerText_' + id,
-                beforeDraw: function(chart) {
-                    var area = chart.chartArea;
-                    var c = chart.ctx;
-                    var fs = Math.min(chart.width, chart.height) / 5;
-                    c.save();
-                    c.font = 'bold ' + fs + 'px system-ui, sans-serif';
-                    c.textBaseline = 'middle';
-                    c.textAlign = 'center';
-                    var cx = (area.left + area.right) / 2;
-                    var cy = (area.top + area.bottom) / 2 - (centerLabel ? 6 : 0);
-                    c.fillStyle = getColors().text;
-                    c.fillText(total, cx, cy);
-                    if (centerLabel) {
-                        c.font = (fs / 2.5) + 'px system-ui, sans-serif';
-                        c.globalAlpha = 0.6;
-                        c.fillText(centerLabel, cx, cy + fs / 1.8);
-                        c.globalAlpha = 1;
-                    }
-                    c.restore();
-                }
-            }] : []
+            plugins: plugins
         });
     }
 

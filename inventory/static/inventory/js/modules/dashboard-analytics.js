@@ -120,65 +120,111 @@
         }
     }
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function employeeInitials(name) {
+        var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return '?';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function renderTopEmployees(employees) {
+        var mount = document.getElementById('dashTopEmployees');
+        if (!mount) return;
+
+        if (!employees || !employees.length) {
+            mount.innerHTML = '<p class="employee-rank-empty">No active assignments yet.</p>';
+            return;
+        }
+
+        var maxAssets = Math.max.apply(null, employees.map(function(row) {
+            return row.assets || 0;
+        })) || 1;
+
+        mount.innerHTML = employees.map(function(row, index) {
+            var assets = row.assets || 0;
+            var width = Math.max(8, Math.round((assets / maxAssets) * 100));
+            var label = assets === 1 ? '1 asset' : assets + ' assets';
+            return '<div class="employee-rank-row">' +
+                '<span class="employee-rank-pos">' + (index + 1) + '</span>' +
+                '<span class="employee-rank-avatar" aria-hidden="true">' +
+                    escapeHtml(employeeInitials(row.name)) +
+                '</span>' +
+                '<div class="employee-rank-meta">' +
+                    '<div class="employee-rank-top">' +
+                        '<span class="employee-rank-name">' + escapeHtml(row.name) + '</span>' +
+                        '<span class="employee-rank-count">' + escapeHtml(label) + '</span>' +
+                    '</div>' +
+                    '<span class="employee-rank-dept">' + escapeHtml(row.department || 'Unassigned') + '</span>' +
+                    '<div class="employee-rank-track" aria-hidden="true">' +
+                        '<span class="employee-rank-bar" style="width:' + width + '%"></span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
     function renderCharts(analytics) {
-        if (!window.ChartCore || !analytics) return;
-        ChartCore.destroyAll();
+        if (!analytics) return;
 
-        if (analytics.asset_by_status && Object.keys(analytics.asset_by_status).length) {
-            var statusLabels = Object.keys(analytics.asset_by_status);
-            ChartCore.createDoughnut(
-                'dashStatusChart',
-                Object.values(analytics.asset_by_status),
-                statusLabels,
-                ChartCore.statusColors(statusLabels),
-                'assets'
-            );
+        if (window.ChartCore) {
+            ChartCore.destroyAll();
+
+            if (analytics.asset_by_status && Object.keys(analytics.asset_by_status).length) {
+                var statusLabels = Object.keys(analytics.asset_by_status);
+                ChartCore.createDoughnut(
+                    'dashStatusChart',
+                    Object.values(analytics.asset_by_status),
+                    statusLabels,
+                    ChartCore.statusColors(statusLabels),
+                    'assets'
+                );
+            }
+
+            if (analytics.asset_by_type && Object.keys(analytics.asset_by_type).length) {
+                ChartCore.createBar(
+                    'dashTypeChart',
+                    Object.values(analytics.asset_by_type),
+                    Object.keys(analytics.asset_by_type),
+                    false
+                );
+            }
+
+            weeklyGrowth = analytics.weekly_asset_growth || null;
+            if (weeklyGrowth && weeklyGrowth.default_month) {
+                selectedMonthKey = weeklyGrowth.default_month;
+            }
+            setupGrowthSwitcher();
+            renderGrowthChart();
+
+            if (analytics.maintenance_by_month && analytics.maintenance_by_month.length) {
+                var maintenance = monthSeries(analytics.maintenance_by_month);
+                ChartCore.createBar(
+                    'dashMaintenanceChart',
+                    maintenance.values,
+                    maintenance.labels,
+                    false,
+                    '#f59e0b'
+                );
+            }
+
+            if (analytics.department_counts && Object.keys(analytics.department_counts).length) {
+                var deptLabels = Object.keys(analytics.department_counts);
+                var deptValues = Object.values(analytics.department_counts);
+                ChartCore.createDoughnut('dashDepartmentChart', deptValues, deptLabels, null, false);
+                renderDeptLegend(deptLabels, deptValues);
+            }
         }
 
-        if (analytics.asset_by_type && Object.keys(analytics.asset_by_type).length) {
-            ChartCore.createBar(
-                'dashTypeChart',
-                Object.values(analytics.asset_by_type),
-                Object.keys(analytics.asset_by_type),
-                false
-            );
-        }
-
-        weeklyGrowth = analytics.weekly_asset_growth || null;
-        if (weeklyGrowth && weeklyGrowth.default_month) {
-            selectedMonthKey = weeklyGrowth.default_month;
-        }
-        setupGrowthSwitcher();
-        renderGrowthChart();
-
-        if (analytics.maintenance_by_month && analytics.maintenance_by_month.length) {
-            var maintenance = monthSeries(analytics.maintenance_by_month);
-            ChartCore.createBar(
-                'dashMaintenanceChart',
-                maintenance.values,
-                maintenance.labels,
-                false,
-                '#f59e0b'
-            );
-        }
-
-        if (analytics.top_assets && analytics.top_assets.length) {
-            var top = analytics.top_assets.slice().reverse();
-            ChartCore.createBar(
-                'dashTopAssetsChart',
-                top.map(function(d) { return d.assignments; }),
-                top.map(function(d) { return d.name; }),
-                true,
-                '#8b5cf6'
-            );
-        }
-
-        if (analytics.department_counts && Object.keys(analytics.department_counts).length) {
-            var deptLabels = Object.keys(analytics.department_counts);
-            var deptValues = Object.values(analytics.department_counts);
-            ChartCore.createDoughnut('dashDepartmentChart', deptValues, deptLabels, null, false);
-            renderDeptLegend(deptLabels, deptValues);
-        }
+        renderTopEmployees(analytics.top_employees || []);
     }
 
     function updateInsights(data) {

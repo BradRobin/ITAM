@@ -108,6 +108,21 @@ def get_analytics_payload(counts: dict | None = None) -> dict:
             assignment_count=Count("assignments"),
         ).order_by("-assignment_count", "name")[:5]
     ]
+    top_employees = [
+        {
+            "name": employee.name,
+            "department": employee.department or "Unassigned",
+            "assets": employee.active_asset_count,
+        }
+        for employee in Employee.objects.annotate(
+            active_asset_count=Count(
+                "assignments",
+                filter=Q(assignments__date_returned__isnull=True),
+            ),
+        )
+        .filter(active_asset_count__gt=0)
+        .order_by("-active_asset_count", "name")[:8]
+    ]
     department_counts = {
         row["department"] or "Unassigned": row["total"]
         for row in Employee.objects.values("department").annotate(total=Count("id")).order_by("department")
@@ -120,6 +135,7 @@ def get_analytics_payload(counts: dict | None = None) -> dict:
         "maintenance_by_month": maintenance_by_month,
         "weekly_asset_growth": weekly_asset_growth,
         "top_assets": top_assets,
+        "top_employees": top_employees,
         "department_counts": department_counts,
         "total_assignments": Assignment.objects.count(),
     }

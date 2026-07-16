@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=10">
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=4">
 {% endblock %}
 
 {% block content %}
@@ -189,11 +189,10 @@
                 <div class="bento-panel" data-panel="people">
                     <div class="bento-card">
                         <div class="bento-card-head">
-                            <h3>Top Assigned Assets</h3>
+                            <h3>Top Employees by Assets</h3>
+                            <span class="bento-hint">Active assignments</span>
                         </div>
-                        <div class="bento-chart-wrap bento-chart-tall">
-                            <canvas id="dashTopAssetsChart"></canvas>
-                        </div>
+                        <div class="employee-rank-list" id="dashTopEmployees" aria-live="polite"></div>
                     </div>
                     <div class="bento-card">
                         <div class="bento-card-head">
@@ -205,9 +204,22 @@
                         <div class="dept-legend" id="dashDeptLegend"></div>
                     </div>
                 </div>
-                <div class="bento-loading" id="analytics-loading">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    <span>Loading analytics...</span>
+                <div class="bento-loading" id="analytics-loading" aria-busy="true" aria-label="Loading analytics">
+                    <div class="bento-skeleton-grid" aria-hidden="true">
+                        <div class="bento-skeleton-card">
+                            <div class="bento-skeleton-head">
+                                <span class="bento-skeleton-bone bento-skeleton-title"></span>
+                                <span class="bento-skeleton-bone bento-skeleton-badge"></span>
+                            </div>
+                            <div class="bento-skeleton-bone bento-skeleton-chart"></div>
+                        </div>
+                        <div class="bento-skeleton-card">
+                            <div class="bento-skeleton-head">
+                                <span class="bento-skeleton-bone bento-skeleton-title"></span>
+                            </div>
+                            <div class="bento-skeleton-bone bento-skeleton-chart"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -283,8 +295,8 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
-    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=5"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=4"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=6"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=6"></script>
     <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
