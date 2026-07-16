@@ -50,26 +50,55 @@
         var ctx = document.getElementById(id);
         if (!ctx || typeof Chart === 'undefined') return;
 
+        if (chartInstances[id] && typeof chartInstances[id].destroy === 'function') {
+            chartInstances[id].destroy();
+            delete chartInstances[id];
+        }
+
         var total = data.reduce(function(a, b) { return a + b; }, 0);
         var isDark = getTheme() === 'dark';
+        var filteredLabels = [];
+        var filteredData = [];
+        var filteredColors = [];
         var colorSet = colors || getChartColors(data.length);
+        data.forEach(function(value, index) {
+            if (!value) {
+                return;
+            }
+            filteredData.push(value);
+            filteredLabels.push(labels[index]);
+            filteredColors.push(colorSet[index % colorSet.length]);
+        });
+        if (!filteredData.length) {
+            filteredData = data.slice();
+            filteredLabels = labels.slice();
+            filteredColors = colorSet.slice();
+        }
 
         chartInstances[id] = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: labels,
+                labels: filteredLabels,
                 datasets: [{
-                    data: data,
-                    backgroundColor: colorSet,
-                    borderWidth: 2,
-                    borderColor: isDark ? '#1e293b' : '#ffffff',
-                    hoverOffset: 10
+                    data: filteredData,
+                    backgroundColor: filteredColors,
+                    borderWidth: 0,
+                    borderRadius: 40,
+                    spacing: 6,
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '70%',
+                elements: {
+                    arc: {
+                        borderWidth: 0,
+                        borderRadius: 40,
+                        circular: true
+                    }
+                },
                 plugins: {
                     legend: {
                         position: 'bottom',
