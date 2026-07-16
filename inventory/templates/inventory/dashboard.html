@@ -5,17 +5,22 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=18">
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=7">
 {% endblock %}
 
 {% block content %}
     <div class="dashboard-page"{% if async_dashboard %} data-async-dashboard="true"{% endif %}>
 
         <!-- Welcome -->
-        <header class="dashboard-welcome" aria-labelledby="dashboard-welcome-heading">
-            <div class="welcome-top">
-                <div class="welcome-greeting">
-                    <i class="fas fa-sun greeting-icon" id="greetingIcon" aria-hidden="true"></i>
+        <header class="dashboard-welcome" id="dashboardWelcome" aria-labelledby="dashboard-welcome-heading" data-sky="morning">
+            <div class="welcome-sky" aria-hidden="true">
+                <span class="welcome-sky-glow"></span>
+                <span class="welcome-sky-rays"></span>
+                <span class="welcome-sky-orb"></span>
+                <span class="welcome-sky-stars"></span>
+            </div>
+            <div class="welcome-body">
+                <div class="welcome-copy">
                     <div class="welcome-heading-group">
                         <h1 class="greeting-title" id="dashboard-welcome-heading">
                             <span id="greetingMessage">Good Morning</span>
@@ -25,24 +30,24 @@
                             <span class="user-role">{% if user.is_staff %}Administrator{% else %}Team Member{% endif %}</span>
                         </p>
                     </div>
+                    <p class="typewriter-text" id="typewriterText" aria-live="off"></p>
+                    <nav class="welcome-actions" aria-label="Dashboard quick actions">
+                        <a href="{% url 'asset_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle" aria-hidden="true"></i> Add New Asset
+                        </a>
+                        <a href="{% url 'employee_add' %}" class="btn btn-secondary">
+                            <i class="fas fa-user-plus" aria-hidden="true"></i> Add Employee
+                        </a>
+                        <a href="{% url 'reports' %}" class="btn btn-secondary btn-ghost welcome-reports-btn">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i> Full Reports
+                        </a>
+                    </nav>
                 </div>
                 <aside class="welcome-time" aria-label="Local date and time">
-                    <time class="time-display" id="liveTime" datetime="">00:00:00</time>
+                    <time class="time-display" id="liveTime" datetime="">00:00</time>
                     <time class="date-display" id="liveDate" datetime=""></time>
                 </aside>
             </div>
-            <p class="typewriter-text" id="typewriterText" aria-live="off"></p>
-            <nav class="welcome-actions" aria-label="Dashboard quick actions">
-                <a href="{% url 'asset_add' %}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle" aria-hidden="true"></i> Add New Asset
-                </a>
-                <a href="{% url 'employee_add' %}" class="btn btn-secondary">
-                    <i class="fas fa-user-plus" aria-hidden="true"></i> Add Employee
-                </a>
-                <a href="{% url 'reports' %}" class="btn btn-secondary btn-ghost">
-                    <i class="fas fa-chart-line" aria-hidden="true"></i> Full Reports
-                </a>
-            </nav>
         </header>
 
         <!-- Fleet overview stats -->
@@ -322,7 +327,7 @@
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/core/chart-core.js' %}?v=11"></script>
     <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=8"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=8"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

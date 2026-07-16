@@ -1,6 +1,7 @@
 /* Dashboard analytics canvas — bento grid, tabs, chart panels */
 
 .dash-chart-tabs {
+    position: relative;
     display: flex;
     gap: 0.35rem;
     padding: 0.25rem;
@@ -12,8 +13,30 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
+.dash-tab-glider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    border-radius: var(--radius-md, 8px);
+    background: var(--bg-card, #ffffff);
+    box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+    transition:
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    will-change: transform, width, height;
+}
+
+[data-theme="dark"] .dash-tab-glider {
+    background: #334155;
+}
+
 .dash-tab {
-    border: none;
+    position: relative;
+    z-index: 1;
+    border: 1px solid #94a3b8;
     background: transparent;
     padding: 0.4rem 0.85rem;
     font-size: var(--font-size-xs, 0.78rem);
@@ -21,22 +44,26 @@
     color: var(--text-muted, #94a3b8);
     border-radius: var(--radius-md, 8px);
     cursor: pointer;
-    transition: all var(--transition-fast, 0.2s ease);
+    transition: color 0.25s ease, border-color 0.25s ease;
 }
 
 .dash-tab:hover {
-    color: var(--text-primary, #1e293b);
+    color: var(--text-secondary, #64748b);
 }
 
 .dash-tab.active {
-    background: var(--bg-card, #ffffff);
-    color: var(--text-primary, #1e293b);
-    box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.06));
+    background: transparent;
+    color: #2563eb;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .dash-tab {
+    border-color: rgba(148, 163, 184, 0.55);
 }
 
 [data-theme="dark"] .dash-tab.active {
-    background: #334155;
-    color: var(--text-primary, #f1f5f9);
+    background: transparent;
+    color: #60a5fa;
 }
 
 .analytics-bento {

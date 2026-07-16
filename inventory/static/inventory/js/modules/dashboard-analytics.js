@@ -255,21 +255,65 @@
         }
     }
 
+    function syncTabGlider(tabsEl, activeTab, animate) {
+        if (!tabsEl || !activeTab) return;
+        var glider = tabsEl.querySelector('.dash-tab-glider');
+        if (!glider) return;
+
+        var tabsRect = tabsEl.getBoundingClientRect();
+        var tabRect = activeTab.getBoundingClientRect();
+        var x = tabRect.left - tabsRect.left;
+        var y = tabRect.top - tabsRect.top;
+
+        if (animate === false) {
+            glider.style.transition = 'none';
+        }
+        glider.style.width = tabRect.width + 'px';
+        glider.style.height = tabRect.height + 'px';
+        glider.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+        if (animate === false) {
+            // Force reflow so the next move can animate from this position.
+            void glider.offsetWidth;
+            glider.style.transition = '';
+        }
+    }
+
     function setupTabs() {
         if (tabsReady) return;
         tabsReady = true;
+        var tabsEl = document.querySelector('.dash-chart-tabs');
         var tabs = document.querySelectorAll('.dash-tab');
         var panels = document.querySelectorAll('.bento-panel');
+        var activeTab = tabsEl ? tabsEl.querySelector('.dash-tab.active') : null;
+
+        if (!activeTab && tabs.length) {
+            activeTab = tabs[0];
+            activeTab.classList.add('active');
+            activeTab.setAttribute('aria-selected', 'true');
+        }
+
+        syncTabGlider(tabsEl, activeTab, false);
+
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function() {
                 var target = tab.getAttribute('data-tab');
-                tabs.forEach(function(t) { t.classList.remove('active'); });
+                tabs.forEach(function(t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
                 panels.forEach(function(p) {
                     p.classList.toggle('active', p.getAttribute('data-panel') === target);
                 });
                 tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                syncTabGlider(tabsEl, tab, true);
                 if (window.ChartCore) ChartCore.resizeAll();
             });
+        });
+
+        window.addEventListener('resize', function() {
+            var current = tabsEl ? tabsEl.querySelector('.dash-tab.active') : null;
+            syncTabGlider(tabsEl, current, false);
         });
     }
 
