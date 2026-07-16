@@ -824,11 +824,7 @@
 }
 
 .overdue-section.overdue-clear {
-    border-left: 4px solid var(--success-500, #22c55e);
-}
-
-[data-theme="dark"] .overdue-section.overdue-clear {
-    border-left-color: var(--success-400, #4ade80);
+    border-left: none;
 }
 
 .overdue-header {
@@ -888,12 +884,12 @@
 }
 
 .overdue-clear-message {
-    color: var(--success-500, #22c55e);
+    color: var(--primary-600, #2563eb);
     font-size: var(--font-size-sm, 0.9rem);
 }
 
 [data-theme="dark"] .overdue-clear-message {
-    color: var(--success-400, #4ade80);
+    color: var(--primary-400, #60a5fa);
 }
 
 .overdue-grid {
