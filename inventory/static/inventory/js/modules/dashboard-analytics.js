@@ -22,7 +22,7 @@
         var total = values.reduce(function(a, b) { return a + b; }, 0) || 1;
         mount.innerHTML = labels.map(function(label, i) {
             var pct = Math.round((values[i] / total) * 100);
-            var color = ChartCore.chartColors[i % ChartCore.chartColors.length];
+            var color = ChartCore.getBlueShades(labels.length)[i];
             return '<div class="dept-legend-item">' +
                 '<span class="dept-legend-dot" style="background:' + color + '"></span>' +
                 '<span class="dept-legend-name">' + label + '</span>' +
@@ -211,15 +211,20 @@
                     'dashMaintenanceChart',
                     maintenance.values,
                     maintenance.labels,
-                    false,
-                    '#f59e0b'
+                    false
                 );
             }
 
             if (analytics.department_counts && Object.keys(analytics.department_counts).length) {
                 var deptLabels = Object.keys(analytics.department_counts);
                 var deptValues = Object.values(analytics.department_counts);
-                ChartCore.createDoughnut('dashDepartmentChart', deptValues, deptLabels, null, false);
+                ChartCore.createDoughnut(
+                    'dashDepartmentChart',
+                    deptValues,
+                    deptLabels,
+                    ChartCore.getBlueShades(deptLabels.length),
+                    false
+                );
                 renderDeptLegend(deptLabels, deptValues);
             }
         }
