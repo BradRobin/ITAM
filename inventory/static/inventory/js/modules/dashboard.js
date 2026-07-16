@@ -26,47 +26,76 @@
     var statsObserver = null;
     
     // ============================================
-    // Greeting Function with Font Awesome Icons
+    // Greeting + sky period
     // ============================================
+    function getSkyPeriod(now) {
+        var hour = (now || new Date()).getHours();
+        var minute = (now || new Date()).getMinutes();
+        var decimal = hour + (minute / 60);
+
+        if (decimal >= 5 && decimal < 11) {
+            return 'morning';
+        }
+        if (decimal >= 11 && decimal < 15) {
+            return 'noon';
+        }
+        if (decimal >= 15 && decimal < 20) {
+            return 'sunset';
+        }
+        return 'night';
+    }
+
     function getGreeting() {
-        var hour = new Date().getHours();
-        var icon = '';
-        var message = '';
-        
-        if (hour >= 5 && hour < 12) {
-            message = 'Good Morning';
-            icon = 'fa-sun';
-        } else if (hour >= 12 && hour < 17) {
-            message = 'Good Afternoon';
-            icon = 'fa-cloud-sun';
-        } else if (hour >= 17 && hour < 21) {
-            message = 'Good Evening';
-            icon = 'fa-moon';
+        var period = getSkyPeriod();
+        if (period === 'morning') {
+            return 'Good Morning';
+        }
+        if (period === 'noon') {
+            return 'Good Afternoon';
+        }
+        if (period === 'sunset') {
+            return 'Good Evening';
+        }
+        return 'Good Night';
+    }
+
+    function updateMoonPosition(now) {
+        var welcome = document.getElementById('dashboardWelcome');
+        if (!welcome || welcome.getAttribute('data-sky') !== 'night') {
+            return;
+        }
+
+        // Night window: 20:00 -> 05:00 (9 hours). Moon starts west/high and sets before morning.
+        var hour = now.getHours();
+        var minute = now.getMinutes();
+        var minutesIntoNight;
+        if (hour >= 20) {
+            minutesIntoNight = ((hour - 20) * 60) + minute;
         } else {
-            message = 'Good Night';
-            icon = 'fa-star';
+            minutesIntoNight = ((hour + 4) * 60) + minute;
         }
-        
-        return { message: message, icon: icon };
+        var progress = Math.min(1, Math.max(0, minutesIntoNight / (9 * 60)));
+        var moonX = 8 + (progress * 28);
+        var moonY = 18 + (progress * 58);
+        welcome.style.setProperty('--moon-x', moonX.toFixed(2) + '%');
+        welcome.style.setProperty('--moon-y', moonY.toFixed(2) + '%');
     }
-    
-    // ============================================
-    // Update Greeting
-    // ============================================
+
     function updateGreeting() {
-        var greeting = getGreeting();
+        var now = new Date();
         var greetingElement = document.getElementById('greetingMessage');
-        var iconElement = document.getElementById('greetingIcon');
-        
+        var welcome = document.getElementById('dashboardWelcome');
+        var period = getSkyPeriod(now);
+
         if (greetingElement) {
-            greetingElement.textContent = greeting.message;
+            greetingElement.textContent = getGreeting();
         }
-        if (iconElement) {
-            // Update Font Awesome icon
-            iconElement.className = 'fas ' + greeting.icon + ' greeting-icon';
+        if (welcome) {
+            welcome.setAttribute('data-sky', period);
+            updateMoonPosition(now);
         }
     }
-    
+
     // ============================================
     // Live Time and Date
     // ============================================
@@ -78,8 +107,7 @@
         if (timeElement) {
             var hours = String(now.getHours()).padStart(2, '0');
             var minutes = String(now.getMinutes()).padStart(2, '0');
-            var seconds = String(now.getSeconds()).padStart(2, '0');
-            timeElement.textContent = hours + ':' + minutes + ':' + seconds;
+            timeElement.textContent = hours + ':' + minutes;
             timeElement.setAttribute('datetime', now.toISOString());
         }
 
@@ -98,6 +126,8 @@
                 String(now.getDate()).padStart(2, '0')
             );
         }
+
+        updateGreeting();
 
         var lastUpdated = document.getElementById('lastUpdated');
         if (lastUpdated) {

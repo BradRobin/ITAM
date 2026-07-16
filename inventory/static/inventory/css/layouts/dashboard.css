@@ -4,80 +4,271 @@
 
 .dashboard-page {
     max-width: 1440px;
+    width: 100%;
     margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: clip;
+    min-width: 0;
 }
 
 /* ==========================================
    WELCOME SECTION
    ========================================== */
 .dashboard-welcome {
+    --welcome-fg: #111111;
+    --welcome-muted: #525252;
+    --welcome-border: rgba(0, 0, 0, 0.12);
+    --welcome-badge-bg: rgba(255, 255, 255, 0.55);
+    --welcome-badge-border: rgba(0, 0, 0, 0.1);
+    --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.55);
+    --welcome-btn-secondary-fg: #111111;
+    position: relative;
+    isolation: isolate;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 13.5rem;
+    margin: 0 0 1.5rem;
+    padding: 0.2rem 0.35rem 0.2rem 1.05rem;
+    border: 1px solid var(--welcome-border);
+    border-radius: 14px;
+    overflow: hidden;
+    overflow-x: clip;
+    color: var(--welcome-fg);
+    background: #fff7ed;
+    transition: background 0.6s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+.welcome-sky {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    contain: paint;
+}
+
+.welcome-sky-glow,
+.welcome-sky-rays,
+.welcome-sky-orb,
+.welcome-sky-stars {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+.welcome-sky-orb {
+    width: 7.5rem;
+    height: 7.5rem;
+    inset: auto;
+    border-radius: 50%;
+    opacity: 0;
+    filter: blur(0.5px);
+    transition: opacity 0.5s ease, transform 0.8s ease;
+    /* Keep decorative orbs from expanding scrollable overflow. */
+    max-width: 40%;
+    max-height: 80%;
+}
+
+.welcome-sky-stars {
+    opacity: 0;
+    background-image:
+        radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, 0.95), transparent),
+        radial-gradient(1px 1px at 28% 48%, rgba(255, 255, 255, 0.75), transparent),
+        radial-gradient(1.5px 1.5px at 41% 16%, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(1px 1px at 58% 34%, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(2px 2px at 73% 18%, rgba(255, 255, 255, 0.95), transparent),
+        radial-gradient(1px 1px at 82% 52%, rgba(255, 255, 255, 0.65), transparent),
+        radial-gradient(1.5px 1.5px at 18% 68%, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 35% 82%, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1.5px 1.5px at 64% 74%, rgba(255, 255, 255, 0.85), transparent),
+        radial-gradient(1px 1px at 88% 78%, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 8% 40%, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1.5px 1.5px at 50% 58%, rgba(255, 255, 255, 0.75), transparent);
+}
+
+.welcome-sky-rays {
+    opacity: 0;
+    background-repeat: no-repeat;
+    transition: opacity 0.5s ease;
+}
+
+/* Morning — warm orange, sunrise rays from the east (right) */
+.dashboard-welcome[data-sky="morning"] {
+    background: linear-gradient(115deg, #fff7ed 0%, #ffedd5 42%, #fdba74 100%);
+}
+
+.dashboard-welcome[data-sky="morning"] .welcome-sky-glow {
+    background:
+        radial-gradient(ellipse 55% 80% at 100% 50%, rgba(251, 146, 60, 0.55), transparent 70%),
+        radial-gradient(ellipse 40% 60% at 85% 20%, rgba(254, 243, 199, 0.7), transparent 65%);
+}
+
+.dashboard-welcome[data-sky="morning"] .welcome-sky-rays {
+    opacity: 1;
+    background:
+        conic-gradient(from 200deg at 108% 50%,
+            transparent 0deg,
+            rgba(255, 237, 180, 0.55) 8deg,
+            transparent 16deg,
+            rgba(255, 200, 120, 0.45) 24deg,
+            transparent 34deg,
+            rgba(255, 247, 210, 0.5) 42deg,
+            transparent 52deg,
+            rgba(255, 186, 90, 0.4) 60deg,
+            transparent 72deg);
+}
+
+.dashboard-welcome[data-sky="morning"] .welcome-sky-orb {
+    opacity: 1;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: radial-gradient(circle at 35% 35%, #fff7ed 0%, #fbbf24 40%, #f97316 78%, transparent 82%);
+    box-shadow: 0 0 40px rgba(249, 115, 22, 0.45);
+}
+
+/* Noon — pale yellow, blue/white rays from top center */
+.dashboard-welcome[data-sky="noon"] {
+    background: linear-gradient(180deg, #fefce8 0%, #fef9c3 55%, #fef3c7 100%);
+}
+
+.dashboard-welcome[data-sky="noon"] .welcome-sky-glow {
+    background:
+        radial-gradient(ellipse 70% 55% at 50% -5%, rgba(254, 249, 195, 0.95), transparent 70%),
+        radial-gradient(ellipse 45% 40% at 50% 0%, rgba(186, 230, 253, 0.45), transparent 70%);
+}
+
+.dashboard-welcome[data-sky="noon"] .welcome-sky-rays {
+    opacity: 1;
+    background:
+        conic-gradient(from -30deg at 50% -8%,
+            transparent 0deg,
+            rgba(255, 255, 255, 0.75) 6deg,
+            transparent 14deg,
+            rgba(186, 230, 253, 0.5) 22deg,
+            transparent 30deg,
+            rgba(255, 255, 255, 0.65) 38deg,
+            transparent 46deg,
+            rgba(147, 197, 253, 0.4) 54deg,
+            transparent 64deg,
+            rgba(255, 255, 255, 0.55) 72deg,
+            transparent 82deg);
+}
+
+.dashboard-welcome[data-sky="noon"] .welcome-sky-orb {
+    opacity: 0.9;
+    left: 50%;
+    top: 0.35rem;
+    transform: translateX(-50%);
+    width: 5.25rem;
+    height: 5.25rem;
+    background: radial-gradient(circle at 40% 40%, #ffffff 0%, #fde68a 45%, #fbbf24 78%, transparent 82%);
+    box-shadow: 0 0 36px rgba(253, 224, 71, 0.5);
+}
+
+/* Sunset / late afternoon — orange, rays from the west (left) */
+.dashboard-welcome[data-sky="sunset"] {
+    background: linear-gradient(250deg, #fb923c 0%, #fdba74 38%, #ffedd5 100%);
+}
+
+.dashboard-welcome[data-sky="sunset"] .welcome-sky-glow {
+    background:
+        radial-gradient(ellipse 60% 90% at 0% 55%, rgba(234, 88, 12, 0.55), transparent 70%),
+        radial-gradient(ellipse 45% 55% at 15% 80%, rgba(251, 113, 133, 0.28), transparent 70%);
+}
+
+.dashboard-welcome[data-sky="sunset"] .welcome-sky-rays {
+    opacity: 1;
+    background:
+        conic-gradient(from 20deg at -8% 55%,
+            transparent 0deg,
+            rgba(255, 237, 180, 0.55) 8deg,
+            transparent 16deg,
+            rgba(255, 170, 100, 0.45) 24deg,
+            transparent 34deg,
+            rgba(255, 228, 180, 0.5) 42deg,
+            transparent 52deg,
+            rgba(255, 140, 80, 0.4) 60deg,
+            transparent 72deg);
+}
+
+.dashboard-welcome[data-sky="sunset"] .welcome-sky-orb {
+    opacity: 1;
+    left: 0.35rem;
+    bottom: 0.35rem;
+    top: auto;
+    background: radial-gradient(circle at 40% 35%, #ffedd5 0%, #fb923c 42%, #ea580c 78%, transparent 82%);
+    box-shadow: 0 0 42px rgba(234, 88, 12, 0.45);
+}
+
+/* Night — black sky, inverted text, stars, moon in the west */
+.dashboard-welcome[data-sky="night"] {
+    --welcome-fg: #f5f5f5;
+    --welcome-muted: #a3a3a3;
+    --welcome-border: rgba(255, 255, 255, 0.14);
+    --welcome-badge-bg: rgba(255, 255, 255, 0.08);
+    --welcome-badge-border: rgba(255, 255, 255, 0.16);
+    --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.1);
+    --welcome-btn-secondary-fg: #f5f5f5;
+    /* Shorthand clears prior gradient themes cleanly */
+    background: #05070d;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-sky-glow {
+    background:
+        radial-gradient(ellipse 50% 70% at 12% 40%, rgba(99, 102, 241, 0.18), transparent 70%),
+        radial-gradient(ellipse 40% 50% at 80% 70%, rgba(30, 58, 138, 0.25), transparent 70%);
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-sky-stars {
+    opacity: 1;
+    animation: welcomeStarTwinkle 4.5s ease-in-out infinite;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-sky-orb {
+    opacity: 1;
+    left: var(--moon-x, 8%);
+    top: var(--moon-y, 22%);
+    width: 3.4rem;
+    height: 3.4rem;
+    background:
+        radial-gradient(circle at 32% 32%, #f8fafc 0%, #e2e8f0 38%, #94a3b8 72%, transparent 74%);
+    box-shadow:
+        0 0 24px rgba(226, 232, 240, 0.35),
+        inset -10px -4px 0 -2px #05070d;
+}
+
+@keyframes welcomeStarTwinkle {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+}
+
+.welcome-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0.75rem 1.25rem;
+    min-height: 12.75rem;
+}
+
+.welcome-copy {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
-    box-sizing: border-box;
-    background: #ffffff;
-    border: 1px solid #d4d4d4;
-    border-radius: 12px;
-    padding: 1.5rem 1.75rem;
-    margin: 0 0 1.5rem;
-    position: relative;
-    overflow: hidden;
-    box-shadow: none;
-    color: #111111;
-}
-
-[data-theme="dark"] .dashboard-welcome {
-    background: #111827;
-    border-color: #374151;
-    color: #f5f5f5;
-}
-
-.dashboard-welcome::before {
-    content: none;
-}
-
-.welcome-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1.25rem 2rem;
-}
-
-.welcome-greeting {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.85rem;
+    justify-content: center;
+    gap: 0.7rem;
     min-width: 0;
-}
-
-.greeting-icon {
-    font-size: 1.35rem;
-    line-height: 1.4;
-    flex-shrink: 0;
-    margin-top: 0.15rem;
-    color: #737373;
-    transition: color 0.2s ease;
-}
-
-.fa-sun.greeting-icon,
-.fa-cloud-sun.greeting-icon,
-.fa-moon.greeting-icon,
-.fa-star.greeting-icon {
-    color: #525252;
-}
-
-[data-theme="dark"] .greeting-icon,
-[data-theme="dark"] .fa-sun.greeting-icon,
-[data-theme="dark"] .fa-cloud-sun.greeting-icon,
-[data-theme="dark"] .fa-moon.greeting-icon,
-[data-theme="dark"] .fa-star.greeting-icon {
-    color: #a3a3a3;
+    flex: 1 1 auto;
+    padding: 0.35rem 0;
 }
 
 .welcome-heading-group {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.4rem;
     min-width: 0;
 }
 
@@ -87,25 +278,17 @@
     flex-wrap: wrap;
     gap: 0.45rem 0.55rem;
     margin: 0;
-    font-size: 1.65rem;
+    font-size: 1.55rem;
     font-weight: 700;
     letter-spacing: -0.03em;
-    color: #111111;
+    color: var(--welcome-fg);
     line-height: 1.2;
-}
-
-[data-theme="dark"] .greeting-title {
-    color: #f5f5f5;
 }
 
 .user-name {
     font-size: 1.05rem;
     font-weight: 600;
-    color: #111111;
-}
-
-[data-theme="dark"] .user-name {
-    color: #f5f5f5;
+    color: var(--welcome-fg);
 }
 
 .user-role-line {
@@ -118,30 +301,20 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #525252;
-    background: #f5f5f5;
-    border: 1px solid #e5e5e5;
+    color: var(--welcome-muted);
+    background: var(--welcome-badge-bg);
+    border: 1px solid var(--welcome-badge-border);
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
 }
 
-[data-theme="dark"] .user-role {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: #374151;
-    color: #a3a3a3;
-}
-
 .typewriter-text {
     margin: 0;
-    min-height: 1.4rem;
-    color: #525252;
+    min-height: 1.35rem;
+    color: var(--welcome-muted);
     font-size: 0.95rem;
     font-weight: 400;
     line-height: 1.45;
-}
-
-[data-theme="dark"] .typewriter-text {
-    color: #a3a3a3;
 }
 
 .typewriter-text::after {
@@ -149,11 +322,7 @@
     display: inline-block;
     margin-left: 0.1rem;
     animation: blink 1s step-end infinite;
-    color: #737373;
-}
-
-[data-theme="dark"] .typewriter-text::after {
-    color: #a3a3a3;
+    color: var(--welcome-muted);
 }
 
 @keyframes blink {
@@ -174,45 +343,64 @@
     font-size: 0.82rem;
 }
 
+.dashboard-welcome[data-sky="night"] .welcome-actions .btn-secondary:not(.welcome-reports-btn) {
+    background: var(--welcome-btn-secondary-bg);
+    color: var(--welcome-btn-secondary-fg);
+    border-color: var(--welcome-badge-border);
+}
+
+.welcome-reports-btn {
+    border: 1.5px solid var(--welcome-fg) !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    color: var(--welcome-fg) !important;
+    box-shadow: none;
+}
+
+.welcome-reports-btn:hover {
+    background: rgba(255, 255, 255, 0.55) !important;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-reports-btn {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-reports-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
 .welcome-time {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    justify-content: flex-start;
-    gap: 0.35rem;
+    justify-content: center;
+    gap: 0.05rem;
+    flex: 0 0 auto;
+    min-width: 8rem;
+    padding: 0;
     z-index: 1;
-    flex-shrink: 0;
-    padding-top: 0.15rem;
-    min-width: 9.5rem;
+    align-self: stretch;
 }
 
 .time-display {
     display: block;
     margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #111111;
+    font-size: clamp(5.75rem, 15vw, 9rem);
+    font-weight: 200;
+    color: var(--welcome-fg);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-    line-height: 1.2;
-}
-
-[data-theme="dark"] .time-display {
-    color: #f5f5f5;
+    letter-spacing: -0.08em;
+    line-height: 0.82;
+    font-family: "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 .date-display {
     display: block;
     margin: 0;
     font-size: 0.78rem;
-    line-height: 1.4;
-    color: #737373;
+    line-height: 1.35;
+    color: var(--welcome-muted);
     text-align: right;
-    max-width: 12rem;
-}
-
-[data-theme="dark"] .date-display {
-    color: #a3a3a3;
+    max-width: 11rem;
 }
 
 /* ==========================================
@@ -220,11 +408,14 @@
    ========================================== */
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     list-style: none;
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .dashboard-stats-item {
@@ -370,6 +561,9 @@
    ========================================== */
 .dash-section {
     margin-bottom: 1.75rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .dash-section-head {
@@ -405,12 +599,15 @@
 
 .insight-spotlight {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     list-style: none;
     margin: 0;
     padding: 0;
     align-items: start;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .insight-spotlight-item {
@@ -861,13 +1058,13 @@
    ========================================== */
 @media (max-width: 1200px) {
     .insight-spotlight {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 1024px) {
     .dashboard-stats {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.75rem;
     }
 
@@ -878,24 +1075,20 @@
 
 @media (max-width: 768px) {
     .dashboard-welcome {
-        padding: 1.25rem 1.35rem;
-        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+        min-height: 0;
     }
 
-    .welcome-top {
-        flex-direction: column;
+    .welcome-body {
+        flex-direction: column-reverse;
         gap: 0.85rem;
+        min-height: 0;
     }
 
     .welcome-time {
         align-items: flex-start;
         min-width: 0;
-        padding-top: 0.85rem;
-        border-top: 1px solid #e5e5e5;
-    }
-
-    [data-theme="dark"] .welcome-time {
-        border-top-color: #374151;
+        padding: 0;
     }
 
     .date-display {
@@ -904,15 +1097,13 @@
     }
 
     .time-display {
-        font-size: 1.05rem;
+        font-size: clamp(2.4rem, 14vw, 3.5rem);
+        max-width: 100%;
+        overflow: hidden;
     }
 
     .greeting-title {
         font-size: 1.35rem;
-    }
-
-    .greeting-icon {
-        font-size: 1.2rem;
     }
 
     .typewriter-text {
@@ -922,15 +1113,17 @@
 
     .welcome-actions {
         gap: 0.55rem;
+        width: 100%;
     }
 
     .welcome-actions .btn {
         width: auto;
+        max-width: 100%;
         justify-content: center;
     }
 
     .dashboard-stats {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
     }
     
@@ -958,7 +1151,7 @@
 
 @media (max-width: 480px) {
     .dashboard-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.65rem;
     }
 
@@ -971,15 +1164,11 @@
     }
     
     .time-display {
-        font-size: 1rem;
+        font-size: clamp(2.5rem, 14vw, 3.4rem);
     }
 
     .greeting-title {
         font-size: 1.2rem;
-    }
-
-    .greeting-icon {
-        font-size: 1.1rem;
     }
     
     .overdue-grid {
