@@ -42,14 +42,14 @@
     padding: 0.4rem 0.85rem;
     font-size: var(--font-size-xs, 0.78rem);
     font-weight: var(--font-weight-semibold, 600);
-    color: var(--text-muted, #94a3b8);
+    color: #111827;
     border-radius: var(--radius-md, 8px);
     cursor: pointer;
     transition: color 0.25s ease, border-color 0.25s ease;
 }
 
 .dash-tab:hover:not(.active) {
-    color: var(--text-secondary, #64748b);
+    color: #000000;
 }
 
 .dash-tab.active {
@@ -61,6 +61,11 @@
 
 [data-theme="dark"] .dash-tab {
     border-color: rgba(148, 163, 184, 0.55);
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .dash-tab:hover:not(.active) {
+    color: #ffffff;
 }
 
 [data-theme="dark"] .dash-tab.active {
