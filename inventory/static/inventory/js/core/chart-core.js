@@ -316,6 +316,15 @@
         var backgroundColors = color
             ? data.map(function() { return color + 'd9'; })
             : colors.map(function(c) { return c + '80'; });
+        var maxValue = 0;
+        for (var i = 0; i < data.length; i++) {
+            var value = Number(data[i]);
+            if (!isNaN(value) && value > maxValue) {
+                maxValue = value;
+            }
+        }
+        // Keep one full tick above the tallest bar so values never clip the chart edge.
+        var valueMax = maxValue + 1;
 
         chartInstances[id] = new Chart(ctx, {
             type: 'bar',
@@ -339,8 +348,14 @@
                     var gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
                     var valueScale = {
                         beginAtZero: true,
+                        max: valueMax,
                         grid: { color: gridColor, drawBorder: false },
-                        ticks: { color: getColors().text, font: { size: 10 }, stepSize: 1 }
+                        ticks: {
+                            color: getColors().text,
+                            font: { size: 10 },
+                            stepSize: 1,
+                            precision: 0
+                        }
                     };
                     var categoryScale = {
                         grid: { display: false },
