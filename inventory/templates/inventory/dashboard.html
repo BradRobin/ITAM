@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=11">
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=4">
 {% endblock %}
 
@@ -62,67 +62,76 @@
         </div>
 
         <!-- Intelligence spotlight -->
-        <section class="dash-section">
+        <section class="dash-section" aria-labelledby="fleet-intelligence-heading">
             <div class="dash-section-head">
                 <div>
-                    <h2 class="dash-section-title">Fleet Intelligence</h2>
+                    <h2 class="dash-section-title" id="fleet-intelligence-heading">Fleet Intelligence</h2>
                     <p class="dash-section-sub">Live operational signals across your asset ecosystem</p>
                 </div>
             </div>
-            <div class="insight-spotlight" id="insight-spotlight">
-                <div class="insight-card insight-utilization">
-                    <div class="insight-metric">
-                        <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
-                        <span class="insight-metric-unit">utilized</span>
-                    </div>
-                    <div class="insight-meta">
-                        <h3>Asset Utilization</h3>
-                        <p>Share of fleet currently assigned to employees</p>
-                    </div>
-                    <i class="fas fa-chart-pie insight-card-icon"></i>
-                </div>
-
-                <a href="{% url 'employee_list' %}" class="insight-card insight-employees insight-card-link">
-                    <div class="insight-metric">
-                        <span class="insight-metric-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
-                        <span class="insight-metric-unit">people</span>
-                    </div>
-                    <div class="insight-meta">
-                        <h3>Workforce</h3>
-                        <p>Employees tracked in the system</p>
-                    </div>
-                    <i class="fas fa-users insight-card-icon"></i>
-                </a>
-
-                <a href="{% url 'asset_list' %}#maintenance-assets" class="insight-card insight-health insight-card-link">
-                    <div class="insight-metric">
-                        <span class="insight-metric-value {% if asset_health_rate|default:0 < 10 %}healthy{% else %}warning{% endif %}" id="asset-health-value">{{ asset_health_rate|default:0 }}%</span>
-                        <span class="insight-metric-unit">in maintenance</span>
-                    </div>
-                    <div class="insight-meta">
-                        <h3>Asset Health</h3>
-                        <p>Fleet share under maintenance or repair</p>
-                    </div>
-                    <i class="fas fa-heartbeat insight-card-icon"></i>
-                </a>
-
-                <div class="insight-card insight-ops">
-                    <div class="insight-ops-grid">
-                        <div class="insight-ops-item">
-                            <span class="insight-ops-value" id="total-assignments-value">{{ total_assignments|default:0 }}</span>
-                            <span class="insight-ops-label">Total Assignments</span>
+            <ul class="insight-spotlight" id="insight-spotlight">
+                <li class="insight-spotlight-item">
+                    <article class="insight-card" aria-labelledby="insight-util-title">
+                        <header class="insight-card-head">
+                            <h3 class="insight-card-title" id="insight-util-title">Asset Utilization</h3>
+                            <i class="fas fa-chart-pie insight-card-icon" aria-hidden="true"></i>
+                        </header>
+                        <div class="insight-metric">
+                            <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
+                            <span class="insight-metric-unit">of fleet assigned</span>
                         </div>
-                        <div class="insight-ops-item {% if overdue_assets_count|default:0 > 0 %}danger{% else %}success{% endif %}">
-                            <span class="insight-ops-value" id="overdue-count-value">{{ overdue_assets_count|default:0 }}</span>
-                            <span class="insight-ops-label">Overdue Service</span>
+                        <p class="insight-card-desc">Share of fleet currently assigned to employees</p>
+                    </article>
+                </li>
+
+                <li class="insight-spotlight-item">
+                    <a href="{% url 'employee_list' %}" class="insight-card insight-card-link" aria-labelledby="insight-workforce-title">
+                        <header class="insight-card-head">
+                            <h3 class="insight-card-title" id="insight-workforce-title">Workforce</h3>
+                            <i class="fas fa-users insight-card-icon" aria-hidden="true"></i>
+                        </header>
+                        <div class="insight-metric">
+                            <span class="insight-metric-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
+                            <span class="insight-metric-unit">people tracked</span>
                         </div>
-                    </div>
-                    <div class="insight-meta">
-                        <h3>Operations Pulse</h3>
-                        <p>Assignment volume and service risk signals</p>
-                    </div>
-                </div>
-            </div>
+                        <p class="insight-card-desc">Employees registered in the directory</p>
+                    </a>
+                </li>
+
+                <li class="insight-spotlight-item">
+                    <a href="{% url 'asset_list' %}#maintenance-assets" class="insight-card insight-card-link" aria-labelledby="insight-health-title">
+                        <header class="insight-card-head">
+                            <h3 class="insight-card-title" id="insight-health-title">Asset Health</h3>
+                            <i class="fas fa-heartbeat insight-card-icon" aria-hidden="true"></i>
+                        </header>
+                        <div class="insight-metric">
+                            <span class="insight-metric-value" id="asset-health-value">{{ asset_health_rate|default:0 }}%</span>
+                            <span class="insight-metric-unit">fleet healthy</span>
+                        </div>
+                        <p class="insight-card-desc">Share of fleet not under maintenance or repair</p>
+                    </a>
+                </li>
+
+                <li class="insight-spotlight-item">
+                    <article class="insight-card" aria-labelledby="insight-ops-title">
+                        <header class="insight-card-head">
+                            <h3 class="insight-card-title" id="insight-ops-title">Operations Pulse</h3>
+                            <i class="fas fa-wave-square insight-card-icon" aria-hidden="true"></i>
+                        </header>
+                        <div class="insight-metric-stack" role="list">
+                            <div class="insight-metric insight-metric-compact" role="listitem">
+                                <span class="insight-metric-value" id="total-assignments-value">{{ total_assignments|default:0 }}</span>
+                                <span class="insight-metric-unit">total assignments</span>
+                            </div>
+                            <div class="insight-metric insight-metric-compact" role="listitem" id="overdue-metric" data-state="{% if overdue_assets_count|default:0 > 0 %}alert{% else %}clear{% endif %}">
+                                <span class="insight-metric-value" id="overdue-count-value">{{ overdue_assets_count|default:0 }}</span>
+                                <span class="insight-metric-unit">overdue for service</span>
+                            </div>
+                        </div>
+                        <p class="insight-card-desc">Assignment volume and service risk signals</p>
+                    </article>
+                </li>
+            </ul>
         </section>
 
         <!-- Analytics canvas -->
@@ -295,8 +304,8 @@
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
-    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=6"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=6"></script>
+    <script src="{% static 'inventory/js/core/chart-core.js' %}?v=7"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=7"></script>
     <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

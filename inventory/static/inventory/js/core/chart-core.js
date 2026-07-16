@@ -63,9 +63,10 @@
                 var isDark = getTheme() === 'dark';
                 c.save();
                 c.beginPath();
-                c.arc(props.x, props.y, props.outerRadius + 5, 0, Math.PI * 2);
-                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)';
-                c.lineWidth = 1.5;
+                // Sit just outside the status arcs so the ring frames them.
+                c.arc(props.x, props.y, props.outerRadius + 6, 0, Math.PI * 2);
+                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.45)';
+                c.lineWidth = 2;
                 c.stroke();
                 c.restore();
             }
@@ -139,10 +140,10 @@
                     data: filteredData,
                     backgroundColor: filteredColors,
                     borderWidth: 0,
-                    // Rounded caps with negative spacing so segment ends overlap clockwise.
-                    borderRadius: 40,
-                    spacing: -10,
-                    hoverOffset: 6
+                    borderRadius: 20,
+                    // Negative spacing pulls rounded caps over each other clockwise.
+                    spacing: -28,
+                    hoverOffset: 4
                 }]
             },
             options: {
@@ -151,10 +152,15 @@
                 cutout: '70%',
                 rotation: -90,
                 circumference: 360,
+                layout: {
+                    // Room for the outer framing ring around the arcs.
+                    padding: 10
+                },
                 elements: {
                     arc: {
                         borderWidth: 0,
-                        borderRadius: 40,
+                        borderRadius: 20,
+                        spacing: -28,
                         circular: true
                     }
                 },

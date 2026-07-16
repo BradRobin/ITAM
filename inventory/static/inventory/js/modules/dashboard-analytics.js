@@ -237,8 +237,6 @@
         var health = document.getElementById('asset-health-value');
         if (health) {
             health.textContent = (data.asset_health_rate || 0) + '%';
-            health.classList.toggle('healthy', data.asset_health_rate < 10);
-            health.classList.toggle('warning', data.asset_health_rate >= 10);
         }
 
         var assignments = document.getElementById('total-assignments-value');
@@ -247,10 +245,12 @@
         var overdueCount = document.getElementById('overdue-count-value');
         if (overdueCount) {
             overdueCount.textContent = data.overdue_assets_count || 0;
-            var opsItem = overdueCount.closest('.insight-ops-item');
-            if (opsItem) {
-                opsItem.classList.toggle('danger', (data.overdue_assets_count || 0) > 0);
-                opsItem.classList.toggle('success', !(data.overdue_assets_count || 0));
+            var overdueMetric = document.getElementById('overdue-metric') || overdueCount.closest('[data-state]');
+            if (overdueMetric) {
+                overdueMetric.setAttribute(
+                    'data-state',
+                    (data.overdue_assets_count || 0) > 0 ? 'alert' : 'clear'
+                );
             }
         }
     }
