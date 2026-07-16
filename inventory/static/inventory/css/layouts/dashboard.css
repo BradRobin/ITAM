@@ -396,8 +396,11 @@
     font-weight: 200;
     color: var(--welcome-fg);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.08em;
-    line-height: 0.82;
+    letter-spacing: -0.06em;
+    /* Negative tracking shrinks the layout box; pad so last glyph ink is not clipped. */
+    padding-inline-end: 0.08em;
+    line-height: 0.9;
+    overflow: visible;
     font-family: "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
@@ -1106,8 +1109,11 @@
 
     .time-display {
         font-size: clamp(2.4rem, 14vw, 3.5rem);
-        max-width: 100%;
-        overflow: hidden;
+        max-width: none;
+        overflow: visible;
+        letter-spacing: -0.04em;
+        padding-inline-end: 0.12em;
+        line-height: 0.95;
     }
 
     .greeting-title {
