@@ -331,16 +331,24 @@
 }
 
 .welcome-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
     gap: 0.65rem;
     margin: 0;
+    width: 100%;
+    max-width: 36rem;
 }
 
 .welcome-actions .btn {
-    padding: 0.55rem 0.95rem;
-    font-size: 0.82rem;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    border-radius: 12px !important;
+    min-height: 2.5rem !important;
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-actions .btn-secondary:not(.welcome-reports-btn) {
@@ -1112,14 +1120,15 @@
     }
 
     .welcome-actions {
+        grid-template-columns: 1fr;
         gap: 0.55rem;
         width: 100%;
+        max-width: none;
     }
 
     .welcome-actions .btn {
-        width: auto;
-        max-width: 100%;
-        justify-content: center;
+        width: 100% !important;
+        max-width: none;
     }
 
     .dashboard-stats {
