@@ -305,9 +305,9 @@
             {% else %}
                 <div class="overdue-section overdue-clear">
                     <div class="overdue-header">
-                        <h2><i class="fas fa-check-circle" style="color: var(--success-500, #22c55e);"></i> You're all caught up!</h2>
+                        <h2><i class="fas fa-check-circle overdue-clear-icon" aria-hidden="true"></i> You're all caught up!</h2>
                     </div>
-                    <p class="overdue-clear-message"><i class="fas fa-check"></i> All assets serviced within 6 months</p>
+                    <p class="overdue-clear-message">All assets serviced within 6 months</p>
                 </div>
             {% endif %}
             </div>
@@ -326,8 +326,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/core/chart-core.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=8"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=10"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=9"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {
