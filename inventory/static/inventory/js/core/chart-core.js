@@ -46,33 +46,6 @@
         });
     }
 
-    function outerRingPlugin(id) {
-        return {
-            id: 'outerRing_' + id,
-            afterDatasetsDraw: function(chart) {
-                var meta = chart.getDatasetMeta(0);
-                if (!meta || !meta.data || !meta.data.length) {
-                    return;
-                }
-                var firstArc = meta.data[0];
-                var props = firstArc.getProps(['x', 'y', 'outerRadius'], true);
-                if (!props.outerRadius) {
-                    return;
-                }
-                var c = chart.ctx;
-                var isDark = getTheme() === 'dark';
-                c.save();
-                c.beginPath();
-                // Sit just outside the status arcs so the ring frames them.
-                c.arc(props.x, props.y, props.outerRadius + 6, 0, Math.PI * 2);
-                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.45)';
-                c.lineWidth = 2;
-                c.stroke();
-                c.restore();
-            }
-        };
-    }
-
     function centerTextPlugin(id, total, centerLabel) {
         return {
             id: 'centerText_' + id,
@@ -94,6 +67,70 @@
                     c.fillText(centerLabel, cx, cy + fs / 1.8);
                     c.globalAlpha = 1;
                 }
+                c.restore();
+            }
+        };
+    }
+
+    /**
+     * Draw doughnut segments as round-cap strokes so adjacent ends overlap
+     * clockwise, plus a thin framing ring outside the arcs.
+     */
+    function overlappingRingPlugin(id, colors) {
+        return {
+            id: 'overlappingRing_' + id,
+            beforeDatasetsDraw: function(chart) {
+                var meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data) {
+                    return;
+                }
+                // Keep hit-targets; hide default fills (rounded-rect arcs leave gaps).
+                meta.data.forEach(function(arc) {
+                    arc.options.backgroundColor = 'rgba(0,0,0,0)';
+                    arc.options.borderWidth = 0;
+                });
+            },
+            afterDatasetsDraw: function(chart) {
+                var meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) {
+                    return;
+                }
+                var c = chart.ctx;
+                var isDark = getTheme() === 'dark';
+                var first = meta.data[0].getProps(['x', 'y', 'outerRadius', 'innerRadius'], true);
+                if (!first.outerRadius) {
+                    return;
+                }
+
+                var midRadius = (first.outerRadius + first.innerRadius) / 2;
+                var lineWidth = Math.max(first.outerRadius - first.innerRadius, 1);
+
+                c.save();
+                c.lineCap = 'round';
+                c.lineJoin = 'round';
+                c.lineWidth = lineWidth;
+
+                meta.data.forEach(function(arc, index) {
+                    var props = arc.getProps(
+                        ['x', 'y', 'startAngle', 'endAngle', 'outerRadius', 'innerRadius'],
+                        true
+                    );
+                    var span = props.endAngle - props.startAngle;
+                    if (!(span > 0)) {
+                        return;
+                    }
+                    c.beginPath();
+                    c.strokeStyle = colors[index % colors.length];
+                    c.arc(props.x, props.y, midRadius, props.startAngle, props.endAngle);
+                    c.stroke();
+                });
+
+                c.beginPath();
+                c.lineCap = 'butt';
+                c.lineWidth = 1.75;
+                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.55)';
+                c.arc(first.x, first.y, first.outerRadius + 7, 0, Math.PI * 2);
+                c.stroke();
                 c.restore();
             }
         };
@@ -127,7 +164,7 @@
             filteredColors = colorSet.slice();
         }
 
-        var plugins = [outerRingPlugin(id)];
+        var plugins = [overlappingRingPlugin(id, filteredColors)];
         if (centerLabel !== false) {
             plugins.push(centerTextPlugin(id, total, centerLabel));
         }
@@ -140,10 +177,7 @@
                     data: filteredData,
                     backgroundColor: filteredColors,
                     borderWidth: 0,
-                    borderRadius: 20,
-                    // Negative spacing pulls rounded caps over each other clockwise.
-                    spacing: -28,
-                    hoverOffset: 4
+                    hoverOffset: 0
                 }]
             },
             options: {
@@ -153,15 +187,12 @@
                 rotation: -90,
                 circumference: 360,
                 layout: {
-                    // Room for the outer framing ring around the arcs.
-                    padding: 10
+                    padding: 12
                 },
                 elements: {
                     arc: {
                         borderWidth: 0,
-                        borderRadius: 20,
-                        spacing: -28,
-                        circular: true
+                        borderRadius: 0
                     }
                 },
                 plugins: {
