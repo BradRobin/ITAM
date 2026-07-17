@@ -179,6 +179,37 @@
     outline-offset: 1px;
 }
 
+.asset-action-dock__tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.55rem);
+    z-index: 5;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 14rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+    pointer-events: none;
+}
+
+.asset-action-dock__tip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.92);
+}
+
 [data-theme="dark"] .asset-action-dock__btn--add {
     color: #dbeafe !important;
     background:

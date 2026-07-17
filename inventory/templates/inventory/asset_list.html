@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=17">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=11">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=6">
 {% endblock %}
 
@@ -480,14 +480,29 @@
                 infoBtn.addEventListener('click', function(event) {
                     event.preventDefault();
                     event.stopPropagation();
+
+                    var message = 'Import and export currently support CSV files only.';
                     if (window.Utils && typeof window.Utils.showToast === 'function') {
-                        window.Utils.showToast(
-                            'Import and export currently support CSV files only.',
-                            'info'
-                        );
-                    } else {
-                        window.alert('Import and export currently support CSV files only.');
+                        window.Utils.showToast(message, 'info');
+                        return;
                     }
+
+                    var existing = document.querySelector('.asset-action-dock__tip');
+                    if (existing) {
+                        existing.remove();
+                    }
+
+                    var tip = document.createElement('div');
+                    tip.className = 'asset-action-dock__tip';
+                    tip.setAttribute('role', 'status');
+                    tip.textContent = message;
+                    infoBtn.parentNode.appendChild(tip);
+
+                    window.setTimeout(function() {
+                        if (tip.parentNode) {
+                            tip.remove();
+                        }
+                    }, 3200);
                 });
             });
         });
