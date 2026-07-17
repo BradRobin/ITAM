@@ -21,7 +21,8 @@
     --welcome-badge-border: rgba(0, 0, 0, 0.1);
     --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.55);
     --welcome-btn-secondary-fg: #111111;
-    --welcome-fade: var(--bg-primary, #ffffff);
+    /* Match main page canvas so the horizon dissolve has no color seam */
+    --welcome-fade: var(--bg-secondary, #f8fafc);
     --cloud-fill: rgba(255, 255, 255, 0.9);
     position: relative;
     isolation: isolate;
@@ -30,19 +31,21 @@
     max-width: 100%;
     min-width: 0;
     min-height: 13.5rem;
-    margin: 0 0 1.5rem;
+    margin: 0 0 2rem;
     padding: 0.2rem 0.35rem 0.2rem 1.05rem;
     border: none;
-    border-radius: 14px;
-    overflow: hidden;
+    /* Square bottom edge so the fade can dissolve without a rounded lip */
+    border-radius: 14px 14px 0 0;
+    overflow: visible;
     overflow-x: clip;
     color: var(--welcome-fg);
     background: #fff7ed;
+    box-shadow: none !important;
     transition: background 0.6s ease, color 0.4s ease;
 }
 
 [data-theme="dark"] .dashboard-welcome {
-    --welcome-fade: var(--bg-primary, #0f172a);
+    --welcome-fade: var(--bg-secondary, #1e293b);
 }
 
 .welcome-sky {
@@ -51,6 +54,7 @@
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
+    border-radius: inherit;
     contain: paint;
 }
 
@@ -209,22 +213,79 @@
     }
 }
 
-/* Soft white horizon fade — blends welcome into the page background */
+/* Soft horizon fade — dissolves sky into the page canvas inside the section */
 .welcome-sky-fade {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 34%;
-    min-height: 3.5rem;
+    height: 52%;
+    min-height: 5.5rem;
     z-index: 3;
     pointer-events: none;
     background: linear-gradient(
         180deg,
         rgba(255, 255, 255, 0) 0%,
-        color-mix(in srgb, var(--welcome-fade) 45%, transparent) 42%,
-        color-mix(in srgb, var(--welcome-fade) 88%, transparent) 72%,
+        color-mix(in srgb, var(--welcome-fade) 10%, transparent) 18%,
+        color-mix(in srgb, var(--welcome-fade) 38%, transparent) 40%,
+        color-mix(in srgb, var(--welcome-fade) 72%, transparent) 62%,
+        color-mix(in srgb, var(--welcome-fade) 94%, transparent) 82%,
+        var(--welcome-fade) 94%,
         var(--welcome-fade) 100%
+    );
+}
+
+/* Outer glow + fade below the section — erases the bottom seam into the page */
+.welcome-section-glow {
+    position: absolute;
+    left: -2rem;
+    right: -2rem;
+    bottom: -3.25rem;
+    height: 6rem;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--welcome-fade) 70%, transparent) 0%,
+            var(--welcome-fade) 26%,
+            var(--welcome-fade) 62%,
+            color-mix(in srgb, var(--welcome-fade) 40%, transparent) 88%,
+            transparent 100%
+        );
+    filter: blur(14px);
+    opacity: 1;
+}
+
+.welcome-section-glow::before {
+    content: '';
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    top: 10%;
+    bottom: 20%;
+    border-radius: 50%;
+    background: var(--welcome-fade);
+    filter: blur(28px);
+    opacity: 0.95;
+}
+
+/* Unblurred seam eraser — sits on the section floor so the edge dissolves cleanly */
+.welcome-section-seam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1.75rem;
+    height: 3.5rem;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        color-mix(in srgb, var(--welcome-fade) 45%, transparent) 22%,
+        var(--welcome-fade) 52%,
+        var(--welcome-fade) 78%,
+        color-mix(in srgb, var(--welcome-fade) 35%, transparent) 100%
     );
 }
 
@@ -253,7 +314,9 @@
 /* Morning — bright blue sky, warm sun clipped on the east (right) border */
 .dashboard-welcome[data-sky="morning"] {
     --sun-mask: radial-gradient(circle at 100.5% 46%, transparent 0 3.1rem, #000 4.6rem);
-    background: linear-gradient(102deg, #8fc3ee 0%, #a9d4f4 42%, #cfe7f9 68%, #ffe0ae 100%);
+    background:
+        linear-gradient(180deg, transparent 42%, var(--welcome-fade) 100%),
+        linear-gradient(102deg, #8fc3ee 0%, #a9d4f4 42%, #cfe7f9 68%, #ffe0ae 100%);
 }
 
 .dashboard-welcome[data-sky="morning"] .welcome-sky-atmosphere {
@@ -339,7 +402,9 @@
 /* Noon — bright blue sky, white-hot sun clipped on the top border */
 .dashboard-welcome[data-sky="noon"] {
     --sun-mask: radial-gradient(circle at 50% -1.5%, transparent 0 3.1rem, #000 4.6rem);
-    background: linear-gradient(180deg, #5fb2ec 0%, #83c5f2 46%, #b6e0f9 100%);
+    background:
+        linear-gradient(180deg, transparent 42%, var(--welcome-fade) 100%),
+        linear-gradient(180deg, #5fb2ec 0%, #83c5f2 46%, #b6e0f9 100%);
 }
 
 .dashboard-welcome[data-sky="noon"] .welcome-sky-atmosphere {
@@ -434,7 +499,9 @@
 /* Sunset — blue sky fading to warm west, orange sun clipped on the left border */
 .dashboard-welcome[data-sky="sunset"] {
     --sun-mask: radial-gradient(circle at -0.5% 40%, transparent 0 3.1rem, #000 4.6rem);
-    background: linear-gradient(88deg, #ffb066 0%, #ffd3a1 26%, #a5cff0 62%, #7cbceb 100%);
+    background:
+        linear-gradient(180deg, transparent 42%, var(--welcome-fade) 100%),
+        linear-gradient(88deg, #ffb066 0%, #ffd3a1 26%, #a5cff0 62%, #7cbceb 100%);
 }
 
 .dashboard-welcome[data-sky="sunset"] .welcome-sky-atmosphere {
@@ -526,9 +593,11 @@
     --welcome-badge-border: rgba(255, 255, 255, 0.16);
     --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.1);
     --welcome-btn-secondary-fg: #f5f5f5;
-    --welcome-fade: var(--bg-primary, #0f172a);
+    --welcome-fade: var(--bg-secondary, #1e293b);
     --cloud-fill: rgba(148, 163, 184, 0.45);
-    background: #05070d;
+    background:
+        linear-gradient(180deg, transparent 42%, var(--welcome-fade) 100%),
+        #05070d;
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-sky-atmosphere {
@@ -600,7 +669,7 @@
 
 .welcome-body {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     align-items: stretch;
     justify-content: space-between;
