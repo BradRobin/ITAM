@@ -17,13 +17,14 @@ from django.views.generic import DetailView, ListView, TemplateView
 
 from .access import get_employee_for_user
 from .http import parse_request_data
-from .models import AdminNotification, Asset, Assignment, EmployeeNotification, MaintenanceLog
+from .models import Asset, Assignment, EmployeeNotification, MaintenanceLog
 from .services.employee_notifications import (
     create_employee_notification,
     get_employee_notifications,
     get_employee_unread_notification_count,
     serialize_employee_notification,
 )
+from .services.notifications import create_admin_notification
 
 logger = logging.getLogger(__name__)
 
@@ -215,9 +216,9 @@ class EmployeeReportIssueView(EmployeePortalJSONAccessMixin, View):
 
         admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
         for admin in admins:
-            AdminNotification.objects.create(
+            create_admin_notification(
                 user=admin,
-                type=AdminNotification.NotificationType.ERROR,
+                notification_type="error",
                 title="Asset Issue Reported",
                 message=f'Employee "{self.employee.name}" reported an issue on "{asset.name}": {issue_type}.',
                 link=reverse("asset_detail", kwargs={"pk": asset.pk}),
@@ -256,9 +257,9 @@ class EmployeeMaintenanceRequestView(EmployeePortalJSONAccessMixin, View):
 
         admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
         for admin in admins:
-            AdminNotification.objects.create(
+            create_admin_notification(
                 user=admin,
-                type=AdminNotification.NotificationType.WARNING,
+                notification_type="warning",
                 title="Asset Maintenance Requested",
                 message=f'Employee "{self.employee.name}" requested maintenance for "{asset.name}".',
                 link=reverse("asset_detail", kwargs={"pk": asset.pk}),
@@ -290,9 +291,9 @@ class EmployeeReturnRequestView(EmployeePortalJSONAccessMixin, View):
         asset = assignment.asset
         admins = get_user_model().objects.filter(Q(is_staff=True) | Q(is_superuser=True)).distinct()
         for admin in admins:
-            AdminNotification.objects.create(
+            create_admin_notification(
                 user=admin,
-                type=AdminNotification.NotificationType.WARNING,
+                notification_type="warning",
                 title="Asset Return Requested",
                 message=f'Employee "{self.employee.name}" has requested to return asset "{asset.name}".',
                 link=reverse("asset_detail", kwargs={"pk": asset.pk}),

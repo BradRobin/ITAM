@@ -385,6 +385,101 @@
     // ============================================
     // Async dashboard data
     // ============================================
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function formatActivityTime(value) {
+        if (!value) {
+            return '';
+        }
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        var now = new Date();
+        var diffMs = now - date;
+        var diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) {
+            return 'Just now';
+        }
+        if (diffMins < 60) {
+            return diffMins + ' minute' + (diffMins === 1 ? '' : 's') + ' ago';
+        }
+        var diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) {
+            return diffHours + ' hour' + (diffHours === 1 ? '' : 's') + ' ago';
+        }
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    }
+
+    function activityIconClass(type) {
+        if (type === 'success') {
+            return 'fa-check';
+        }
+        if (type === 'warning') {
+            return 'fa-exclamation';
+        }
+        if (type === 'error') {
+            return 'fa-times';
+        }
+        return 'fa-info';
+    }
+
+    function renderActivityFeed(activities) {
+        var items = (activities || []).slice(0, 10);
+        if (!items.length) {
+            return '';
+        }
+
+        var list = items.map(function(activity) {
+            var type = activity.type || 'info';
+            var titleHtml = activity.link
+                ? '<a href="' + escapeHtml(activity.link) + '" class="activity-item-title">' + escapeHtml(activity.title) + '</a>'
+                : '<span class="activity-item-title">' + escapeHtml(activity.title) + '</span>';
+
+            return '' +
+                '<li class="activity-item activity-item--' + escapeHtml(type) + '">' +
+                    '<span class="activity-item-icon ' + escapeHtml(type) + '" aria-hidden="true">' +
+                        '<i class="fas ' + activityIconClass(type) + '"></i>' +
+                    '</span>' +
+                    '<div class="activity-item-body">' +
+                        titleHtml +
+                        '<p class="activity-item-message">' + escapeHtml(activity.message) + '</p>' +
+                        '<time class="activity-item-time" datetime="' + escapeHtml(activity.time || '') + '">' +
+                            escapeHtml(formatActivityTime(activity.time)) +
+                        '</time>' +
+                    '</div>' +
+                '</li>';
+        }).join('');
+
+        return '' +
+            '<div class="activity-section">' +
+                '<h3 class="activity-section-title">Recent activity</h3>' +
+                '<ul class="activity-feed" aria-label="Recent activity">' + list + '</ul>' +
+            '</div>';
+    }
+
+    function renderOverdueClearSection() {
+        return '' +
+            '<div class="overdue-section overdue-clear">' +
+                '<div class="overdue-header">' +
+                    '<h2><i class="fas fa-check-circle overdue-clear-icon" aria-hidden="true"></i> You\'re all caught up!</h2>' +
+                '</div>' +
+                '<p class="overdue-clear-message">All assets serviced within 6 months</p>' +
+            '</div>';
+    }
+
     function markInsightsLoaded() {
         var mount = document.getElementById('insight-spotlight-mount');
         var skeleton = document.getElementById('insight-skeleton');
@@ -424,12 +519,15 @@
                         ' data-stat="' + key + '"' +
                         ' data-loader="true" data-loader-message="Loading Assets..."' +
                         ' aria-labelledby="' + labelId + ' ' + valueId + '">' +
-                        '<header class="stat-card-head">' +
+                        '<span class="stat-icon-badge" aria-hidden="true">' +
+                            '<i class="fas ' + stat.icon + ' stat-icon"></i>' +
+                        '</span>' +
+                        '<div class="stat-card-content">' +
                             '<span class="stat-label" id="' + labelId + '">' + stat.label + '</span>' +
-                            '<i class="fas ' + stat.icon + ' stat-icon" aria-hidden="true"></i>' +
-                        '</header>' +
-                        '<p class="stat-number" id="' + valueId + '"' + animateAttr + '>' + stat.value + '</p>' +
-                        '<p class="stat-trend">' + stat.trend + '</p>' +
+                            '<p class="stat-number" id="' + valueId + '"' + animateAttr + '>' + stat.value + '</p>' +
+                            '<p class="stat-trend">' + stat.trend + '</p>' +
+                        '</div>' +
+                        '<i class="fas fa-chevron-right stat-card-chevron" aria-hidden="true"></i>' +
                     '</a>' +
                 '</li>';
         }).join('');
@@ -445,50 +543,53 @@
         container.removeAttribute('aria-busy');
 
         var overdueAssets = data.overdue_assets || [];
+        var activityHtml = renderActivityFeed(data.recent_activities || []);
+        var html = '';
+
         if (!overdueAssets.length) {
-            container.innerHTML = '' +
-                '<div class="overdue-section overdue-clear">' +
+            html += renderOverdueClearSection();
+        } else {
+            var cards = overdueAssets.slice(0, 6).map(function(asset, index) {
+                return '' +
+                    '<div class="overdue-card" data-delay="' + (index + 1) + '">' +
+                        '<div class="overdue-card-header">' +
+                            '<span class="overdue-icon"></span>' +
+                            '<strong>' + escapeHtml(asset.name) + '</strong>' +
+                        '</div>' +
+                        '<div class="overdue-card-body">' +
+                            '<p><span>Type</span> ' + escapeHtml(asset.type) + '</p>' +
+                            '<p><span>Serial</span> ' + escapeHtml(asset.serial_number) + '</p>' +
+                            '<p><span>Status</span> <span class="badge badge-' + String(asset.status).toLowerCase().replace(/\s+/g, '') + '">' + escapeHtml(asset.status) + '</span></p>' +
+                            '<p><span>Last Service</span> ' + escapeHtml(asset.last_maintenance_date || 'Never') + '</p>' +
+                        '</div>' +
+                        '<div class="overdue-card-footer">' +
+                            '<a href="' + escapeHtml(asset.detail_url) + '" class="btn-sm"><i class="fas fa-eye"></i> View Details</a>' +
+                        '</div>' +
+                    '</div>';
+            }).join('');
+
+            var moreLink = overdueAssets.length > 6
+                ? '<div class="overdue-more"><a href="' + escapeHtml(data.overdue_list_url || '') + '" class="btn btn-secondary"><i class="fas fa-list"></i> View All ' + overdueAssets.length + '</a></div>'
+                : '';
+
+            html += '' +
+                '<div class="overdue-section">' +
                     '<div class="overdue-header">' +
-                        '<h2><i class="fas fa-check-circle overdue-clear-icon" aria-hidden="true"></i> You\'re all caught up!</h2>' +
+                        '<h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Overdue Service</h2>' +
+                        '<span class="overdue-badge">' + overdueAssets.length + '</span>' +
                     '</div>' +
-                    '<p class="overdue-clear-message">All assets serviced within 6 months</p>' +
+                    '<p class="overdue-subtitle"><strong>' + overdueAssets.length + '</strong> asset' + (overdueAssets.length > 1 ? 's' : '') + ' overdue since ' + escapeHtml(data.overdue_cutoff || '') + '</p>' +
+                    '<div class="overdue-grid">' + cards + '</div>' +
+                    moreLink +
                 '</div>';
-            return;
         }
 
-        var cards = overdueAssets.slice(0, 6).map(function(asset, index) {
-            return '' +
-                '<div class="overdue-card" data-delay="' + (index + 1) + '">' +
-                    '<div class="overdue-card-header">' +
-                        '<span class="overdue-icon"></span>' +
-                        '<strong>' + asset.name + '</strong>' +
-                    '</div>' +
-                    '<div class="overdue-card-body">' +
-                        '<p><span>Type</span> ' + asset.type + '</p>' +
-                        '<p><span>Serial</span> ' + asset.serial_number + '</p>' +
-                        '<p><span>Status</span> <span class="badge badge-' + String(asset.status).toLowerCase().replace(/\s+/g, '') + '">' + asset.status + '</span></p>' +
-                        '<p><span>Last Service</span> ' + (asset.last_maintenance_date || 'Never') + '</p>' +
-                    '</div>' +
-                    '<div class="overdue-card-footer">' +
-                        '<a href="' + asset.detail_url + '" class="btn-sm"><i class="fas fa-eye"></i> View Details</a>' +
-                    '</div>' +
-                '</div>';
-        }).join('');
+        html += activityHtml;
+        container.innerHTML = html;
 
-        var moreLink = overdueAssets.length > 6
-            ? '<div class="overdue-more"><a href="' + (data.overdue_list_url || '') + '" class="btn btn-secondary"><i class="fas fa-list"></i> View All ' + overdueAssets.length + '</a></div>'
-            : '';
-
-        container.innerHTML = '' +
-            '<div class="overdue-section">' +
-                '<div class="overdue-header">' +
-                    '<h2><i class="fas fa-exclamation-triangle" style="color: var(--danger-color, #ef4444);"></i> Overdue Service</h2>' +
-                    '<span class="overdue-badge">' + overdueAssets.length + '</span>' +
-                '</div>' +
-                '<p class="overdue-subtitle"><strong>' + overdueAssets.length + '</strong> asset' + (overdueAssets.length > 1 ? 's' : '') + ' overdue since ' + (data.overdue_cutoff || '') + '</p>' +
-                '<div class="overdue-grid">' + cards + '</div>' +
-                moreLink +
-            '</div>';
+        if (overdueAssets.length) {
+            animateOverdueCards();
+        }
     }
 
     function applyDashboardData(data) {
@@ -520,7 +621,7 @@
             window.DashboardAnalytics.initTabs();
             window.DashboardAnalytics.applyData(null);
         }
-        window.BackgroundJobs.run('dashboard').then(function(job) {
+        window.BackgroundJobs.run('dashboard', { force: true }).then(function(job) {
             var data = job.result || {};
             mount.classList.remove('async-loading');
             applyDashboardData(data);

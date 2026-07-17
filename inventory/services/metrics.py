@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from inventory.models import Asset, Assignment, Employee, MaintenanceLog
 from inventory.services.ecosystem_map import get_ecosystem_map_json
+from inventory.services.notifications import get_recent_activities
 
 # Fixed four buckets per month: days 1-7, 8-14, 15-21, 22-end.
 WEEK_DAY_RANGES = (
@@ -187,6 +188,7 @@ def get_dashboard_context(user=None) -> dict:
     asset_list_url = reverse("asset_list")
     analytics = get_analytics_payload(counts)
     today_activity_count = get_today_activity_count(user)
+    recent_activities = get_recent_activities(user)
 
     return {
         **counts,
@@ -194,6 +196,7 @@ def get_dashboard_context(user=None) -> dict:
         "total_employees": employee_count,
         "today_activity_count": today_activity_count,
         "busy_day_threshold": BUSY_DAY_ACTIVITY_THRESHOLD,
+        "recent_activities": recent_activities,
         "status_counts": Asset.objects.values("status").annotate(total=Count("id")),
         "asset_summary": counts,
         "overdue_assets": overdue_assets,

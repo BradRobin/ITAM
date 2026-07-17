@@ -331,7 +331,7 @@ class DashboardContextTests(TestCase):
         self.assertContains(response, "data-async-dashboard")
         self.assertContains(response, "Workforce")
         self.assertContains(response, reverse("asset_list"))
-        self.assertContains(response, 'class="stat-card stat-card-link stat-total"')
+        self.assertContains(response, "stat-skeleton-card")
         self.assertContains(response, 'id="fleet-overview-heading"')
         self.assertContains(response, 'Fleet overview')
         self.assertContains(response, 'id="fleet-intelligence-heading"')
@@ -353,6 +353,7 @@ class DashboardContextTests(TestCase):
         self.assertIn("overdue_list_url", data)
         self.assertIn("today_activity_count", data)
         self.assertIn("busy_day_threshold", data)
+        self.assertIn("recent_activities", data)
 
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "Fleet Intelligence")
@@ -393,6 +394,27 @@ class DashboardContextTests(TestCase):
         job.refresh_from_db()
         self.assertEqual(job.result["today_activity_count"], 3)
         self.assertEqual(job.result["busy_day_threshold"], BUSY_DAY_ACTIVITY_THRESHOLD)
+
+    def test_recent_activities_include_admin_notifications(self):
+        from ..services.notifications import create_admin_notification, get_recent_activities
+
+        create_admin_notification(
+            user=self.user,
+            notification_type="success",
+            title="New Employee Added",
+            message='Employee "Jane Doe" has been added to the system.',
+            link=reverse("employee_list"),
+        )
+
+        activities = get_recent_activities(self.user)
+        self.assertEqual(len(activities), 1)
+        self.assertEqual(activities[0]["title"], "New Employee Added")
+        self.assertEqual(activities[0]["type"], "success")
+
+        job = enqueue_job(self.user, BackgroundJob.JobType.DASHBOARD, force=True)
+        job.refresh_from_db()
+        self.assertEqual(len(job.result["recent_activities"]), 1)
+        self.assertEqual(job.result["recent_activities"][0]["title"], "New Employee Added")
 
     def test_dashboard_rejects_non_admin_user(self):
         non_admin = get_user_model().objects.create_user(

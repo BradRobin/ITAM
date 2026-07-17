@@ -81,6 +81,7 @@ def _serialize_dashboard_result(context: dict) -> dict:
         "total_assignments": context.get("total_assignments", 0),
         "today_activity_count": context.get("today_activity_count", 0),
         "busy_day_threshold": context.get("busy_day_threshold", 3),
+        "recent_activities": context.get("recent_activities", []),
         "overdue_list_url": f"{reverse('asset_list')}?status=overdue",
         "dashboard_stats": dashboard_stats,
         "overdue_assets": overdue_assets,
