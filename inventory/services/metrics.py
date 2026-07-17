@@ -141,7 +141,42 @@ def get_analytics_payload(counts: dict | None = None) -> dict:
     }
 
 
-def get_dashboard_context() -> dict:
+BUSY_DAY_ACTIVITY_THRESHOLD = 3
+
+
+def get_today_activity_count(user) -> int:
+    """Count fleet actions the signed-in user performed today."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return 0
+
+    today = timezone.localdate()
+    start = timezone.make_aware(datetime.datetime.combine(today, datetime.time.min))
+    end = start + datetime.timedelta(days=1)
+
+    assets_today = Asset.objects.filter(
+        created_by=user,
+        date_created__gte=start,
+        date_created__lt=end,
+    ).count()
+    assignments_today = Assignment.objects.filter(
+        created_by=user,
+        date_assigned__gte=start,
+        date_assigned__lt=end,
+    ).count()
+    returns_today = Assignment.objects.filter(
+        created_by=user,
+        date_returned__gte=start,
+        date_returned__lt=end,
+    ).count()
+    maintenance_today = MaintenanceLog.objects.filter(
+        created_by=user,
+        date=today,
+    ).count()
+
+    return assets_today + assignments_today + returns_today + maintenance_today
+
+
+def get_dashboard_context(user=None) -> dict:
     counts = get_asset_counts()
     total_assets = counts["total_assets"]
     available_assets = counts["available_assets"]
@@ -151,11 +186,14 @@ def get_dashboard_context() -> dict:
     overdue_assets = get_overdue_assets_queryset()
     asset_list_url = reverse("asset_list")
     analytics = get_analytics_payload(counts)
+    today_activity_count = get_today_activity_count(user)
 
     return {
         **counts,
         "employee_count": employee_count,
         "total_employees": employee_count,
+        "today_activity_count": today_activity_count,
+        "busy_day_threshold": BUSY_DAY_ACTIVITY_THRESHOLD,
         "status_counts": Asset.objects.values("status").annotate(total=Count("id")),
         "asset_summary": counts,
         "overdue_assets": overdue_assets,

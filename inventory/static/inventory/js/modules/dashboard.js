@@ -24,10 +24,36 @@
     
     var isStatsAnimated = false;
     var statsObserver = null;
+    var greetingContext = {
+        todayActivityCount: 0,
+        busyDayThreshold: 3
+    };
     
     // ============================================
     // Greeting + sky period
     // ============================================
+    function isLateNightHour(hour) {
+        return hour === 23 || hour === 0 || hour === 1 || hour === 2;
+    }
+
+    function isEarlyCoffeeHour(hour) {
+        return hour >= 5 && hour <= 8;
+    }
+
+    function getStandardGreeting(now) {
+        var period = getSkyPeriod(now);
+        if (period === 'morning') {
+            return 'Good Morning';
+        }
+        if (period === 'noon') {
+            return 'Good Afternoon';
+        }
+        if (period === 'sunset') {
+            return 'Good Evening';
+        }
+        return 'Good Night';
+    }
+
     function getSkyPeriod(now) {
         var hour = (now || new Date()).getHours();
         var minute = (now || new Date()).getMinutes();
@@ -45,18 +71,28 @@
         return 'night';
     }
 
-    function getGreeting() {
-        var period = getSkyPeriod();
-        if (period === 'morning') {
-            return 'Good Morning';
+    function getGreeting(now) {
+        now = now || new Date();
+        var hour = now.getHours();
+
+        if (isLateNightHour(hour)) {
+            return 'Late night';
         }
-        if (period === 'noon') {
-            return 'Good Afternoon';
+        if (isEarlyCoffeeHour(hour)) {
+            return 'Coffee and ITAM';
         }
-        if (period === 'sunset') {
-            return 'Good Evening';
+        if (greetingContext.todayActivityCount >= greetingContext.busyDayThreshold) {
+            return 'Busy day at the office';
         }
-        return 'Good Night';
+        return getStandardGreeting(now);
+    }
+
+    function setGreetingActivity(count, threshold) {
+        greetingContext.todayActivityCount = Number(count) || 0;
+        if (threshold !== undefined && threshold !== null) {
+            greetingContext.busyDayThreshold = Number(threshold) || 3;
+        }
+        updateGreeting();
     }
 
     function updateMoonPosition(now) {
@@ -88,13 +124,14 @@
         var period = getSkyPeriod(now);
 
         if (greetingElement) {
-            greetingElement.textContent = getGreeting();
+            greetingElement.textContent = getGreeting(now);
         }
         if (welcome) {
             welcome.setAttribute('data-sky', period);
             updateMoonPosition(now);
         }
     }
+
 
     // ============================================
     // Live Time and Date
@@ -380,6 +417,7 @@
     function applyDashboardData(data) {
         renderDashboardStats(data.dashboard_stats || []);
         renderOverdueSection(data);
+        setGreetingActivity(data.today_activity_count, data.busy_day_threshold);
         if (window.DashboardAnalytics) {
             window.DashboardAnalytics.applyData(data);
         }
@@ -460,6 +498,7 @@
         init: init,
         refresh: refreshDashboardData,
         getGreeting: getGreeting,
+        setGreetingActivity: setGreetingActivity,
         animateStats: animateStats,
         resetStats: resetStats
     };

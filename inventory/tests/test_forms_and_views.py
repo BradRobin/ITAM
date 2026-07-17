@@ -351,11 +351,48 @@ class DashboardContextTests(TestCase):
         self.assertIn("asset_by_status", data["analytics"])
         self.assertIn("total_assignments", data)
         self.assertIn("overdue_list_url", data)
+        self.assertIn("today_activity_count", data)
+        self.assertIn("busy_day_threshold", data)
 
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "Fleet Intelligence")
         self.assertContains(response, "Analytics Canvas")
         self.assertContains(response, "dashStatusChart")
+
+    def test_today_activity_count_tracks_user_actions(self):
+        from ..services.metrics import BUSY_DAY_ACTIVITY_THRESHOLD, get_today_activity_count
+
+        self.assertEqual(get_today_activity_count(self.user), 0)
+
+        Asset.objects.create(
+            name="Morning Laptop",
+            type=Asset.AssetType.LAPTOP,
+            serial_number="ACT-001",
+            status=Asset.AssetStatus.AVAILABLE,
+            created_by=self.user,
+        )
+        Asset.objects.create(
+            name="Morning Router",
+            type=Asset.AssetType.ROUTER,
+            serial_number="ACT-002",
+            status=Asset.AssetStatus.AVAILABLE,
+            created_by=self.user,
+        )
+        Asset.objects.create(
+            name="Morning Monitor",
+            type=Asset.AssetType.MONITOR,
+            serial_number="ACT-003",
+            status=Asset.AssetStatus.AVAILABLE,
+            created_by=self.user,
+        )
+
+        self.assertEqual(get_today_activity_count(self.user), 3)
+        self.assertGreaterEqual(3, BUSY_DAY_ACTIVITY_THRESHOLD)
+
+        job = enqueue_job(self.user, BackgroundJob.JobType.DASHBOARD, force=True)
+        job.refresh_from_db()
+        self.assertEqual(job.result["today_activity_count"], 3)
+        self.assertEqual(job.result["busy_day_threshold"], BUSY_DAY_ACTIVITY_THRESHOLD)
 
     def test_dashboard_rejects_non_admin_user(self):
         non_admin = get_user_model().objects.create_user(

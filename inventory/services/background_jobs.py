@@ -79,6 +79,8 @@ def _serialize_dashboard_result(context: dict) -> dict:
         "overdue_assets_count": context.get("overdue_assets_count", 0),
         "overdue_cutoff": _serialize_date(context.get("overdue_cutoff")),
         "total_assignments": context.get("total_assignments", 0),
+        "today_activity_count": context.get("today_activity_count", 0),
+        "busy_day_threshold": context.get("busy_day_threshold", 3),
         "overdue_list_url": f"{reverse('asset_list')}?status=overdue",
         "dashboard_stats": dashboard_stats,
         "overdue_assets": overdue_assets,
@@ -110,7 +112,7 @@ def serialize_asset_sections(sections: dict) -> dict:
 
 @register_handler(BackgroundJob.JobType.DASHBOARD)
 def handle_dashboard_job(job: BackgroundJob) -> dict:
-    return _serialize_dashboard_result(get_dashboard_context())
+    return _serialize_dashboard_result(get_dashboard_context(job.user))
 
 
 @register_handler(BackgroundJob.JobType.REPORTS)
