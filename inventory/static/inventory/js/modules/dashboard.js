@@ -355,13 +355,16 @@
 
     function moonBackground(bright) {
         var face = lerpColor('#94a3b8', '#f8fafc', bright);
-        var mid = lerpColor('#64748b', '#e2e8f0', bright);
-        return 'radial-gradient(circle at 68% 32%, rgba(100, 116, 139, ' +
-            (0.25 + (0.2 * bright)).toFixed(2) + ') 0%, transparent 14%),' +
-            'radial-gradient(circle at 42% 68%, rgba(100, 116, 139, ' +
-            (0.2 + (0.15 * bright)).toFixed(2) + ') 0%, transparent 11%),' +
-            'radial-gradient(circle at 34% 38%, ' + face + ' 0%, ' + mid +
-            ' 42%, #94a3b8 78%, transparent 82%)';
+        var mid = lerpColor('#64748b', '#e8eef5', bright);
+        var rim = lerpColor('#475569', '#cbd5e1', bright);
+        return 'radial-gradient(circle at 62% 34%, rgba(148, 163, 184, ' +
+            (0.18 + (0.16 * bright)).toFixed(2) + ') 0%, transparent 12%),' +
+            'radial-gradient(circle at 38% 62%, rgba(100, 116, 139, ' +
+            (0.14 + (0.14 * bright)).toFixed(2) + ') 0%, transparent 10%),' +
+            'radial-gradient(circle at 54% 48%, rgba(148, 163, 184, ' +
+            (0.1 + (0.1 * bright)).toFixed(2) + ') 0%, transparent 8%),' +
+            'radial-gradient(circle at 40% 36%, ' + face + ' 0%, ' + mid +
+            ' 38%, ' + rim + ' 78%, ' + lerpColor('#334155', '#94a3b8', bright) + ' 100%)';
     }
 
     function moonShadow(bright) {
@@ -369,7 +372,8 @@
             (0.12 + (bright * 0.28)).toFixed(2) + '),' +
             '0 0 ' + (40 + (bright * 20)).toFixed(0) + 'px rgba(99, 102, 241, ' +
             (0.05 + (bright * 0.12)).toFixed(2) + '),' +
-            'inset -11px -5px 0 -2px #05070d, inset 4px 4px 8px rgba(255, 255, 255, 0.08)';
+            'inset 3px 3px 8px rgba(255, 255, 255, ' +
+            (0.1 + (bright * 0.12)).toFixed(2) + ')';
     }
 
     function applyContinuousSky(now) {
@@ -440,10 +444,12 @@
             moon.style.opacity = frame.moon.opacity.toFixed(3);
             moon.style.width = frame.moon.size.toFixed(2) + 'rem';
             moon.style.height = frame.moon.size.toFixed(2) + 'rem';
+            moon.style.borderRadius = '50%';
             moon.style.background = moonBackground(frame.moon.bright || 0);
             moon.style.boxShadow = moonShadow(frame.moon.bright || 0);
             moon.style.border = '1px solid rgba(226, 232, 240, ' +
                 (0.15 + ((frame.moon.bright || 0) * 0.25)).toFixed(2) + ')';
+            moon.style.filter = 'none';
         }
 
         if (corona) {
@@ -501,10 +507,31 @@
     }
 
     // ============================================
-    // Ambient sky clouds
+    // Ambient sky clouds + rare shooting stars
     // ============================================
     var skyCloudTimer = null;
     var skyCloudMax = 6;
+    var skyMeteorTimer = null;
+
+    function buildRandomCloudShape() {
+        var lobes = 5 + Math.floor(Math.random() * 4);
+        var parts = [];
+        var i;
+        for (i = 0; i < lobes; i += 1) {
+            var x = 10 + (Math.random() * 80);
+            var y = 22 + (Math.random() * 56);
+            var rx = 16 + (Math.random() * 30);
+            var ry = 20 + (Math.random() * 34);
+            var solid = 48 + (Math.random() * 12);
+            var fade = solid + 18 + (Math.random() * 10);
+            parts.push(
+                'radial-gradient(ellipse ' + rx.toFixed(1) + '% ' + ry.toFixed(1) +
+                '% at ' + x.toFixed(1) + '% ' + y.toFixed(1) + '%, var(--cloud-fill) 0 ' +
+                solid.toFixed(0) + '%, transparent ' + fade.toFixed(0) + '%)'
+            );
+        }
+        return parts.join(',');
+    }
 
     function spawnSkyCloud() {
         var container = document.getElementById('welcomeSkyClouds');
@@ -514,19 +541,46 @@
 
         var cloud = document.createElement('span');
         cloud.className = 'welcome-sky-cloud';
-        var width = 110 + (Math.random() * 150);
+        var width = 120 + (Math.random() * 160);
         var duration = 16 + (Math.random() * 14);
         var top = 6 + (Math.random() * 42);
-        var opacity = 0.38 + (Math.random() * 0.42);
+        var opacity = 0.34 + (Math.random() * 0.4);
         var scale = 0.7 + (Math.random() * 0.7);
         var startOffset = Math.random() * 22;
+        var aspect = 0.58 + (Math.random() * 0.32);
+        var rotate = -18 + (Math.random() * 36);
+        var blur = 2 + (Math.random() * 2.2);
+        var puffCount = 2 + Math.floor(Math.random() * 3);
+        var i;
 
         cloud.style.setProperty('--cloud-duration', duration.toFixed(2) + 's');
         cloud.style.setProperty('--cloud-top', top.toFixed(1) + '%');
         cloud.style.setProperty('--cloud-width', width.toFixed(0) + 'px');
         cloud.style.setProperty('--cloud-opacity', opacity.toFixed(2));
         cloud.style.setProperty('--cloud-scale', scale.toFixed(2));
+        cloud.style.setProperty('--cloud-aspect', aspect.toFixed(2));
+        cloud.style.setProperty('--cloud-rotate', rotate.toFixed(1) + 'deg');
+        cloud.style.setProperty('--cloud-blur', blur.toFixed(1) + 'px');
+        cloud.style.setProperty('--cloud-shape', buildRandomCloudShape());
+        cloud.style.setProperty('--cloud-puff-a', (26 + Math.random() * 22).toFixed(0) + '%');
+        cloud.style.setProperty('--cloud-puff-b', (22 + Math.random() * 20).toFixed(0) + '%');
+        cloud.style.setProperty('--cloud-puff-a-x', (4 + Math.random() * 28).toFixed(0) + '%');
+        cloud.style.setProperty('--cloud-puff-a-y', (8 + Math.random() * 36).toFixed(0) + '%');
+        cloud.style.setProperty('--cloud-puff-b-x', (4 + Math.random() * 24).toFixed(0) + '%');
+        cloud.style.setProperty('--cloud-puff-b-y', (14 + Math.random() * 40).toFixed(0) + '%');
         cloud.style.left = (-38 - startOffset) + '%';
+
+        for (i = 0; i < puffCount; i += 1) {
+            var puff = document.createElement('span');
+            var puffSize = 18 + (Math.random() * 34);
+            puff.className = 'welcome-sky-cloud-puff';
+            puff.style.width = puffSize.toFixed(0) + '%';
+            puff.style.height = (puffSize * (0.85 + Math.random() * 0.35)).toFixed(0) + '%';
+            puff.style.left = (6 + Math.random() * 72).toFixed(0) + '%';
+            puff.style.top = (8 + Math.random() * 62).toFixed(0) + '%';
+            puff.style.opacity = (0.55 + Math.random() * 0.4).toFixed(2);
+            cloud.appendChild(puff);
+        }
 
         cloud.addEventListener('animationend', function() {
             if (cloud.parentNode) {
@@ -535,6 +589,45 @@
         });
 
         container.appendChild(cloud);
+    }
+
+    function spawnShootingStar() {
+        var welcome = document.getElementById('dashboardWelcome');
+        var container = document.getElementById('welcomeSkyMeteors');
+        if (!welcome || !container) {
+            return;
+        }
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        var starsOpacity = parseFloat(welcome.style.getPropertyValue('--stars-opacity')) || 0;
+        if (starsOpacity < 0.35) {
+            return;
+        }
+
+        // Very rare: ~8% chance each attempt (~once every few minutes).
+        if (Math.random() > 0.08) {
+            return;
+        }
+
+        var meteor = document.createElement('span');
+        meteor.className = 'welcome-sky-meteor';
+        meteor.style.left = (8 + Math.random() * 62).toFixed(1) + '%';
+        meteor.style.top = (4 + Math.random() * 38).toFixed(1) + '%';
+        meteor.style.setProperty('--meteor-length', (4.5 + Math.random() * 5).toFixed(1) + 'rem');
+        meteor.style.setProperty('--meteor-angle', (-42 + Math.random() * 24).toFixed(1) + 'deg');
+        meteor.style.setProperty('--meteor-duration', (0.65 + Math.random() * 0.45).toFixed(2) + 's');
+        meteor.style.setProperty('--meteor-travel', (28 + Math.random() * 28).toFixed(0) + 'vw');
+        meteor.style.setProperty('--meteor-drop', (10 + Math.random() * 18).toFixed(0) + 'vh');
+
+        meteor.addEventListener('animationend', function() {
+            if (meteor.parentNode) {
+                meteor.parentNode.removeChild(meteor);
+            }
+        });
+
+        container.appendChild(meteor);
     }
 
     function initSkyClouds() {
@@ -553,6 +646,10 @@
         }
 
         skyCloudTimer = setInterval(spawnSkyCloud, 2800);
+
+        if (!skyMeteorTimer) {
+            skyMeteorTimer = setInterval(spawnShootingStar, 14000);
+        }
     }
 
     // ============================================

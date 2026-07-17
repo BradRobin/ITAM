@@ -275,24 +275,28 @@ html:not([data-theme="dark"]) .dashboard-welcome[data-sky-cycle="live"].is-night
     z-index: 0;
 }
 
-/* Soft multi-lobe cirrus — overlapping ellipses + blur for a natural cloud body */
+/* Soft multi-lobe clouds — random puffs compose an organic silhouette */
 .welcome-sky-cloud {
+    --cloud-puff-a: 34%;
+    --cloud-puff-b: 28%;
+    --cloud-puff-c: 42%;
     position: absolute;
     left: -42%;
     top: var(--cloud-top, 22%);
     width: var(--cloud-width, 9rem);
-    height: calc(var(--cloud-width, 9rem) * 0.55);
+    height: calc(var(--cloud-width, 9rem) * var(--cloud-aspect, 0.72));
     opacity: 0;
-    filter: blur(1.8px) contrast(1.08);
-    transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1));
+    filter: blur(var(--cloud-blur, 2.4px)) contrast(1.04);
+    transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1)) rotate(var(--cloud-rotate, 0deg));
     animation: welcomeCloudDrift var(--cloud-duration, 14s) linear forwards;
     will-change: transform, opacity;
-    background:
-        radial-gradient(ellipse 50% 70% at 12% 55%, var(--cloud-fill) 0 48%, transparent 72%),
-        radial-gradient(ellipse 46% 78% at 30% 36%, var(--cloud-fill) 0 52%, transparent 74%),
-        radial-gradient(ellipse 58% 68% at 50% 50%, var(--cloud-fill) 0 56%, transparent 76%),
-        radial-gradient(ellipse 44% 72% at 70% 38%, var(--cloud-fill) 0 50%, transparent 72%),
-        radial-gradient(ellipse 40% 60% at 88% 56%, var(--cloud-fill) 0 44%, transparent 70%);
+    background: var(--cloud-shape,
+        radial-gradient(ellipse 42% 58% at 18% 58%, var(--cloud-fill) 0 54%, transparent 72%),
+        radial-gradient(ellipse 48% 62% at 42% 40%, var(--cloud-fill) 0 56%, transparent 74%),
+        radial-gradient(ellipse 40% 54% at 66% 52%, var(--cloud-fill) 0 52%, transparent 72%),
+        radial-gradient(ellipse 36% 48% at 84% 44%, var(--cloud-fill) 0 48%, transparent 70%)
+    );
+    border-radius: 42% 58% 48% 52% / 48% 42% 58% 52%;
     pointer-events: none;
 }
 
@@ -300,33 +304,41 @@ html:not([data-theme="dark"]) .dashboard-welcome[data-sky-cycle="live"].is-night
 .welcome-sky-cloud::after {
     content: '';
     position: absolute;
-    inset: -8% -4%;
+    border-radius: 50%;
+    background: var(--cloud-fill);
     pointer-events: none;
+    filter: blur(1.5px);
 }
 
-/* Upper wisps — thinner trailing filaments */
 .welcome-sky-cloud::before {
-    background:
-        radial-gradient(ellipse 48% 36% at 22% 20%, var(--cloud-fill) 0 42%, transparent 70%),
-        radial-gradient(ellipse 40% 32% at 48% 12%, var(--cloud-fill) 0 38%, transparent 68%),
-        radial-gradient(ellipse 36% 30% at 74% 22%, var(--cloud-fill) 0 34%, transparent 66%);
-    opacity: 0.78;
-    filter: blur(1.2px);
+    width: var(--cloud-puff-a, 34%);
+    height: calc(var(--cloud-puff-a, 34%) * 1.05);
+    left: var(--cloud-puff-a-x, 8%);
+    top: var(--cloud-puff-a-y, 18%);
+    opacity: 0.9;
 }
 
-/* Lower soft underbelly for volume */
 .welcome-sky-cloud::after {
-    background:
-        radial-gradient(ellipse 62% 42% at 38% 82%, var(--cloud-fill) 0 46%, transparent 72%),
-        radial-gradient(ellipse 44% 36% at 66% 86%, var(--cloud-fill) 0 40%, transparent 68%);
-    opacity: 0.62;
+    width: var(--cloud-puff-b, 28%);
+    height: calc(var(--cloud-puff-b, 28%) * 1.1);
+    right: var(--cloud-puff-b-x, 10%);
+    top: var(--cloud-puff-b-y, 28%);
+    opacity: 0.82;
+}
+
+.welcome-sky-cloud-puff {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--cloud-fill);
     filter: blur(1.8px);
+    opacity: 0.88;
+    pointer-events: none;
 }
 
 @keyframes welcomeCloudDrift {
     0% {
         opacity: 0;
-        transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1));
+        transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1)) rotate(var(--cloud-rotate, 0deg));
     }
     8% {
         opacity: var(--cloud-opacity, 0.55);
@@ -336,7 +348,53 @@ html:not([data-theme="dark"]) .dashboard-welcome[data-sky-cycle="live"].is-night
     }
     100% {
         opacity: 0;
-        transform: translate3d(155vw, 0, 0) scale(calc(var(--cloud-scale, 1) * 0.82));
+        transform: translate3d(155vw, 0, 0) scale(calc(var(--cloud-scale, 1) * 0.82)) rotate(var(--cloud-rotate, 0deg));
+    }
+}
+
+/* Rare shooting stars — diagonal streak across the night sky */
+.welcome-sky-meteors {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.welcome-sky-meteor {
+    position: absolute;
+    width: var(--meteor-length, 7rem);
+    height: 2px;
+    border-radius: 999px;
+    opacity: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.95) 55%,
+        rgba(186, 210, 255, 0.35) 100%
+    );
+    box-shadow:
+        0 0 6px rgba(255, 255, 255, 0.85),
+        0 0 14px rgba(147, 197, 253, 0.45);
+    transform: rotate(var(--meteor-angle, -32deg));
+    animation: welcomeMeteorStreak var(--meteor-duration, 0.85s) ease-out forwards;
+    will-change: transform, opacity;
+}
+
+@keyframes welcomeMeteorStreak {
+    0% {
+        opacity: 0;
+        transform: rotate(var(--meteor-angle, -32deg)) translate3d(0, 0, 0) scaleX(0.35);
+    }
+    12% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 0.85;
+    }
+    100% {
+        opacity: 0;
+        transform: rotate(var(--meteor-angle, -32deg)) translate3d(var(--meteor-travel, 42vw), var(--meteor-drop, 18vh), 0) scaleX(1);
     }
 }
 
@@ -766,20 +824,23 @@ html:not([data-theme="dark"]) .dashboard-welcome[data-sky-cycle="live"].is-night
     width: 3.6rem;
     height: 3.6rem;
     background:
-        radial-gradient(circle at 68% 32%, rgba(100, 116, 139, 0.45) 0%, transparent 14%),
-        radial-gradient(circle at 42% 68%, rgba(100, 116, 139, 0.35) 0%, transparent 11%),
-        radial-gradient(circle at 58% 48%, rgba(148, 163, 184, 0.25) 0%, transparent 9%),
-        radial-gradient(circle at 34% 38%, #f8fafc 0%, #e2e8f0 30%, #cbd5e1 58%, #94a3b8 78%, transparent 82%);
+        radial-gradient(circle at 62% 34%, rgba(148, 163, 184, 0.35) 0%, transparent 12%),
+        radial-gradient(circle at 38% 62%, rgba(100, 116, 139, 0.28) 0%, transparent 10%),
+        radial-gradient(circle at 54% 48%, rgba(148, 163, 184, 0.2) 0%, transparent 8%),
+        radial-gradient(circle at 40% 36%, #f8fafc 0%, #e2e8f0 34%, #cbd5e1 62%, #94a3b8 88%, #64748b 100%);
     border: 1px solid rgba(226, 232, 240, 0.35);
     box-shadow:
         0 0 28px rgba(186, 210, 255, 0.3),
         0 0 56px rgba(99, 102, 241, 0.12),
-        inset -11px -5px 0 -2px #05070d,
-        inset 4px 4px 8px rgba(255, 255, 255, 0.08);
+        inset 3px 3px 8px rgba(255, 255, 255, 0.18);
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-sky-cloud {
-    filter: blur(3px) contrast(1.02);
+    filter: blur(3.2px) contrast(1.02);
+}
+
+.dashboard-welcome[data-sky-cycle="live"] .welcome-sky-moon {
+    border-radius: 50%;
 }
 
 /* Live cycle wins over discrete period skins once JS is running */
@@ -814,12 +875,17 @@ html:not([data-theme="dark"]) .dashboard-welcome[data-sky-cycle="live"].is-night
 
 @media (prefers-reduced-motion: reduce) {
     .welcome-sky-beams,
-    .welcome-sky-rays {
+    .welcome-sky-rays,
+    .welcome-sky-meteor {
         animation: none;
     }
 
     .welcome-sky-cloud {
         animation: none;
+        display: none;
+    }
+
+    .welcome-sky-meteor {
         display: none;
     }
 }
