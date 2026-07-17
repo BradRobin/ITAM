@@ -264,7 +264,7 @@ def build_ecosystem_map(user) -> dict:
     nodes.append(
         _node(
             "hub-itam",
-            "ITAM 3.0",
+            "ITAM V4",
             "hub",
             icon="fa-cubes",
             layer=0,
@@ -377,7 +377,7 @@ def build_ecosystem_map(user) -> dict:
         "edges": edges,
         "expansions": expansions,
         "meta": {
-            "base_label": "ITAM 3.0 Overview",
+            "base_label": "ITAM V4 Overview",
             "is_admin": is_admin,
             "summary": [
                 {"label": "Assets", "value": counts["total_assets"]},
