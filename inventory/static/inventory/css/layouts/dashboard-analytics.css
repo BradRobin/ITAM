@@ -277,6 +277,7 @@
     inset: 0;
     z-index: 2;
     display: block;
+    overflow: hidden;
 }
 
 .bento-loading.hidden,
@@ -288,10 +289,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    height: 100%;
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    align-content: start;
 }
 
 .bento-skeleton-card {
@@ -301,7 +302,10 @@
     padding: 1rem 1.25rem;
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 [data-theme="dark"] .bento-skeleton-card {
@@ -354,8 +358,11 @@
 }
 
 .bento-skeleton-chart {
-    flex: 1;
-    min-height: 220px;
+    height: 220px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
     border-radius: 12px;
 }
 
@@ -554,6 +561,10 @@
     .bento-chart-wrap {
         height: 200px;
     }
+
+    .bento-skeleton-chart {
+        height: 200px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -567,6 +578,10 @@
     }
 
     .bento-chart-wrap {
+        height: 180px;
+    }
+
+    .bento-skeleton-chart {
         height: 180px;
     }
 }
