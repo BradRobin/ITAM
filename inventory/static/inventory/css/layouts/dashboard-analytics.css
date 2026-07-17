@@ -195,11 +195,12 @@
 }
 
 .month-switcher-label {
-    min-width: 0;
-    max-width: 6.5rem;
+    min-width: 5.25rem;
+    max-width: 7.5rem;
     text-align: center;
-    font-size: var(--font-size-xs, 0.7rem);
+    font-size: 0.72rem;
     font-weight: var(--font-weight-semibold, 600);
+    letter-spacing: 0.01em;
     color: var(--text-secondary, #64748b);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -254,6 +255,11 @@
     max-width: 100%;
     min-width: 0;
     overflow: hidden;
+}
+
+/* Trends line charts need a bit more vertical room for points + axis titles */
+.bento-panel[data-panel="trends"] .bento-chart-wrap {
+    height: 248px;
 }
 
 .bento-chart-wrap canvas {
@@ -562,6 +568,10 @@
         height: 200px;
     }
 
+    .bento-panel[data-panel="trends"] .bento-chart-wrap {
+        height: 220px;
+    }
+
     .bento-skeleton-chart {
         height: 200px;
     }
@@ -579,6 +589,10 @@
 
     .bento-chart-wrap {
         height: 180px;
+    }
+
+    .bento-panel[data-panel="trends"] .bento-chart-wrap {
+        height: 200px;
     }
 
     .bento-skeleton-chart {

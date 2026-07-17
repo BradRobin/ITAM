@@ -382,9 +382,23 @@
 
         options = options || {};
         var isDark = getTheme() === 'dark';
-        var baseColor = color || '#3b82f6';
-        var grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-        grad.addColorStop(0, baseColor + '40');
+        var themeColors = getColors();
+        var baseColor = color || '#2563eb';
+        var maxValue = 0;
+        var i;
+        for (i = 0; i < data.length; i++) {
+            var value = Number(data[i]);
+            if (!isNaN(value) && value > maxValue) {
+                maxValue = value;
+            }
+        }
+        // Always leave at least one full unit above the peak so points never clip.
+        var valueMax = maxValue + 1;
+
+        var chartHeight = Math.max(ctx.clientHeight || 220, 160);
+        var grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, chartHeight);
+        grad.addColorStop(0, baseColor + '55');
+        grad.addColorStop(0.55, baseColor + '1f');
         grad.addColorStop(1, baseColor + '00');
 
         chartInstances[id] = new Chart(ctx, {
@@ -396,51 +410,96 @@
                     borderColor: baseColor,
                     backgroundColor: fill !== false ? grad : 'transparent',
                     fill: fill !== false,
-                    tension: 0.4,
+                    tension: 0.35,
+                    cubicInterpolationMode: 'monotone',
+                    borderWidth: 2.5,
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
                     pointBackgroundColor: baseColor,
-                    pointBorderColor: isDark ? '#1e293b' : '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 7
+                    pointBorderColor: isDark ? '#0f172a' : '#ffffff',
+                    pointBorderWidth: 2.5,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointHoverBorderWidth: 3,
+                    pointHoverBackgroundColor: baseColor,
+                    pointHoverBorderColor: isDark ? '#0f172a' : '#ffffff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { top: 8, right: 6, bottom: 2, left: 2 }
+                },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { intersect: false, mode: 'index' }
+                    tooltip: {
+                        intersect: false,
+                        mode: 'index',
+                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+                        titleColor: themeColors.text,
+                        bodyColor: themeColors.text,
+                        borderColor: isDark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.35)',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 10,
+                        displayColors: false,
+                        titleFont: { size: 11, weight: '600' },
+                        bodyFont: { size: 12, weight: '600' }
+                    }
                 },
                 scales: {
                     x: {
-                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
-                        ticks: { color: getColors().text, font: { size: 10 } },
+                        offset: true,
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: themeColors.text,
+                            font: { size: 11, weight: '500' },
+                            padding: 6
+                        },
                         title: options.xAxisTitle ? {
                             display: true,
                             text: options.xAxisTitle,
-                            color: getColors().text,
-                            font: { size: 11, weight: '600' }
+                            color: isDark ? '#94a3b8' : '#64748b',
+                            font: { size: 11, weight: '600' },
+                            padding: { top: 4 }
                         } : undefined
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false },
+                        max: valueMax,
+                        grace: 0,
+                        grid: {
+                            color: isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.22)',
+                            drawBorder: false,
+                            drawTicks: false,
+                            lineWidth: 1
+                        },
+                        border: { display: false },
                         ticks: {
-                            color: getColors().text,
-                            font: { size: 10 },
+                            color: isDark ? '#94a3b8' : '#64748b',
+                            font: { size: 11, weight: '500' },
                             stepSize: 1,
-                            precision: 0
+                            precision: 0,
+                            padding: 8
                         },
                         title: options.yAxisTitle ? {
                             display: true,
                             text: options.yAxisTitle,
-                            color: getColors().text,
-                            font: { size: 11, weight: '600' }
+                            color: isDark ? '#94a3b8' : '#64748b',
+                            font: { size: 11, weight: '600' },
+                            padding: { bottom: 4 }
                         } : undefined
                     }
                 },
                 interaction: { intersect: false, mode: 'index' },
-                animation: { duration: 1000 }
+                animation: {
+                    duration: 900,
+                    easing: 'easeOutQuart'
+                }
             }
         });
     }

@@ -72,7 +72,7 @@
                 'dashMonthlyChart',
                 [0, 0, 0, 0],
                 ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                '#3b82f6',
+                '#2563eb',
                 true,
                 { yAxisTitle: 'Asset Count', xAxisTitle: 'Week' }
             );
@@ -83,7 +83,7 @@
             'dashMonthlyChart',
             weeks.map(function(week) { return week.count || 0; }),
             weeks.map(function(week) { return week.label || ('Week ' + week.week); }),
-            '#3b82f6',
+            '#2563eb',
             true,
             { yAxisTitle: 'Asset Count', xAxisTitle: 'Week' }
         );
