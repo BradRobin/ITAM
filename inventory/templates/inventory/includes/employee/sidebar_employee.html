@@ -42,12 +42,14 @@
     
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
-        <div class="sidebar-divider"></div>
-        <ul class="sidebar-nav-bottom">
+        <ul class="sidebar-nav-bottom" aria-label="Account">
             <li class="sidebar-item">
                 {% include "inventory/includes/logout_form.html" %}
             </li>
         </ul>
-        <div class="sidebar-version">{{ itam_version }}</div>
+        <div class="sidebar-version" title="{{ itam_product_name }} {{ itam_version }}">
+            <span class="sidebar-version-product">ITAM</span>
+            <span class="sidebar-version-number">{{ itam_version }}</span>
+        </div>
     </div>
 </aside>

@@ -60,14 +60,13 @@
     
     <!-- Bottom Navigation -->
     <div class="sidebar-bottom">
-        <div class="sidebar-divider"></div>
-        <ul class="sidebar-nav-bottom">
+        <ul class="sidebar-nav-bottom" aria-label="Account">
             <li class="sidebar-item">
                 <a class="sidebar-link {% if 'settings' in request.path %}active{% endif %}" 
                    href="{% url 'settings' %}" 
                    data-loader="true"
                    data-loader-message="Loading Settings...">
-                    <i class="fas fa-cog sidebar-icon"></i>
+                    <i class="fas fa-cog sidebar-icon" aria-hidden="true"></i>
                     <span class="sidebar-label">Settings</span>
                 </a>
             </li>
@@ -75,6 +74,9 @@
                 {% include "inventory/includes/logout_form.html" %}
             </li>
         </ul>
-        <div class="sidebar-version">{{ itam_version }}</div>
+        <div class="sidebar-version" title="{{ itam_product_name }} {{ itam_version }}">
+            <span class="sidebar-version-product">ITAM</span>
+            <span class="sidebar-version-number">{{ itam_version }}</span>
+        </div>
     </div>
 </aside>

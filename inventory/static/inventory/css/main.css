@@ -15,7 +15,7 @@
 @import url('components/forms.css');
 @import url('components/tables.css');
 @import url('components/cards.css');
-@import url('components/sidebar.css');
+@import url('components/sidebar.css?v=3');
 @import url('components/topbar.css');
 @import url('components/footer.css');
 @import url('components/spinner.css');
