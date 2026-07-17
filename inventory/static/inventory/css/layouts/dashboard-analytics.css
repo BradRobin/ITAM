@@ -145,6 +145,15 @@
     grid-column: span 1;
 }
 
+.bento-panel[data-panel="composition"].active {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.bento-panel[data-panel="composition"] .bento-wide {
+    grid-column: 1 / -1;
+}
+
 .bento-card-head {
     display: flex;
     justify-content: space-between;
@@ -171,14 +180,21 @@
 }
 
 .bento-badge {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: var(--font-weight-bold, 700);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--success-500, #22c55e);
-    background: rgba(34, 197, 94, 0.12);
-    padding: 0.15rem 0.5rem;
+    color: #15803d;
+    background: rgba(34, 197, 94, 0.14);
+    padding: 0.2rem 0.55rem;
     border-radius: var(--radius-full, 999px);
+    border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+[data-theme="dark"] .bento-badge {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.16);
+    border-color: rgba(134, 239, 172, 0.28);
 }
 
 .bento-hint {
@@ -255,6 +271,19 @@
     max-width: 100%;
     min-width: 0;
     overflow: hidden;
+}
+
+.bento-chart-wrap--donut {
+    height: 236px;
+}
+
+.bento-card--status .bento-chart-wrap--donut,
+.bento-card--types .bento-chart-wrap {
+    border-radius: 10px;
+}
+
+.bento-card--types .bento-hint {
+    font-variant-numeric: tabular-nums;
 }
 
 /* Trends line charts need a bit more vertical room for points + axis titles */

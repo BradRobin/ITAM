@@ -240,11 +240,32 @@
             }
 
             if (analytics.asset_by_type && Object.keys(analytics.asset_by_type).length) {
+                var typeEntries = Object.keys(analytics.asset_by_type).map(function(label) {
+                    return { label: label, value: analytics.asset_by_type[label] || 0 };
+                }).sort(function(a, b) {
+                    return b.value - a.value;
+                });
+                var typeTotal = typeEntries.reduce(function(sum, entry) {
+                    return sum + entry.value;
+                }, 0);
+                var typeHint = document.getElementById('dashTypeHint');
+                if (typeHint) {
+                    typeHint.textContent = typeEntries.length === 1
+                        ? '1 type · ' + typeTotal + ' assets'
+                        : typeEntries.length + ' types · ' + typeTotal + ' assets';
+                }
                 ChartCore.createBar(
                     'dashTypeChart',
-                    Object.values(analytics.asset_by_type),
-                    Object.keys(analytics.asset_by_type),
-                    false
+                    typeEntries.map(function(entry) { return entry.value; }),
+                    typeEntries.map(function(entry) { return entry.label; }),
+                    true,
+                    null,
+                    {
+                        unit: 'assets',
+                        maxBarThickness: 28,
+                        categoryPercentage: 0.7,
+                        barPercentage: 0.82
+                    }
                 );
             }
 

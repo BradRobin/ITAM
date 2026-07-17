@@ -104,20 +104,20 @@
             beforeDraw: function(chart) {
                 var area = chart.chartArea;
                 var c = chart.ctx;
-                var fs = Math.min(chart.width, chart.height) / 5;
+                var size = Math.min(area.right - area.left, area.bottom - area.top);
+                var fs = Math.max(18, Math.min(size / 4.2, 36));
                 c.save();
-                c.font = 'bold ' + fs + 'px system-ui, sans-serif';
+                c.font = '700 ' + fs + 'px Inter, system-ui, sans-serif';
                 c.textBaseline = 'middle';
                 c.textAlign = 'center';
                 var cx = (area.left + area.right) / 2;
-                var cy = (area.top + area.bottom) / 2 - (centerLabel ? 6 : 0);
+                var cy = (area.top + area.bottom) / 2 - (centerLabel ? fs * 0.18 : 0);
                 c.fillStyle = getColors().text;
-                c.fillText(total, cx, cy);
+                c.fillText(String(total), cx, cy);
                 if (centerLabel) {
-                    c.font = (fs / 2.5) + 'px system-ui, sans-serif';
-                    c.globalAlpha = 0.6;
-                    c.fillText(centerLabel, cx, cy + fs / 1.8);
-                    c.globalAlpha = 1;
+                    c.font = '500 ' + Math.max(10, fs / 2.6) + 'px Inter, system-ui, sans-serif';
+                    c.fillStyle = getTheme() === 'dark' ? '#94a3b8' : '#64748b';
+                    c.fillText(centerLabel, cx, cy + fs * 0.55);
                 }
                 c.restore();
             }
@@ -208,12 +208,12 @@
                     strokeArc(segment, start, end + tip * 0.35);
                 });
 
-                // Tight border: ring sits flush on the outer edge of the strokes.
-                var ringWidth = 1.25;
+                // Soft outer ring — frames the donut without a heavy border
+                var ringWidth = 1;
                 c.beginPath();
                 c.lineCap = 'butt';
                 c.lineWidth = ringWidth;
-                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.7)';
+                c.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(148, 163, 184, 0.4)';
                 c.arc(first.x, first.y, first.outerRadius + ringWidth / 2, 0, Math.PI * 2);
                 c.stroke();
                 c.restore();
@@ -249,6 +249,7 @@
             filteredColors = colorSet.slice();
         }
 
+        var isDark = getTheme() === 'dark';
         var plugins = [overlappingRingPlugin(id, filteredColors)];
         if (centerLabel !== false) {
             plugins.push(centerTextPlugin(id, total, centerLabel));
@@ -262,17 +263,17 @@
                     data: filteredData,
                     backgroundColor: filteredColors,
                     borderWidth: 0,
-                    hoverOffset: 0
+                    hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '72%',
                 rotation: -90,
                 circumference: 360,
                 layout: {
-                    padding: 8
+                    padding: { top: 4, right: 8, bottom: 2, left: 8 }
                 },
                 elements: {
                     arc: {
@@ -285,23 +286,51 @@
                         position: 'bottom',
                         labels: {
                             color: getColors().text,
-                            padding: 12,
+                            padding: 14,
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            font: { size: 11 }
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            font: { size: 11, weight: '500' },
+                            generateLabels: function(chart) {
+                                var dataset = chart.data.datasets[0] || {};
+                                var values = dataset.data || [];
+                                return (chart.data.labels || []).map(function(label, i) {
+                                    var value = Number(values[i]) || 0;
+                                    var pct = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return {
+                                        text: label + '  ' + value + ' · ' + pct + '%',
+                                        fillStyle: filteredColors[i],
+                                        strokeStyle: filteredColors[i],
+                                        hidden: false,
+                                        index: i,
+                                        pointStyle: 'circle'
+                                    };
+                                });
+                            }
                         }
                     },
                     tooltip: {
+                        backgroundColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { size: 11, weight: '600' },
+                        bodyFont: { size: 11 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 4,
                         callbacks: {
                             label: function(context) {
                                 var value = context.parsed || 0;
-                                var pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return context.label + ': ' + value + ' (' + pct + '%)';
+                                var pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                                return ' ' + value + ' assets (' + pct + '%)';
                             }
                         }
                     }
                 },
-                animation: { duration: 1000 }
+                animation: {
+                    duration: 900,
+                    easing: 'easeOutQuart'
+                }
             },
             plugins: plugins
         });
@@ -340,6 +369,12 @@
         var valueMax = Math.max(maxValue + 1, minHeadroom);
         var unitLabel = options.unit || '';
         var barThickness = typeof options.maxBarThickness === 'number' ? options.maxBarThickness : 50;
+        var tickStep = 1;
+        if (valueMax > 20) {
+            tickStep = Math.ceil(valueMax / 6);
+        } else if (valueMax > 8) {
+            tickStep = 2;
+        }
 
         chartInstances[id] = new Chart(ctx, {
             type: 'bar',
@@ -349,11 +384,11 @@
                     data: data,
                     backgroundColor: backgroundColors,
                     borderColor: borderColors,
-                    borderWidth: color ? 0 : 1.5,
+                    borderWidth: color ? 0 : 1.25,
                     borderRadius: 8,
                     maxBarThickness: barThickness,
-                    categoryPercentage: options.categoryPercentage || 0.72,
-                    barPercentage: options.barPercentage || 0.78
+                    categoryPercentage: options.categoryPercentage || (horizontal ? 0.68 : 0.62),
+                    barPercentage: options.barPercentage || (horizontal ? 0.78 : 0.7)
                 }]
             },
             options: {
@@ -394,7 +429,7 @@
                         ticks: {
                             color: getColors().text,
                             font: { size: 10 },
-                            stepSize: 1,
+                            stepSize: tickStep,
                             precision: 0,
                             padding: 6
                         }
@@ -407,7 +442,7 @@
                             font: { size: 10, weight: '500' },
                             maxRotation: 0,
                             autoSkip: true,
-                            padding: 4
+                            padding: 6
                         }
                     };
                     var scales = {};
