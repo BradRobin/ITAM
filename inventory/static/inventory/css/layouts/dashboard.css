@@ -17,11 +17,12 @@
 .dashboard-welcome {
     --welcome-fg: #111111;
     --welcome-muted: #525252;
-    --welcome-border: rgba(0, 0, 0, 0.12);
     --welcome-badge-bg: rgba(255, 255, 255, 0.55);
     --welcome-badge-border: rgba(0, 0, 0, 0.1);
     --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.55);
     --welcome-btn-secondary-fg: #111111;
+    --welcome-fade: var(--bg-primary, #ffffff);
+    --cloud-fill: rgba(255, 255, 255, 0.9);
     position: relative;
     isolation: isolate;
     box-sizing: border-box;
@@ -31,13 +32,17 @@
     min-height: 13.5rem;
     margin: 0 0 1.5rem;
     padding: 0.2rem 0.35rem 0.2rem 1.05rem;
-    border: 1px solid var(--welcome-border);
+    border: none;
     border-radius: 14px;
     overflow: hidden;
     overflow-x: clip;
     color: var(--welcome-fg);
     background: #fff7ed;
-    transition: background 0.6s ease, color 0.4s ease, border-color 0.4s ease;
+    transition: background 0.6s ease, color 0.4s ease;
+}
+
+[data-theme="dark"] .dashboard-welcome {
+    --welcome-fade: var(--bg-primary, #0f172a);
 }
 
 .welcome-sky {
@@ -139,109 +144,88 @@
     z-index: 0;
 }
 
-/* Flat cirrus streaks — spawn large in the foreground, recede to the horizon */
+/* Soft multi-lobe cirrus — overlapping ellipses + blur for a natural cloud body */
 .welcome-sky-cloud {
     position: absolute;
-    left: 0;
-    top: 0;
+    left: -42%;
+    top: var(--cloud-top, 22%);
     width: var(--cloud-width, 9rem);
-    height: calc(var(--cloud-width, 9rem) * 0.13);
-    border-radius: 999px;
+    height: calc(var(--cloud-width, 9rem) * 0.55);
     opacity: 0;
-    filter: blur(1px);
-    transform: var(--cloud-start, translate3d(0, 0, 0) scale(1.6));
-    animation: welcomeCirrusDrift var(--cloud-duration, 14s) linear forwards;
+    filter: blur(1.8px) contrast(1.08);
+    transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1));
+    animation: welcomeCloudDrift var(--cloud-duration, 14s) linear forwards;
     will-change: transform, opacity;
+    background:
+        radial-gradient(ellipse 50% 70% at 12% 55%, var(--cloud-fill) 0 48%, transparent 72%),
+        radial-gradient(ellipse 46% 78% at 30% 36%, var(--cloud-fill) 0 52%, transparent 74%),
+        radial-gradient(ellipse 58% 68% at 50% 50%, var(--cloud-fill) 0 56%, transparent 76%),
+        radial-gradient(ellipse 44% 72% at 70% 38%, var(--cloud-fill) 0 50%, transparent 72%),
+        radial-gradient(ellipse 40% 60% at 88% 56%, var(--cloud-fill) 0 44%, transparent 70%);
+    pointer-events: none;
 }
 
 .welcome-sky-cloud::before,
 .welcome-sky-cloud::after {
     content: '';
     position: absolute;
-    border-radius: 999px;
-    background: inherit;
+    inset: -8% -4%;
+    pointer-events: none;
 }
 
+/* Upper wisps — thinner trailing filaments */
 .welcome-sky-cloud::before {
-    width: 68%;
-    height: 82%;
-    left: -9%;
-    top: -75%;
+    background:
+        radial-gradient(ellipse 48% 36% at 22% 20%, var(--cloud-fill) 0 42%, transparent 70%),
+        radial-gradient(ellipse 40% 32% at 48% 12%, var(--cloud-fill) 0 38%, transparent 68%),
+        radial-gradient(ellipse 36% 30% at 74% 22%, var(--cloud-fill) 0 34%, transparent 66%);
+    opacity: 0.78;
+    filter: blur(1.2px);
 }
 
+/* Lower soft underbelly for volume */
 .welcome-sky-cloud::after {
-    width: 52%;
-    height: 72%;
-    right: -6%;
-    top: 140%;
+    background:
+        radial-gradient(ellipse 62% 42% at 38% 82%, var(--cloud-fill) 0 46%, transparent 72%),
+        radial-gradient(ellipse 44% 36% at 66% 86%, var(--cloud-fill) 0 40%, transparent 68%);
+    opacity: 0.62;
+    filter: blur(1.8px);
 }
 
-@keyframes welcomeCirrusDrift {
+@keyframes welcomeCloudDrift {
     0% {
         opacity: 0;
-        transform: var(--cloud-start, translate3d(0, 0, 0) scale(1.6));
+        transform: translate3d(0, 0, 0) scale(var(--cloud-scale, 1));
     }
-    9% {
-        opacity: var(--cloud-opacity, 0.6);
+    8% {
+        opacity: var(--cloud-opacity, 0.55);
     }
     78% {
-        opacity: calc(var(--cloud-opacity, 0.6) * 0.7);
+        opacity: calc(var(--cloud-opacity, 0.55) * 0.72);
     }
     100% {
         opacity: 0;
-        transform: var(--cloud-end, translate3d(0, 0, 0) scale(0.12));
+        transform: translate3d(155vw, 0, 0) scale(calc(var(--cloud-scale, 1) * 0.82));
     }
 }
 
-/* Asperatus band — rough bumpy clouds flooding the bottom quarter */
-.welcome-sky-asperatus {
+/* Soft white horizon fade — blends welcome into the page background */
+.welcome-sky-fade {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 25%;
-    min-height: 3.25rem;
-    z-index: 2;
-    overflow: hidden;
+    height: 34%;
+    min-height: 3.5rem;
+    z-index: 3;
     pointer-events: none;
-}
-
-.welcome-sky-asperatus::before,
-.welcome-sky-asperatus::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-repeat: repeat-x;
-}
-
-/* Back layer — larger shaded lobes drifting slower for depth */
-.welcome-sky-asperatus::before {
-    --asperatus-period: 10.5rem;
-    background-image:
-        radial-gradient(ellipse 3.4rem 2.2rem at 1.5rem 2.7rem, #cdd8e2 58%, rgba(205, 216, 226, 0) 60%),
-        radial-gradient(ellipse 4.1rem 2.6rem at 5.4rem 3.1rem, #bfccd8 58%, rgba(191, 204, 216, 0) 60%),
-        radial-gradient(ellipse 3.1rem 2.1rem at 8.9rem 2.6rem, #c8d4df 58%, rgba(200, 212, 223, 0) 60%),
-        linear-gradient(180deg, transparent 0 1.7rem, #c8d4df 3.1rem);
-    background-size: 10.5rem 100%;
-    animation: welcomeAsperatusFlow 4s linear infinite;
-}
-
-/* Front layer — bright white bumps, full 2s left-to-right flow */
-.welcome-sky-asperatus::after {
-    --asperatus-period: 11rem;
-    background-image:
-        radial-gradient(ellipse 2.7rem 1.8rem at 1.2rem 2rem, #ffffff 58%, rgba(255, 255, 255, 0) 60%),
-        radial-gradient(ellipse 3.3rem 2.1rem at 4.1rem 2.4rem, #f2f6f9 58%, rgba(242, 246, 249, 0) 60%),
-        radial-gradient(ellipse 2.5rem 1.7rem at 6.9rem 1.9rem, #ffffff 58%, rgba(255, 255, 255, 0) 60%),
-        radial-gradient(ellipse 3.1rem 2rem at 9.3rem 2.3rem, #eaf0f5 58%, rgba(234, 240, 245, 0) 60%),
-        linear-gradient(180deg, transparent 0 1.2rem, #ffffff 2.5rem);
-    background-size: 11rem 100%;
-    animation: welcomeAsperatusFlow 2s linear infinite;
-}
-
-@keyframes welcomeAsperatusFlow {
-    from { background-position-x: 0; }
-    to { background-position-x: var(--asperatus-period, 11rem); }
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0%,
+        color-mix(in srgb, var(--welcome-fade) 45%, transparent) 42%,
+        color-mix(in srgb, var(--welcome-fade) 88%, transparent) 72%,
+        var(--welcome-fade) 100%
+    );
 }
 
 @keyframes welcomeBeamPulse {
@@ -349,7 +333,7 @@
 }
 
 .dashboard-welcome[data-sky="morning"] .welcome-sky-cloud {
-    background: rgba(255, 255, 255, 0.92);
+    --cloud-fill: rgba(255, 255, 255, 0.92);
 }
 
 /* Noon — bright blue sky, white-hot sun clipped on the top border */
@@ -444,7 +428,7 @@
 }
 
 .dashboard-welcome[data-sky="noon"] .welcome-sky-cloud {
-    background: rgba(255, 255, 255, 0.95);
+    --cloud-fill: rgba(255, 255, 255, 0.95);
 }
 
 /* Sunset — blue sky fading to warm west, orange sun clipped on the left border */
@@ -531,22 +515,19 @@
 }
 
 .dashboard-welcome[data-sky="sunset"] .welcome-sky-cloud {
-    background: rgba(255, 238, 220, 0.9);
-}
-
-.dashboard-welcome[data-sky="sunset"] .welcome-sky-asperatus {
-    filter: sepia(0.24) brightness(1.02);
+    --cloud-fill: rgba(255, 238, 220, 0.88);
 }
 
 /* Night — moon with craters, stars, subtle clouds */
 .dashboard-welcome[data-sky="night"] {
     --welcome-fg: #f5f5f5;
     --welcome-muted: #a3a3a3;
-    --welcome-border: rgba(255, 255, 255, 0.14);
     --welcome-badge-bg: rgba(255, 255, 255, 0.08);
     --welcome-badge-border: rgba(255, 255, 255, 0.16);
     --welcome-btn-secondary-bg: rgba(255, 255, 255, 0.1);
     --welcome-btn-secondary-fg: #f5f5f5;
+    --welcome-fade: var(--bg-primary, #0f172a);
+    --cloud-fill: rgba(148, 163, 184, 0.45);
     background: #05070d;
 }
 
@@ -602,19 +583,12 @@
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-sky-cloud {
-    background: rgba(71, 85, 105, 0.55);
-    filter: blur(3px);
-}
-
-.dashboard-welcome[data-sky="night"] .welcome-sky-asperatus {
-    filter: brightness(0.24) saturate(0.5);
+    filter: blur(3px) contrast(1.02);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .welcome-sky-beams,
-    .welcome-sky-rays,
-    .welcome-sky-asperatus::before,
-    .welcome-sky-asperatus::after {
+    .welcome-sky-rays {
         animation: none;
     }
 
@@ -720,39 +694,125 @@
 }
 
 .welcome-actions .btn {
+    --glass-bg: rgba(255, 255, 255, 0.28);
+    --glass-border: rgba(255, 255, 255, 0.55);
+    --glass-highlight: rgba(255, 255, 255, 0.7);
+    --glass-shadow: rgba(15, 23, 42, 0.12);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     box-sizing: border-box !important;
     width: 100% !important;
     min-width: 0 !important;
     justify-content: center !important;
     padding: 0.55rem 0.85rem !important;
     font-size: 0.82rem !important;
-    border-radius: 12px !important;
+    border-radius: 14px !important;
     min-height: 2.5rem !important;
+    border: 1px solid var(--glass-border) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.42) 0%,
+        var(--glass-bg) 48%,
+        rgba(255, 255, 255, 0.18) 100%
+    ) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.35);
+    backdrop-filter: blur(16px) saturate(1.35);
+    box-shadow:
+        inset 0 1px 0 var(--glass-highlight),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 22px var(--glass-shadow) !important;
+    color: var(--welcome-fg) !important;
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, border-color 0.25s ease !important;
 }
 
-.dashboard-welcome[data-sky="night"] .welcome-actions .btn-secondary:not(.welcome-reports-btn) {
-    background: var(--welcome-btn-secondary-bg);
-    color: var(--welcome-btn-secondary-fg);
-    border-color: var(--welcome-badge-border);
+.welcome-actions .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.12) 28%,
+        transparent 55%
+    );
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.welcome-actions .btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.72) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.16),
+        0 12px 28px rgba(15, 23, 42, 0.16) !important;
+}
+
+.welcome-actions .btn-primary {
+    --glass-bg: rgba(37, 99, 235, 0.72);
+    --glass-border: rgba(96, 165, 250, 0.85);
+    --glass-highlight: rgba(191, 219, 254, 0.45);
+    --glass-shadow: rgba(37, 99, 235, 0.4);
+    color: #ffffff !important;
+    background: linear-gradient(
+        145deg,
+        rgba(59, 130, 246, 0.88) 0%,
+        rgba(37, 99, 235, 0.92) 48%,
+        rgba(29, 78, 216, 0.95) 100%
+    ) !important;
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.28);
+}
+
+.welcome-actions .btn-secondary {
+    --glass-bg: rgba(255, 255, 255, 0.32);
+    color: var(--welcome-fg) !important;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-actions .btn {
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.22);
+    --glass-highlight: rgba(255, 255, 255, 0.28);
+    --glass-shadow: rgba(0, 0, 0, 0.35);
+    color: #f8fafc !important;
+}
+
+.dashboard-welcome[data-sky="night"] .welcome-actions .btn-primary {
+    --glass-bg: rgba(37, 99, 235, 0.65);
+    --glass-border: rgba(96, 165, 250, 0.55);
+    --glass-highlight: rgba(147, 197, 253, 0.35);
+    background: linear-gradient(
+        145deg,
+        rgba(59, 130, 246, 0.78) 0%,
+        rgba(37, 99, 235, 0.85) 55%,
+        rgba(29, 78, 216, 0.9) 100%
+    ) !important;
 }
 
 .welcome-reports-btn {
-    border: 1.5px solid var(--welcome-fg) !important;
-    background: rgba(255, 255, 255, 0.35) !important;
-    color: var(--welcome-fg) !important;
-    box-shadow: none;
+    --glass-bg: rgba(255, 255, 255, 0.22) !important;
 }
 
 .welcome-reports-btn:hover {
-    background: rgba(255, 255, 255, 0.55) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.48) 0%,
+        rgba(255, 255, 255, 0.28) 100%
+    ) !important;
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-reports-btn {
-    background: rgba(255, 255, 255, 0.06) !important;
+    --glass-bg: rgba(255, 255, 255, 0.06) !important;
 }
 
 .dashboard-welcome[data-sky="night"] .welcome-reports-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.14) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+    ) !important;
 }
 
 .welcome-time {

@@ -4,7 +4,7 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=40">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=43">
     <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=12">
 {% endblock %}
 
@@ -21,7 +21,7 @@
                 <span class="welcome-sky-orb-corona"></span>
                 <span class="welcome-sky-orb"></span>
                 <div class="welcome-sky-clouds" id="welcomeSkyClouds"></div>
-                <span class="welcome-sky-asperatus"></span>
+                <span class="welcome-sky-fade"></span>
                 <span class="welcome-sky-stars"></span>
             </div>
             <div class="welcome-body">
@@ -385,7 +385,7 @@
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/core/chart-core.js' %}?v=13"></script>
     <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=12"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=16"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=17"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

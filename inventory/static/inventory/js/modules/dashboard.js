@@ -136,7 +136,7 @@
     // Ambient sky clouds
     // ============================================
     var skyCloudTimer = null;
-    var skyCloudMax = 7;
+    var skyCloudMax = 6;
 
     function spawnSkyCloud() {
         var container = document.getElementById('welcomeSkyClouds');
@@ -146,19 +146,19 @@
 
         var cloud = document.createElement('span');
         cloud.className = 'welcome-sky-cloud';
-        var width = 72 + (Math.random() * 96);
-        var duration = 5 + (Math.random() * 5);
-        var top = 4 + (Math.random() * 52);
-        var opacity = 0.32 + (Math.random() * 0.38);
-        var scale = 0.55 + (Math.random() * 0.75);
-        var startOffset = Math.random() * 18;
+        var width = 110 + (Math.random() * 150);
+        var duration = 16 + (Math.random() * 14);
+        var top = 6 + (Math.random() * 42);
+        var opacity = 0.38 + (Math.random() * 0.42);
+        var scale = 0.7 + (Math.random() * 0.7);
+        var startOffset = Math.random() * 22;
 
         cloud.style.setProperty('--cloud-duration', duration.toFixed(2) + 's');
         cloud.style.setProperty('--cloud-top', top.toFixed(1) + '%');
         cloud.style.setProperty('--cloud-width', width.toFixed(0) + 'px');
         cloud.style.setProperty('--cloud-opacity', opacity.toFixed(2));
         cloud.style.setProperty('--cloud-scale', scale.toFixed(2));
-        cloud.style.left = (-35 - startOffset) + '%';
+        cloud.style.left = (-38 - startOffset) + '%';
 
         cloud.addEventListener('animationend', function() {
             if (cloud.parentNode) {
@@ -181,10 +181,10 @@
 
         var i;
         for (i = 0; i < 3; i += 1) {
-            setTimeout(spawnSkyCloud, i * 900);
+            setTimeout(spawnSkyCloud, i * 1200);
         }
 
-        skyCloudTimer = setInterval(spawnSkyCloud, 1600);
+        skyCloudTimer = setInterval(spawnSkyCloud, 2800);
     }
 
     // ============================================
