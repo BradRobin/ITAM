@@ -791,7 +791,50 @@
         });
     }
 
-    function activityIconClass(type) {
+    function activityKind(title) {
+        var t = String(title || '').toLowerCase();
+        if (t.indexOf('employee') !== -1) {
+            return 'employee';
+        }
+        if (t.indexOf('assign') !== -1) {
+            return 'assign';
+        }
+        if (t.indexOf('return') !== -1) {
+            return 'return';
+        }
+        if (t.indexOf('maintenance') !== -1 || t.indexOf('service') !== -1) {
+            return 'maintenance';
+        }
+        if (t.indexOf('deleted') !== -1 || t.indexOf('delete') !== -1) {
+            return 'delete';
+        }
+        if (t.indexOf('password') !== -1 || t.indexOf('security') !== -1) {
+            return 'security';
+        }
+        if (t.indexOf('issue') !== -1) {
+            return 'issue';
+        }
+        if (t.indexOf('asset') !== -1) {
+            return 'asset';
+        }
+        return 'default';
+    }
+
+    function activityIconClass(kind, type) {
+        var byKind = {
+            asset: 'fa-box',
+            employee: 'fa-user',
+            assign: 'fa-link',
+            return: 'fa-rotate-left',
+            maintenance: 'fa-wrench',
+            delete: 'fa-trash',
+            security: 'fa-key',
+            issue: 'fa-exclamation-triangle',
+            default: null
+        };
+        if (byKind[kind]) {
+            return byKind[kind];
+        }
         if (type === 'success') {
             return 'fa-check';
         }
@@ -804,36 +847,75 @@
         return 'fa-info';
     }
 
+    function collapseActivityFeed(items) {
+        var collapsed = [];
+        items.forEach(function(activity) {
+            var prev = collapsed[collapsed.length - 1];
+            if (
+                prev &&
+                prev.title === activity.title &&
+                prev.message === activity.message
+            ) {
+                prev.count = (prev.count || 1) + 1;
+                return;
+            }
+            collapsed.push({
+                id: activity.id,
+                type: activity.type,
+                title: activity.title,
+                message: activity.message,
+                time: activity.time,
+                link: activity.link,
+                count: 1
+            });
+        });
+        return collapsed;
+    }
+
     function renderActivityFeed(activities) {
-        var items = (activities || []).slice(0, 10);
+        var items = collapseActivityFeed((activities || []).slice(0, 10));
         if (!items.length) {
             return '';
         }
 
+        var eventLabel = items.length === 1 ? '1 event' : items.length + ' events';
         var list = items.map(function(activity) {
             var type = activity.type || 'info';
+            var kind = activityKind(activity.title);
+            var count = activity.count || 1;
             var titleHtml = activity.link
                 ? '<a href="' + escapeHtml(activity.link) + '" class="activity-item-title">' + escapeHtml(activity.title) + '</a>'
                 : '<span class="activity-item-title">' + escapeHtml(activity.title) + '</span>';
+            var countHtml = count > 1
+                ? '<span class="activity-item-count" title="' + count + ' similar events">×' + count + '</span>'
+                : '';
 
             return '' +
-                '<li class="activity-item activity-item--' + escapeHtml(type) + '">' +
-                    '<span class="activity-item-icon ' + escapeHtml(type) + '" aria-hidden="true">' +
-                        '<i class="fas ' + activityIconClass(type) + '"></i>' +
+                '<li class="activity-item activity-item--' + escapeHtml(type) +
+                    ' activity-item--kind-' + escapeHtml(kind) + '">' +
+                    '<span class="activity-item-icon activity-item-icon--' + escapeHtml(kind) +
+                        ' ' + escapeHtml(type) + '" aria-hidden="true">' +
+                        '<i class="fas ' + activityIconClass(kind, type) + '"></i>' +
                     '</span>' +
                     '<div class="activity-item-body">' +
-                        titleHtml +
+                        '<div class="activity-item-top">' +
+                            titleHtml +
+                            countHtml +
+                            '<time class="activity-item-time" datetime="' + escapeHtml(activity.time || '') + '">' +
+                                escapeHtml(formatActivityTime(activity.time)) +
+                            '</time>' +
+                        '</div>' +
                         '<p class="activity-item-message">' + escapeHtml(activity.message) + '</p>' +
-                        '<time class="activity-item-time" datetime="' + escapeHtml(activity.time || '') + '">' +
-                            escapeHtml(formatActivityTime(activity.time)) +
-                        '</time>' +
                     '</div>' +
                 '</li>';
         }).join('');
 
         return '' +
             '<div class="activity-section">' +
-                '<h3 class="activity-section-title">Recent activity</h3>' +
+                '<div class="activity-section-head">' +
+                    '<h3 class="activity-section-title">Recent activity</h3>' +
+                    '<span class="activity-section-meta">' + escapeHtml(eventLabel) + '</span>' +
+                '</div>' +
                 '<ul class="activity-feed" aria-label="Recent activity">' + list + '</ul>' +
             '</div>';
     }
