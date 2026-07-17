@@ -117,7 +117,11 @@ urlpatterns = [
         views.ImportAssetCSVExecuteView.as_view(),
         name="import_asset_csv_execute",
     ),
-    path("assets/add/", views.AssetCreateView.as_view(), name="asset_add"),
+    path(
+        "assets/add/",
+        views.AssetAddRedirectView.as_view(),
+        name="asset_add_redirect",
+    ),
     path("assets/<int:pk>/", views.AssetDetailView.as_view(), name="asset_detail"),
     path("assets/<int:pk>/edit/", views.AssetUpdateView.as_view(), name="asset_edit"),
     path("assets/<int:pk>/delete/", views.AssetDeleteView.as_view(), name="asset_delete"),

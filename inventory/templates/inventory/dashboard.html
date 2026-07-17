@@ -41,9 +41,9 @@
                     </div>
                     <p class="typewriter-text" id="typewriterText" aria-live="off"></p>
                     <nav class="welcome-actions" aria-label="Dashboard quick actions">
-                        <a href="{% url 'asset_add' %}" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" data-open-add-asset>
                             <i class="fas fa-plus-circle" aria-hidden="true"></i> Add New Asset
-                        </a>
+                        </button>
                         <a href="{% url 'employee_add' %}" class="btn btn-secondary">
                             <i class="fas fa-user-plus" aria-hidden="true"></i> Add Employee
                         </a>

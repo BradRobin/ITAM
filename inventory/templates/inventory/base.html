@@ -41,7 +41,10 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=34">
+    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=37">
+    {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-add-modal.css' %}?v=1">
+    {% endif %}
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -85,9 +88,13 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+
+    {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+        {% include 'inventory/includes/add_asset_modal.html' %}
+    {% endif %}
     
     <!-- ===== CORE JAVASCRIPT ===== -->
-    <script src="{% static 'inventory/js/core/utils.js' %}?v=15"></script>
+    <script src="{% static 'inventory/js/core/utils.js' %}?v=16"></script>
     <script src="{% static 'inventory/js/core/loader.js' %}?v=15"></script>
     <script src="{% static 'inventory/js/core/theme.js' %}?v=14"></script>
     <script src="{% static 'inventory/js/core/sidebar.js' %}?v=14"></script>
@@ -99,6 +106,10 @@
     <script src="{% static 'inventory/js/modules/profile.js' %}?v=17"></script>
     <script src="{% static 'inventory/js/modules/notifications.js' %}?v=16"></script>
     <script src="{% static 'inventory/js/modules/reports.js' %}?v=13"></script>
+    {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+    <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
+    <script src="{% static 'inventory/js/modules/asset-add-modal.js' %}?v=2"></script>
+    {% endif %}
     
     <!-- ===== EMPLOYEE MODULES ===== -->
     {% if user.is_authenticated and user.employee %}

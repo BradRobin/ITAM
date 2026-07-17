@@ -15,7 +15,7 @@
          data-asset-delete-url-template="{% url 'asset_delete' 0 %}">
         <h1>Assets</h1>
         <div class="actions">
-            <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+            <button type="button" class="btn btn-primary" data-open-add-asset>Add Asset</button>
             <button type="button" class="btn btn-secondary" id="import-csv-btn">
                 <i class="fas fa-file-import"></i> Import CSV
             </button>
@@ -166,7 +166,7 @@
                                 <div class="empty-state-content">
                                     <h3>No assets found</h3>
                                     <p>Start by adding your first asset.</p>
-                                    <a href="{% url 'asset_add' %}" class="btn btn-primary">Add Asset</a>
+                                    <button type="button" class="btn btn-primary" data-open-add-asset>Add Asset</button>
                                 </div>
                             </td>
                         </tr>

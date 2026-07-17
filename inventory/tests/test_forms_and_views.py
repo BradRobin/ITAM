@@ -819,7 +819,7 @@ class ManagementViewSecurityTests(TestCase):
         )
 
     def test_anonymous_user_blocked_from_crud(self):
-        response = self.client.get(reverse("asset_add"))
+        response = self.client.get(reverse("api_asset_list"))
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login/", response["Location"])
@@ -857,19 +857,20 @@ class ManagementViewSecurityTests(TestCase):
         self.client.force_login(user)
 
         response = self.client.post(
-            reverse("asset_add"),
+            reverse("api_asset_list"),
             data={
                 "name": "Staff Created Router",
                 "type": Asset.AssetType.ROUTER,
                 "serial_number": "STAFF-ROUTER-001",
             },
+            content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 201)
         created = Asset.objects.get(serial_number="STAFF-ROUTER-001")
         self.assertEqual(created.status, Asset.AssetStatus.AVAILABLE)
 
-    def test_asset_create_page_includes_serial_suggest_ui(self):
+    def test_legacy_asset_add_url_redirects_to_list_with_modal(self):
         user = get_user_model().objects.create_user(
             username="staff-ui-user",
             email="staff-ui@example.com",
@@ -878,11 +879,25 @@ class ManagementViewSecurityTests(TestCase):
         )
         self.client.force_login(user)
 
-        response = self.client.get(reverse("asset_add"))
+        response = self.client.get(reverse("asset_add_redirect"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("asset_list") + "?add=1")
+
+    def test_admin_pages_include_add_asset_modal(self):
+        user = get_user_model().objects.create_user(
+            username="staff-modal-user",
+            email="staff-modal@example.com",
+            password="test-pass-12345",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("asset_list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["async_serial_suggestions"])
-        self.assertContains(response, "suggest-serial-btn")
-        self.assertNotContains(response, 'name="status"')
+        self.assertContains(response, 'id="add-asset-modal"')
+        self.assertContains(response, "data-open-add-asset")
+        self.assertContains(response, "add-asset-suggest-btn")
 
 

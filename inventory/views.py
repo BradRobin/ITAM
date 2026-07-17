@@ -10,7 +10,7 @@ from .views_api import (
     EmployeeAPIListView,
 )
 from .views_assets import (
-    AssetCreateView,
+    AssetAddRedirectView,
     AssetDeleteView,
     AssetDetailView,
     AssetListView,
@@ -83,8 +83,8 @@ __all__ = [
     "AssetAPIDetailView",
     "AssetAPIListView",
     "AssetAssignAPIView",
+    "AssetAddRedirectView",
     "AssetBulkDeleteAPIView",
-    "AssetCreateView",
     "AssetDeleteView",
     "AssetDetailView",
     "AssetListView",

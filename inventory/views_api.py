@@ -51,6 +51,14 @@ class AssetAPIListView(AdminRequiredMixin, View):
         if asset.created_by_id is None:
             asset.created_by = request.user
             asset.save(update_fields=["created_by"])
+        add_session_notification(
+            request,
+            notification_type="success",
+            title="New Asset Added",
+            message=f'Asset "{asset.name}" has been added to inventory.',
+            link=reverse("asset_detail", kwargs={"pk": asset.pk}),
+            source="asset_creation",
+        )
         return JsonResponse(serialize_asset(asset), status=201)
 
 

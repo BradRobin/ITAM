@@ -5,7 +5,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView
+from django.views.generic import DeleteView, DetailView, FormView, ListView, RedirectView, UpdateView
+
 
 from .access import AdminRequiredMixin, user_has_admin_access
 from .constants import filter_assets_by_type_status
@@ -17,6 +18,15 @@ from .services.background_jobs import serialize_asset_sections
 from .services.employee_notifications import create_employee_notification
 from .services.metrics import get_service_overdue_cutoff
 from .services.notifications import add_session_notification
+
+
+class AssetAddRedirectView(RedirectView):
+    """Legacy /assets/add/ URL opens the assets list with the add-asset modal."""
+
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse("asset_list") + "?add=1"
 
 
 class AssetListView(AdminRequiredMixin, ListView):
@@ -102,35 +112,6 @@ class AssetDetailView(AdminRequiredMixin, DetailView):
             }
         )
         return context
-
-
-class AssetCreateView(AdminRequiredMixin, CreateView):
-    model = Asset
-    form_class = AssetForm
-    template_name = "inventory/asset_form.html"
-    success_url = reverse_lazy("asset_list")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["async_serial_suggestions"] = True
-        return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        if self.object.created_by_id is None:
-            self.object.created_by = self.request.user
-            self.object.save(update_fields=["created_by"])
-        add_session_notification(
-            self.request,
-            notification_type="success",
-            title="New Asset Added",
-            message=f'Asset "{self.object.name}" has been added to inventory.',
-            link=reverse("asset_detail", kwargs={"pk": self.object.pk}),
-            source="asset_creation",
-        )
-
-        messages.success(self.request, "Asset created successfully.")
-        return response
 
 
 class AssetUpdateView(AdminRequiredMixin, UpdateView):

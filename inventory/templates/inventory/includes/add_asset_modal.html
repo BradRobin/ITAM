@@ -1,0 +1,67 @@
+{% load static %}
+<div id="add-asset-modal" class="add-asset-modal" aria-hidden="true" role="dialog" aria-modal="true"
+     aria-labelledby="add-asset-title" data-create-url="{% url 'api_asset_list' %}">
+    <div class="add-asset-modal-backdrop" data-add-asset-close></div>
+    <div class="add-asset-modal-panel">
+        <header class="add-asset-modal-header">
+            <div>
+                <h2 id="add-asset-title">Add New Asset</h2>
+                <p class="add-asset-modal-subtitle">Enter asset details to add it to inventory. New assets are created as Available.</p>
+            </div>
+            <button type="button" class="add-asset-modal-close" aria-label="Close add asset dialog" data-add-asset-close>
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+
+        <form id="add-asset-form" class="add-asset-form" novalidate>
+            <div class="add-asset-modal-body">
+                <div id="add-asset-form-error" class="add-asset-error" hidden></div>
+
+                <div class="form-group">
+                    <label for="add-asset-name" class="form-label">
+                        Asset name <span class="required-asterisk">*</span>
+                    </label>
+                    <input type="text" id="add-asset-name" name="name" class="add-asset-input" required
+                           maxlength="255" autocomplete="off" placeholder="e.g. Dell Latitude 5540">
+                    <div class="field-errors" data-field-error="name" hidden></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-asset-type" class="form-label">
+                        Type <span class="required-asterisk">*</span>
+                    </label>
+                    <select id="add-asset-type" name="type" class="add-asset-input" required>
+                        <option value="">Select a type</option>
+                        <option value="Laptop">Laptop</option>
+                        <option value="Printer">Printer</option>
+                        <option value="Router">Router</option>
+                        <option value="Monitor">Monitor</option>
+                    </select>
+                    <div class="field-errors" data-field-error="type" hidden></div>
+                </div>
+
+                <div class="form-group serial-number-suggest-group">
+                    <label for="add-asset-serial" class="form-label">
+                        Serial number <span class="required-asterisk">*</span>
+                    </label>
+                    <div class="serial-number-input-row">
+                        <input type="text" id="add-asset-serial" name="serial_number" class="add-asset-input" required
+                               maxlength="100" autocomplete="off" placeholder="Unique serial number">
+                        <button type="button" id="add-asset-suggest-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-magic"></i> Suggest
+                        </button>
+                    </div>
+                    <p class="help-text serial-suggest-status" id="add-asset-suggest-status">Preparing serial number suggestions...</p>
+                    <div class="field-errors" data-field-error="serial_number" hidden></div>
+                </div>
+            </div>
+
+            <footer class="add-asset-modal-footer">
+                <button type="button" class="btn btn-secondary" data-add-asset-close>Cancel</button>
+                <button type="submit" class="btn btn-primary" id="add-asset-submit-btn">
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i> Save Asset
+                </button>
+            </footer>
+        </form>
+    </div>
+</div>

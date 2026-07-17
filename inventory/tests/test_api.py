@@ -146,6 +146,13 @@ class FrontendAPIBridgeTests(TestCase):
         self.assertEqual(response.json()["status"], "available")
         self.assertEqual(response.json()["status_label"], "Available")
         self.assertTrue(response.json()["date_created"].startswith(timezone.localdate().isoformat()))
+        from inventory.models import AdminNotification
+        self.assertTrue(
+            AdminNotification.objects.filter(
+                user=self.admin,
+                title="New Asset Added",
+            ).exists()
+        )
 
     def test_asset_api_rejects_invalid_json_body(self):
         self.client.force_login(self.admin)
