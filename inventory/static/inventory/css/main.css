@@ -16,7 +16,7 @@
 @import url('components/tables.css');
 @import url('components/cards.css');
 @import url('components/sidebar.css?v=3');
-@import url('components/topbar.css');
+@import url('components/topbar.css?v=2');
 @import url('components/footer.css');
 @import url('components/spinner.css');
 @import url('components/notifications.css');

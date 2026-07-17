@@ -41,7 +41,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=37">
+    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}?v=39">
     {% if user.is_authenticated and user.is_staff or user.is_superuser %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-add-modal.css' %}?v=2">
     {% endif %}
@@ -105,7 +105,7 @@
     <!-- ===== MODULES ===== -->
     <script src="{% static 'inventory/js/modules/topbar.js' %}?v=14"></script>
     <script src="{% static 'inventory/js/modules/profile.js' %}?v=17"></script>
-    <script src="{% static 'inventory/js/modules/notifications.js' %}?v=16"></script>
+    <script src="{% static 'inventory/js/modules/notifications.js' %}?v=17"></script>
     <script src="{% static 'inventory/js/modules/reports.js' %}?v=13"></script>
     {% if user.is_authenticated and user.is_staff or user.is_superuser %}
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>

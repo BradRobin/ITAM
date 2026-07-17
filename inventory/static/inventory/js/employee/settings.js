@@ -71,14 +71,18 @@
         const item = document.createElement('div');
         item.className = 'notification-item unread';
         item.dataset.notificationId = notification.id;
+        item.setAttribute('role', 'button');
+        item.tabIndex = 0;
         item.innerHTML =
-            '<div class="notification-icon ' + (notification.type || 'success') + '">' +
+            '<div class="notification-icon ' + (notification.type || 'success') + '" aria-hidden="true">' +
                 '<i class="fas fa-check-circle"></i>' +
             '</div>' +
             '<div class="notification-content">' +
-                '<div class="notification-title"></div>' +
+                '<div class="notification-heading">' +
+                    '<div class="notification-title"></div>' +
+                    '<div class="notification-time"></div>' +
+                '</div>' +
                 '<div class="notification-message"></div>' +
-                '<div class="notification-time"></div>' +
             '</div>';
         item.querySelector('.notification-title').textContent = notification.title || '';
         item.querySelector('.notification-message').textContent = notification.message || '';

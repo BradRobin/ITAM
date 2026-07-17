@@ -1,19 +1,23 @@
 {% load static %}
 <div class="notification-item {% if not notification.is_read %}unread{% endif %}" 
-     data-notification-id="{{ notification.id }}">
-    <div class="notification-icon {{ notification.type|default:'info' }}">
+     data-notification-id="{{ notification.id }}"
+     role="button"
+     tabindex="0">
+    <div class="notification-icon {{ notification.type|default:'info' }}" aria-hidden="true">
         <i class="fas {% if notification.type == 'success' %}fa-check-circle{% elif notification.type == 'warning' %}fa-exclamation-triangle{% elif notification.type == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
     </div>
     <div class="notification-content" onclick="handleNotificationClick('{{ notification.id }}', '{{ notification.link|default:'' }}')">
-        <div class="notification-title">{{ notification.title }}</div>
-        <div class="notification-message">{{ notification.message }}</div>
-        <div class="notification-time">
-            {% if notification.created_at %}
-                {{ notification.created_at|timesince }} ago
-            {% else %}
-                Just now
-            {% endif %}
+        <div class="notification-heading">
+            <div class="notification-title">{{ notification.title }}</div>
+            <div class="notification-time">
+                {% if notification.created_at %}
+                    {{ notification.created_at|timesince }} ago
+                {% else %}
+                    Just now
+                {% endif %}
+            </div>
         </div>
+        <div class="notification-message">{{ notification.message }}</div>
     </div>
     <div class="notification-actions">
         {% if not notification.is_read %}
