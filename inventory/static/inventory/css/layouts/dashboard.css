@@ -831,12 +831,27 @@
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.04em;
-    color: #111111;
     line-height: 1;
 }
 
-[data-theme="dark"] .stat-number {
-    color: #f5f5f5;
+.dashboard-page .dash-stats-section .stat-number,
+.dashboard-page .insight-spotlight .insight-metric-value,
+.dashboard-page .dash-metric-gradient {
+    background: linear-gradient(90deg, #93c5fd 0%, #1e40af 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+[data-theme="dark"] .dashboard-page .dash-stats-section .stat-number,
+[data-theme="dark"] .dashboard-page .insight-spotlight .insight-metric-value,
+[data-theme="dark"] .dashboard-page .dash-metric-gradient {
+    background: linear-gradient(90deg, #bfdbfe 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
 }
 
 .stat-trend {
@@ -1016,12 +1031,7 @@
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.04em;
-    color: #111111;
     line-height: 1;
-}
-
-[data-theme="dark"] .insight-metric-value {
-    color: #f5f5f5;
 }
 
 .insight-metric-unit {
@@ -1347,6 +1357,215 @@
 }
 
 /* ==========================================
+   DASHBOARD SKELETON LOADING
+   ========================================== */
+.dash-skeleton-bone {
+    display: block;
+    border-radius: 8px;
+    background: linear-gradient(
+        90deg,
+        #e5e7eb 0%,
+        #f3f4f6 40%,
+        #e5e7eb 80%
+    );
+    background-size: 200% 100%;
+    animation: dashSkeletonShimmer 1.4s ease-in-out infinite;
+}
+
+[data-theme="dark"] .dash-skeleton-bone {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.12) 40%,
+        rgba(255, 255, 255, 0.06) 80%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes dashSkeletonShimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+.stat-skeleton-card {
+    pointer-events: none;
+    cursor: default;
+}
+
+.stat-skeleton-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.dash-skeleton-stat-label {
+    width: 42%;
+    max-width: 6.5rem;
+    height: 0.85rem;
+}
+
+.dash-skeleton-stat-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.dash-skeleton-stat-number {
+    width: 3.25rem;
+    height: 2rem;
+    border-radius: 10px;
+}
+
+.dash-skeleton-stat-trend {
+    width: 72%;
+    max-width: 11rem;
+    height: 0.72rem;
+    margin-top: 0.15rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid #e5e5e5;
+    border-radius: 6px;
+    background-clip: padding-box;
+}
+
+[data-theme="dark"] .dash-skeleton-stat-trend {
+    border-top-color: #374151;
+}
+
+.insight-spotlight-mount {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.insight-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.insight-skeleton-item {
+    display: flex;
+    min-width: 0;
+    margin: 0;
+}
+
+.insight-skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #d4d4d4;
+    border-radius: 12px;
+    padding: 1.35rem 1.4rem;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .insight-skeleton-card {
+    background: #111827;
+    border-color: #374151;
+}
+
+.insight-skeleton-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.dash-skeleton-insight-title {
+    width: 52%;
+    max-width: 8rem;
+    height: 0.85rem;
+}
+
+.dash-skeleton-insight-icon {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.dash-skeleton-insight-metric {
+    width: 4.5rem;
+    height: 1.75rem;
+    border-radius: 10px;
+}
+
+.dash-skeleton-insight-desc {
+    width: 88%;
+    height: 0.72rem;
+    border-radius: 6px;
+}
+
+.overdue-skeleton {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem 1.35rem;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .overdue-skeleton {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border-color, #334155);
+}
+
+.overdue-skeleton-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.dash-skeleton-overdue-title {
+    width: 9rem;
+    height: 1.1rem;
+}
+
+.dash-skeleton-overdue-badge {
+    width: 2rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.dash-skeleton-overdue-sub {
+    width: 14rem;
+    max-width: 80%;
+    height: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.overdue-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.overdue-skeleton-card {
+    height: 9.5rem;
+    border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-skeleton-bone {
+        animation: none;
+    }
+}
+
+/* ==========================================
    ANIMATIONS
    ========================================== */
 @keyframes pulse {
@@ -1359,6 +1578,10 @@
    ========================================== */
 @media (max-width: 1200px) {
     .insight-spotlight {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .insight-skeleton-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -1447,6 +1670,10 @@
     .insight-spotlight {
         grid-template-columns: 1fr;
     }
+
+    .insight-skeleton-grid {
+        grid-template-columns: 1fr;
+    }
     
     .dash-section-head {
         flex-direction: column;
@@ -1454,6 +1681,10 @@
     }
     
     .overdue-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .overdue-skeleton-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -4,8 +4,8 @@
 {% block title %}Dashboard - {{ itam_product_name }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=33">
-    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard.css' %}?v=35">
+    <link rel="stylesheet" href="{% static 'inventory/css/layouts/dashboard-analytics.css' %}?v=12">
 {% endblock %}
 
 {% block content %}
@@ -62,26 +62,41 @@
                     <p class="dash-section-sub">Asset counts by status — open a card to jump to that list</p>
                 </div>
             </div>
-            <ul class="dashboard-stats" id="dashboard-stats">
-                {% for stat in dashboard_stats %}
-                    <li class="dashboard-stats-item">
-                        <a
-                            href="{{ stat.link }}"
-                            class="stat-card stat-card-link {{ stat.css_class }}"
-                            data-stat="{{ stat.css_class }}"
-                            data-loader="true"
-                            data-loader-message="Loading Assets..."
-                            aria-labelledby="{{ stat.css_class }}-label {{ stat.css_class }}-value"
-                        >
-                            <header class="stat-card-head">
-                                <span class="stat-label" id="{{ stat.css_class }}-label">{{ stat.label }}</span>
-                                <i class="fas {{ stat.icon }} stat-icon" aria-hidden="true"></i>
-                            </header>
-                            <p class="stat-number" id="{{ stat.css_class }}-value"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
-                            <p class="stat-trend">{{ stat.trend }}</p>
-                        </a>
-                    </li>
-                {% endfor %}
+            <ul class="dashboard-stats{% if async_dashboard %} async-loading{% endif %}" id="dashboard-stats"{% if async_dashboard %} aria-busy="true" aria-label="Loading fleet overview"{% endif %}>
+                {% if async_dashboard %}
+                    {% for _ in "1234" %}
+                        <li class="dashboard-stats-item">
+                            <div class="stat-card stat-skeleton-card" aria-hidden="true">
+                                <div class="stat-skeleton-head">
+                                    <span class="dash-skeleton-bone dash-skeleton-stat-label"></span>
+                                    <span class="dash-skeleton-bone dash-skeleton-stat-icon"></span>
+                                </div>
+                                <span class="dash-skeleton-bone dash-skeleton-stat-number"></span>
+                                <span class="dash-skeleton-bone dash-skeleton-stat-trend"></span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    {% for stat in dashboard_stats %}
+                        <li class="dashboard-stats-item">
+                            <a
+                                href="{{ stat.link }}"
+                                class="stat-card stat-card-link {{ stat.css_class }}"
+                                data-stat="{{ stat.css_class }}"
+                                data-loader="true"
+                                data-loader-message="Loading Assets..."
+                                aria-labelledby="{{ stat.css_class }}-label {{ stat.css_class }}-value"
+                            >
+                                <header class="stat-card-head">
+                                    <span class="stat-label" id="{{ stat.css_class }}-label">{{ stat.label }}</span>
+                                    <i class="fas {{ stat.icon }} stat-icon" aria-hidden="true"></i>
+                                </header>
+                                <p class="stat-number" id="{{ stat.css_class }}-value"{% if stat.animate_count %} data-count="{{ stat.data_count }}"{% endif %}>{{ stat.value }}</p>
+                                <p class="stat-trend">{{ stat.trend }}</p>
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
             </ul>
         </section>
 
@@ -93,7 +108,24 @@
                     <p class="dash-section-sub">Live operational signals across your asset ecosystem</p>
                 </div>
             </div>
-            <ul class="insight-spotlight" id="insight-spotlight">
+            <div class="insight-spotlight-mount{% if async_dashboard %} async-loading{% endif %}" id="insight-spotlight-mount"{% if async_dashboard %} aria-busy="true" aria-label="Loading fleet intelligence"{% endif %}>
+            {% if async_dashboard %}
+                <ul class="insight-skeleton-grid" id="insight-skeleton" aria-hidden="true">
+                    {% for _ in "1234" %}
+                        <li class="insight-skeleton-item">
+                            <div class="insight-skeleton-card">
+                                <div class="insight-skeleton-head">
+                                    <span class="dash-skeleton-bone dash-skeleton-insight-title"></span>
+                                    <span class="dash-skeleton-bone dash-skeleton-insight-icon"></span>
+                                </div>
+                                <span class="dash-skeleton-bone dash-skeleton-insight-metric"></span>
+                                <span class="dash-skeleton-bone dash-skeleton-insight-desc"></span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <ul class="insight-spotlight" id="insight-spotlight"{% if async_dashboard %} hidden{% endif %}>
                 <li class="insight-spotlight-item">
                     <article class="insight-card" aria-labelledby="insight-util-title">
                         <header class="insight-card-head">
@@ -102,7 +134,7 @@
                         </header>
                         <div class="insight-metric">
                             <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
-                            <span class="insight-metric-unit">of fleet assigned</span>
+                            <span class="insight-metric-unit"><span class="dash-metric-gradient">of</span> fleet assigned</span>
                         </div>
                         <p class="insight-card-desc">Share of fleet currently assigned to employees</p>
                     </article>
@@ -156,6 +188,7 @@
                     </article>
                 </li>
             </ul>
+            </div>
         </section>
 
         <!-- Analytics canvas -->
@@ -260,11 +293,18 @@
 
         <!-- Overdue -->
         <section class="dash-section">
-            <div id="overdue-section-mount" class="{% if async_dashboard %}async-loading{% endif %}">
+            <div id="overdue-section-mount" class="{% if async_dashboard %}async-loading{% endif %}"{% if async_dashboard %} aria-busy="true" aria-label="Loading service status"{% endif %}>
             {% if async_dashboard %}
-                <div class="async-job-panel">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Loading service status in the background...</span>
+                <div class="overdue-skeleton" id="overdue-skeleton" aria-hidden="true">
+                    <div class="overdue-skeleton-head">
+                        <span class="dash-skeleton-bone dash-skeleton-overdue-title"></span>
+                        <span class="dash-skeleton-bone dash-skeleton-overdue-badge"></span>
+                    </div>
+                    <span class="dash-skeleton-bone dash-skeleton-overdue-sub"></span>
+                    <div class="overdue-skeleton-grid">
+                        <div class="overdue-skeleton-card dash-skeleton-bone"></div>
+                        <div class="overdue-skeleton-card dash-skeleton-bone"></div>
+                    </div>
                 </div>
             {% elif overdue_assets %}
                 <div class="overdue-section">
@@ -330,8 +370,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'inventory/js/core/background-jobs.js' %}?v=3"></script>
     <script src="{% static 'inventory/js/core/chart-core.js' %}?v=13"></script>
-    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=11"></script>
-    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=13"></script>
+    <script src="{% static 'inventory/js/modules/dashboard-analytics.js' %}?v=12"></script>
+    <script src="{% static 'inventory/js/modules/dashboard.js' %}?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Dashboard && typeof window.Dashboard.init === 'function') {

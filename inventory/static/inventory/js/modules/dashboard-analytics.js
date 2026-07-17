@@ -370,8 +370,11 @@
     }
 
     function applyData(data) {
-        if (!data) return;
         setupTabs();
+        if (!data) {
+            setLoading(true);
+            return;
+        }
         if (!data.analytics) {
             setLoading(true);
             return;

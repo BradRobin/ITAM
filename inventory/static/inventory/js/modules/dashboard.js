@@ -385,11 +385,31 @@
     // ============================================
     // Async dashboard data
     // ============================================
+    function markInsightsLoaded() {
+        var mount = document.getElementById('insight-spotlight-mount');
+        var skeleton = document.getElementById('insight-skeleton');
+        var list = document.getElementById('insight-spotlight');
+
+        if (mount) {
+            mount.classList.remove('async-loading');
+            mount.removeAttribute('aria-busy');
+        }
+        if (skeleton && skeleton.parentNode) {
+            skeleton.parentNode.removeChild(skeleton);
+        }
+        if (list) {
+            list.removeAttribute('hidden');
+        }
+    }
+
     function renderDashboardStats(stats) {
         var container = document.getElementById('dashboard-stats');
         if (!container || !stats || !stats.length) {
             return;
         }
+
+        container.classList.remove('async-loading');
+        container.removeAttribute('aria-busy');
 
         container.innerHTML = stats.map(function(stat) {
             var key = stat.css_class || 'stat';
@@ -420,6 +440,9 @@
         if (!container) {
             return;
         }
+
+        container.classList.remove('async-loading');
+        container.removeAttribute('aria-busy');
 
         var overdueAssets = data.overdue_assets || [];
         if (!overdueAssets.length) {
@@ -475,6 +498,7 @@
         if (window.DashboardAnalytics) {
             window.DashboardAnalytics.applyData(data);
         }
+        markInsightsLoaded();
     }
 
     function loadAsyncDashboard() {
@@ -484,6 +508,14 @@
         }
 
         mount.classList.add('async-loading');
+        var insightMount = document.getElementById('insight-spotlight-mount');
+        if (insightMount) {
+            insightMount.classList.add('async-loading');
+        }
+        var overdueMount = document.getElementById('overdue-section-mount');
+        if (overdueMount) {
+            overdueMount.classList.add('async-loading');
+        }
         if (window.DashboardAnalytics) {
             window.DashboardAnalytics.initTabs();
             window.DashboardAnalytics.applyData(null);
@@ -491,10 +523,6 @@
         window.BackgroundJobs.run('dashboard').then(function(job) {
             var data = job.result || {};
             mount.classList.remove('async-loading');
-            var overdueMount = document.getElementById('overdue-section-mount');
-            if (overdueMount) {
-                overdueMount.classList.remove('async-loading');
-            }
             applyDashboardData(data);
             isStatsAnimated = false;
             setupScrollObserver();
@@ -503,6 +531,10 @@
             var overdueMount = document.getElementById('overdue-section-mount');
             if (overdueMount) {
                 overdueMount.classList.remove('async-loading');
+            }
+            var insightMount = document.getElementById('insight-spotlight-mount');
+            if (insightMount) {
+                insightMount.classList.remove('async-loading');
             }
             console.error('Dashboard async load failed:', error);
             if (window.Utils && typeof window.Utils.showAsyncError === 'function') {
