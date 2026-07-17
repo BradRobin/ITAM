@@ -105,7 +105,7 @@
         </section>
 
         <!-- Intelligence spotlight -->
-        <section class="dash-section" aria-labelledby="fleet-intelligence-heading">
+        <section class="dash-section dash-intelligence-section" aria-labelledby="fleet-intelligence-heading">
             <div class="dash-section-head">
                 <div>
                     <h2 class="dash-section-title" id="fleet-intelligence-heading">Fleet Intelligence</h2>
@@ -118,12 +118,12 @@
                     {% for _ in "1234" %}
                         <li class="insight-skeleton-item">
                             <div class="insight-skeleton-card">
-                                <div class="insight-skeleton-head">
+                                <span class="dash-skeleton-bone dash-skeleton-insight-icon-badge"></span>
+                                <div class="insight-card-body">
                                     <span class="dash-skeleton-bone dash-skeleton-insight-title"></span>
-                                    <span class="dash-skeleton-bone dash-skeleton-insight-icon"></span>
+                                    <span class="dash-skeleton-bone dash-skeleton-insight-metric"></span>
+                                    <span class="dash-skeleton-bone dash-skeleton-insight-desc"></span>
                                 </div>
-                                <span class="dash-skeleton-bone dash-skeleton-insight-metric"></span>
-                                <span class="dash-skeleton-bone dash-skeleton-insight-desc"></span>
                             </div>
                         </li>
                     {% endfor %}
@@ -131,64 +131,74 @@
             {% endif %}
             <ul class="insight-spotlight" id="insight-spotlight"{% if async_dashboard %} hidden{% endif %}>
                 <li class="insight-spotlight-item">
-                    <article class="insight-card" aria-labelledby="insight-util-title">
-                        <header class="insight-card-head">
+                    <article class="insight-card insight-card--util" aria-labelledby="insight-util-title">
+                        <span class="insight-icon-badge" aria-hidden="true">
+                            <i class="fas fa-chart-pie insight-card-icon"></i>
+                        </span>
+                        <div class="insight-card-body">
                             <h3 class="insight-card-title" id="insight-util-title">Asset Utilization</h3>
-                            <i class="fas fa-chart-pie insight-card-icon" aria-hidden="true"></i>
-                        </header>
-                        <div class="insight-metric">
-                            <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
-                            <span class="insight-metric-unit"><span class="dash-metric-gradient">of</span> fleet assigned</span>
+                            <div class="insight-metric">
+                                <span class="insight-metric-value" id="utilization-rate-value">{{ utilization_rate|default:0 }}%</span>
+                                <span class="insight-metric-unit"><span class="dash-metric-gradient">of</span> fleet assigned</span>
+                            </div>
+                            <p class="insight-card-desc">Share of fleet currently assigned to employees</p>
                         </div>
-                        <p class="insight-card-desc">Share of fleet currently assigned to employees</p>
                     </article>
                 </li>
 
                 <li class="insight-spotlight-item">
-                    <a href="{% url 'employee_list' %}" class="insight-card insight-card-link" aria-labelledby="insight-workforce-title">
-                        <header class="insight-card-head">
+                    <a href="{% url 'employee_list' %}" class="insight-card insight-card-link insight-card--workforce" aria-labelledby="insight-workforce-title">
+                        <span class="insight-icon-badge" aria-hidden="true">
+                            <i class="fas fa-users insight-card-icon"></i>
+                        </span>
+                        <div class="insight-card-body">
                             <h3 class="insight-card-title" id="insight-workforce-title">Workforce</h3>
-                            <i class="fas fa-users insight-card-icon" aria-hidden="true"></i>
-                        </header>
-                        <div class="insight-metric">
-                            <span class="insight-metric-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
-                            <span class="insight-metric-unit">people tracked</span>
+                            <div class="insight-metric">
+                                <span class="insight-metric-value" id="employee-count-value">{{ employee_count|default:"0" }}</span>
+                                <span class="insight-metric-unit">people tracked</span>
+                            </div>
+                            <p class="insight-card-desc">Employees registered in the directory</p>
                         </div>
-                        <p class="insight-card-desc">Employees registered in the directory</p>
+                        <i class="fas fa-chevron-right insight-card-chevron" aria-hidden="true"></i>
                     </a>
                 </li>
 
                 <li class="insight-spotlight-item">
-                    <a href="{% url 'asset_list' %}#maintenance-assets" class="insight-card insight-card-link" aria-labelledby="insight-health-title">
-                        <header class="insight-card-head">
+                    <a href="{% url 'asset_list' %}#maintenance-assets" class="insight-card insight-card-link insight-card--health" aria-labelledby="insight-health-title">
+                        <span class="insight-icon-badge" aria-hidden="true">
+                            <i class="fas fa-heartbeat insight-card-icon"></i>
+                        </span>
+                        <div class="insight-card-body">
                             <h3 class="insight-card-title" id="insight-health-title">Asset Health</h3>
-                            <i class="fas fa-heartbeat insight-card-icon" aria-hidden="true"></i>
-                        </header>
-                        <div class="insight-metric">
-                            <span class="insight-metric-value" id="asset-health-value">{{ asset_health_rate|default:0 }}%</span>
-                            <span class="insight-metric-unit">fleet healthy</span>
+                            <div class="insight-metric">
+                                <span class="insight-metric-value" id="asset-health-value">{{ asset_health_rate|default:0 }}%</span>
+                                <span class="insight-metric-unit">fleet healthy</span>
+                            </div>
+                            <p class="insight-card-desc">Share of fleet not under maintenance or repair</p>
                         </div>
-                        <p class="insight-card-desc">Share of fleet not under maintenance or repair</p>
+                        <i class="fas fa-chevron-right insight-card-chevron" aria-hidden="true"></i>
                     </a>
                 </li>
 
                 <li class="insight-spotlight-item">
-                    <article class="insight-card" aria-labelledby="insight-ops-title">
-                        <header class="insight-card-head">
+                    <article class="insight-card insight-card--ops" aria-labelledby="insight-ops-title">
+                        <span class="insight-icon-badge" aria-hidden="true">
+                            <i class="fas fa-wave-square insight-card-icon"></i>
+                        </span>
+                        <div class="insight-card-body">
                             <h3 class="insight-card-title" id="insight-ops-title">Operations Pulse</h3>
-                            <i class="fas fa-wave-square insight-card-icon" aria-hidden="true"></i>
-                        </header>
-                        <div class="insight-metric-stack" role="list">
-                            <div class="insight-metric insight-metric-compact" role="listitem">
-                                <span class="insight-metric-value" id="total-assignments-value">{{ total_assignments|default:0 }}</span>
-                                <span class="insight-metric-unit">total assignments</span>
+                            <div class="insight-metric-stack" role="list">
+                                <div class="insight-metric insight-metric-compact" role="listitem">
+                                    <span class="insight-metric-value" id="total-assignments-value">{{ total_assignments|default:0 }}</span>
+                                    <span class="insight-metric-unit">total assignments</span>
+                                </div>
+                                <div class="insight-metric insight-metric-compact" role="listitem" id="overdue-metric" data-state="{% if overdue_assets_count|default:0 > 0 %}alert{% else %}clear{% endif %}">
+                                    <span class="insight-metric-value" id="overdue-count-value">{{ overdue_assets_count|default:0 }}</span>
+                                    <span class="insight-metric-unit">overdue for service</span>
+                                </div>
                             </div>
-                            <div class="insight-metric insight-metric-compact" role="listitem" id="overdue-metric" data-state="{% if overdue_assets_count|default:0 > 0 %}alert{% else %}clear{% endif %}">
-                                <span class="insight-metric-value" id="overdue-count-value">{{ overdue_assets_count|default:0 }}</span>
-                                <span class="insight-metric-unit">overdue for service</span>
-                            </div>
+                            <p class="insight-card-desc">Assignment volume and service risk signals</p>
                         </div>
-                        <p class="insight-card-desc">Assignment volume and service risk signals</p>
                     </article>
                 </li>
             </ul>
