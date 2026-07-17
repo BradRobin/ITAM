@@ -5,43 +5,105 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'inventory/css/components/tables.css' %}?v=17">
-    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'inventory/css/components/asset-list-sections.css' %}?v=10">
     <link rel="stylesheet" href="{% static 'inventory/css/components/asset-import.css' %}?v=6">
 {% endblock %}
 
 {% block content %}
-    <div class="page-header"
+    <nav class="asset-action-dock"
+         aria-label="Asset actions"
          data-user-is-admin="{% if user_is_admin %}true{% else %}false{% endif %}"
          data-asset-delete-url-template="{% url 'asset_delete' 0 %}">
-        <h1>Assets</h1>
-        <div class="actions">
-            <button type="button" class="btn btn-primary" data-open-add-asset>Add Asset</button>
-            <button type="button" class="btn btn-secondary" id="import-csv-btn">
-                <i class="fas fa-file-import"></i> Import CSV
+        <div class="asset-action-dock__glass">
+            <button type="button" class="btn asset-action-dock__btn asset-action-dock__btn--add" data-open-add-asset>
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                <span>Add Asset</span>
             </button>
-            <button type="button" class="btn btn-success" id="export-csv-btn" data-export-url="{% url 'asset_export' %}?async=1">Export CSV</button>
+            <div class="asset-action-dock__action">
+                <button type="button" class="btn asset-action-dock__btn asset-action-dock__btn--import" id="import-csv-btn">
+                    <i class="fas fa-file-import" aria-hidden="true"></i>
+                    <span>Import</span>
+                </button>
+                <button type="button"
+                        class="asset-action-dock__info"
+                        data-csv-info
+                        aria-label="Import format information"
+                        title="Currently supports CSV only">
+                    <span aria-hidden="true">i</span>
+                </button>
+            </div>
+            <div class="asset-action-dock__action">
+                <button type="button" class="btn asset-action-dock__btn asset-action-dock__btn--export" id="export-csv-btn" data-export-url="{% url 'asset_export' %}?async=1">
+                    <i class="fas fa-file-export" aria-hidden="true"></i>
+                    <span>Export</span>
+                </button>
+                <button type="button"
+                        class="asset-action-dock__info"
+                        data-csv-info
+                        aria-label="Export format information"
+                        title="Currently supports CSV only">
+                    <span aria-hidden="true">i</span>
+                </button>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="filters">
-        <form method="get" class="filter-form">
-            <span class="filter-label">Filter by:</span>
-            <select name="type" class="filter-select" aria-label="Filter by asset type" onchange="this.form.submit()">
-                <option value="">All Types</option>
-                <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
-                <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
-                <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
-                <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
-            </select>
-            <select name="status" class="filter-select" aria-label="Filter by asset status" onchange="this.form.submit()">
-                <option value="">All Statuses</option>
-                <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
-                <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
-                <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
-            </select>
-            <a href="{% url 'asset_list' %}" class="btn btn-secondary">Clear</a>
+    <section class="asset-filters" aria-label="Filter assets">
+        <form method="get" class="asset-filters__form filter-form">
+            <div class="asset-filters__controls">
+                <label class="asset-filters__control">
+                    <span class="asset-filters__label">Type</span>
+                    <span class="asset-filters__select-wrap">
+                        <select name="type" class="asset-filters__select" aria-label="Filter by asset type">
+                            <option value="">All types</option>
+                            <option value="Laptop" {% if selected_type == "Laptop" %}selected{% endif %}>Laptop</option>
+                            <option value="Printer" {% if selected_type == "Printer" %}selected{% endif %}>Printer</option>
+                            <option value="Router" {% if selected_type == "Router" %}selected{% endif %}>Router</option>
+                            <option value="Monitor" {% if selected_type == "Monitor" %}selected{% endif %}>Monitor</option>
+                        </select>
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </span>
+                </label>
+                <label class="asset-filters__control">
+                    <span class="asset-filters__label">Status</span>
+                    <span class="asset-filters__select-wrap">
+                        <select name="status" class="asset-filters__select" aria-label="Filter by asset status">
+                            <option value="">All statuses</option>
+                            <option value="Available" {% if selected_status == "Available" %}selected{% endif %}>Available</option>
+                            <option value="Assigned" {% if selected_status == "Assigned" %}selected{% endif %}>Assigned</option>
+                            <option value="Under Maintenance" {% if selected_status == "Under Maintenance" %}selected{% endif %}>Under Maintenance</option>
+                        </select>
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </span>
+                </label>
+            </div>
+
+            <div class="asset-filters__aside">
+                {% if selected_type or selected_status %}
+                    <div class="asset-filters__active" aria-live="polite">
+                        {% if selected_type %}
+                            <span class="asset-filters__chip">
+                                <i class="fas fa-cube" aria-hidden="true"></i>
+                                {{ selected_type }}
+                            </span>
+                        {% endif %}
+                        {% if selected_status %}
+                            <span class="asset-filters__chip">
+                                <i class="fas fa-circle" aria-hidden="true"></i>
+                                {{ selected_status }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'asset_list' %}" class="asset-filters__clear">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                        <span>Clear filters</span>
+                    </a>
+                {% else %}
+                    <p class="asset-filters__hint">Showing all assets</p>
+                {% endif %}
+            </div>
         </form>
-    </div>
+    </section>
 
     <div id="asset-catalog-sections">
         {% for catalog in asset_catalogs %}
@@ -390,19 +452,20 @@
             }
 
             var exportBtn = document.getElementById('export-csv-btn');
+            var exportBtnMarkup = '<i class="fas fa-file-export" aria-hidden="true"></i><span>Export</span>';
             if (exportBtn && window.BackgroundJobs) {
                 exportBtn.addEventListener('click', function() {
                     exportBtn.disabled = true;
-                    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing export...';
+                    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Preparing...</span>';
                     window.BackgroundJobs.run('csv_export', { force: true })
                         .then(function(job) {
                             window.BackgroundJobs.downloadExport(job);
                             exportBtn.disabled = false;
-                            exportBtn.innerHTML = 'Export CSV';
+                            exportBtn.innerHTML = exportBtnMarkup;
                         })
                         .catch(function(error) {
                             exportBtn.disabled = false;
-                            exportBtn.innerHTML = 'Export CSV';
+                            exportBtn.innerHTML = exportBtnMarkup;
                             if (window.Utils && typeof window.Utils.showToast === 'function') {
                                 window.Utils.showToast(
                                     window.Utils.getUserFacingError(error, 'Export failed. Please try again.'),
@@ -412,6 +475,21 @@
                         });
                 });
             }
+
+            document.querySelectorAll('[data-csv-info]').forEach(function(infoBtn) {
+                infoBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (window.Utils && typeof window.Utils.showToast === 'function') {
+                        window.Utils.showToast(
+                            'Import and export currently support CSV files only.',
+                            'info'
+                        );
+                    } else {
+                        window.alert('Import and export currently support CSV files only.');
+                    }
+                });
+            });
         });
     </script>
 {% endblock %}
