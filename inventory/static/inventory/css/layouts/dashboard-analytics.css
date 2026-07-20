@@ -489,6 +489,10 @@
     text-overflow: ellipsis;
 }
 
+[data-theme="dark"] .dept-legend-name {
+    color: var(--text-secondary, #94a3b8);
+}
+
 .dept-legend-pct {
     font-weight: var(--font-weight-semibold, 600);
     color: var(--text-primary, #1e293b);
@@ -513,6 +517,10 @@
     font-size: var(--font-size-sm, 0.85rem);
 }
 
+[data-theme="dark"] .employee-rank-empty {
+    color: var(--text-muted, #64748b);
+}
+
 .employee-rank-row {
     display: grid;
     grid-template-columns: 1.25rem 2rem minmax(0, 1fr);
@@ -526,6 +534,10 @@
     color: var(--text-muted, #94a3b8);
     line-height: 2rem;
     text-align: center;
+}
+
+[data-theme="dark"] .employee-rank-pos {
+    color: var(--text-muted, #64748b);
 }
 
 .employee-rank-avatar {
@@ -591,6 +603,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .employee-rank-dept {
+    color: var(--text-muted, #64748b);
 }
 
 .employee-rank-track {
